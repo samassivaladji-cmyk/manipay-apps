@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="theme-color" content="#0a0800"/>
+<meta name="theme-color" content="#92400e"/>
 <title>AFRIM PAY — Master</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0800;--s:#150f00;--c:#1a1300;--b:#2d2000;--a:#d4a017;--a2:#b8860b;--t:#fefce8;--m:#713f12;--d:#431407;--r:#ef4444;--g:#22c55e;--bl:#3b82f6;--p:#a855f7}
+:root{--bg:#ffffff;--s:#fdf8f3;--c:#fdf5ee;--b:#e7d5c0;--a:#92400e;--a2:#78350f;--t:#3d1f0a;--m:#6b7280;--d:#9ca3af;--r:#ef4444;--g:#22c55e;--bl:#3b82f6;--p:#a855f7}
 html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);overflow-x:hidden}
 ::-webkit-scrollbar{width:0}
 #app{width:100%;max-width:420px;min-height:100vh;margin:0 auto;background:var(--bg)}
 .scr{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px}
 .scr.on{display:flex}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:var(--bg);border-top:1px solid var(--b);display:flex;z-index:100;padding:8px 0 22px}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#ffffff;border-top:1px solid var(--b);box-shadow:0 -4px 20px rgba(0,0,0,0.08);display:flex;z-index:100;padding:8px 0 22px}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 0;color:var(--d);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;transition:color .2s}
 .nb.on{color:var(--a)}
 .nb svg{width:22px;height:22px}
@@ -101,19 +101,20 @@ function setTab(t){
   G.tab=t;
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('#nb-'+t).forEach(b=>b.classList.add('on'));
-  if(t==='home')chargerAccueil();
-  else if(t==='history')chargerHistorique();
-  else if(t==='network')chargerReseau();
-  else if(t==='profile')chargerProfil();
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  if(t==='home'){document.getElementById('s-home').classList.add('on');chargerAccueil();}
+  else if(t==='history'){document.getElementById('s-history').classList.add('on');chargerHistorique();}
+  else if(t==='network'){document.getElementById('s-network').classList.add('on');chargerReseau();}
+  else if(t==='profile'){document.getElementById('s-profile').classList.add('on');chargerProfil();}
 }
 </script>
 
 <!-- LOGIN -->
 <div class="scr" id="s-login" style="align-items:center;justify-content:center;padding:40px 22px;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,rgba(245,158,11,.07),transparent 55%)">
   <div style="width:100%;max-width:360px;text-align:center">
-    <div style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--a2),var(--a));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 12px 32px rgba(245,158,11,.25);font-size:36px">◈</div>
+    <div style="width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 12px 32px rgba(146,64,14,.25);overflow:hidden;background:#fff"><img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:76px;height:76px;object-fit:contain" alt="AFRIM PAY"/></div>
     <div style="font-size:36px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px">AFRIM PAY</div>
-    <div style="color:var(--m);font-size:13px;margin-bottom:8px">Interface Master</div>
+    <div style="color:var(--m);font-size:13px;margin-bottom:8px">Interface Master AFRIM PAY</div>
     <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:28px">
       <span style="color:var(--a);font-size:11px;font-weight:800;letter-spacing:.14em">ESPACE MASTER</span>
     </div>
