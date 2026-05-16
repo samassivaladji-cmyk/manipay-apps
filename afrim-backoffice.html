@@ -7,15 +7,19 @@
 <title>AFRIM PAY — Back-office</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--y:#ca8a04;--y2:#a16207;--y3:#fef3c7;--t:#111827;--m:#6b7280;--r:#ef4444;--g:#22c55e}
+:root{--y:#ca8a04;--y2:#a16207;--y3:#fef3c7;--t:#111827;--m:#6b7280;--d:#9ca3af;--r:#ef4444;--g:#22c55e;--b:#3b82f6}
 body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:var(--t)}
 #app{max-width:430px;margin:0 auto;min-height:100vh}
 .scr{display:none;flex-direction:column;min-height:100vh}
 .scr.on{display:flex}
 .inp{width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 16px;font-size:15px;font-family:inherit;color:var(--t);outline:none}
 .inp:focus{border-color:var(--y)}
+.inp::placeholder{color:var(--d)}
 .btn{width:100%;padding:15px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
 .btn-y{background:linear-gradient(135deg,var(--y2),var(--y));color:#fff}
+.btn-g{background:linear-gradient(135deg,#15803d,#22c55e);color:#fff}
+.btn-r{background:#fef2f2;color:var(--r);border:1px solid #fecaca}
+.btn-gh{background:#f3f4f6;color:var(--t)}
 .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #d1d5db;display:inline-block;margin:0 6px;transition:.15s}
 .pin-dot.on{background:var(--y);border-color:var(--y)}
 .pin-key{padding:18px;border-radius:16px;border:none;background:#f3f4f6;font-size:22px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--t)}
@@ -26,12 +30,31 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 #toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#111827;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:999;transition:.3s;white-space:nowrap}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #toast.err{background:var(--r)}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border:none;background:none;cursor:pointer;font-size:10px;font-weight:600;color:var(--m);font-family:inherit}
+.nb svg{width:22px;height:22px;stroke:var(--m);fill:none}
+.nb.on{color:var(--y)}
+.nb.on svg{stroke:var(--y)}
+.sh-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.sh-ov.on{display:flex}
+.sh{width:100%;max-width:430px;background:#fff;border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto}
+.sh-bar{width:40px;height:4px;background:#e5e7eb;border-radius:99px;margin:12px auto 0}
+.sh-top{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 12px}
+.sh-title{font-size:18px;font-weight:800}
+.sh-x{background:#f3f4f6;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--m)}
+.sh-body{padding:0 20px 40px}
+.lbl{font-size:11px;font-weight:700;color:var(--m);margin-bottom:6px;display:block;letter-spacing:.05em;text-transform:uppercase}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6}
+.card{background:#fff;border-radius:14px;padding:14px;border:1px solid #f3f4f6}
+.role-btn{padding:9px 4px;border-radius:10px;border:1.5px solid #e5e7eb;background:#f9fafb;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+.role-btn.on{border-color:var(--y);background:var(--y3);color:var(--y2)}
 </style>
 </head>
 <body>
 <div id="app">
 <div id="toast"></div>
 
+<!-- LOGIN -->
 <div class="scr" id="s-login" style="justify-content:center;align-items:center;padding:32px 24px">
   <div style="width:100%;max-width:340px">
     <div style="text-align:center;margin-bottom:32px">
@@ -40,18 +63,21 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       </div>
       <h1 style="font-size:24px;font-weight:900">AFRIM PAY</h1>
       <p style="color:var(--m);font-size:13px;margin-top:4px">Back-office Administration</p>
-      <div style="margin-top:10px;background:var(--y3);border:1px solid #fde68a;border-radius:99px;padding:4px 14px;display:inline-block;font-size:11px;font-weight:700;color:var(--y2)">Admin · Superviseur · Support</div>
+      <div style="margin-top:10px;background:var(--y3);border:1px solid #fde68a;border-radius:99px;padding:4px 14px;display:inline-block;font-size:11px;font-weight:700;color:var(--y2)">
+        Admin · Superviseur · Support Client · Support Tech
+      </div>
     </div>
     <div id="err-login" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:12px;border-radius:12px;margin-bottom:14px;font-size:13px"></div>
-    <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block">Numero de telephone</label>
+    <label class="lbl">Numero de telephone</label>
     <input class="inp" id="lg-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:14px"/>
     <button class="btn btn-y" onclick="goPin()">Continuer</button>
   </div>
 </div>
 
+<!-- PIN -->
 <div class="scr" id="s-pin" style="justify-content:center;align-items:center;padding:32px 24px">
   <div style="width:100%;max-width:320px;text-align:center">
-    <button onclick="showScr('s-login')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:28px;display:block">Retour</button>
+    <button onclick="showScr('s-login')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:28px;display:block">← Retour</button>
     <h2 style="font-size:22px;font-weight:800;margin-bottom:6px">Code PIN</h2>
     <div id="pin-sub" style="color:var(--m);font-size:14px;margin-bottom:28px;font-family:monospace"></div>
     <div id="err-pin" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px;border-radius:12px;margin-bottom:14px;font-size:13px"></div>
@@ -64,20 +90,28 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button class="pin-key" onclick="PIN(1)">1</button><button class="pin-key" onclick="PIN(2)">2</button><button class="pin-key" onclick="PIN(3)">3</button>
         <button class="pin-key" onclick="PIN(4)">4</button><button class="pin-key" onclick="PIN(5)">5</button><button class="pin-key" onclick="PIN(6)">6</button>
         <button class="pin-key" onclick="PIN(7)">7</button><button class="pin-key" onclick="PIN(8)">8</button><button class="pin-key" onclick="PIN(9)">9</button>
-        <button class="pin-key empty"></button><button class="pin-key" onclick="PIN(0)">0</button><button class="pin-key" onclick="DELP()">X</button>
+        <button class="pin-key empty"></button><button class="pin-key" onclick="PIN(0)">0</button><button class="pin-key" onclick="DELP()">⌫</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- HOME -->
 <div class="scr" id="s-home">
   <div style="background:linear-gradient(135deg,var(--y2),var(--y));padding:48px 20px 28px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div>
-        <div style="color:rgba(255,255,255,.75);font-size:12px;font-weight:600;text-transform:uppercase">Administration</div>
+        <div style="color:rgba(255,255,255,.75);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Administration</div>
         <div style="color:#fff;font-size:20px;font-weight:800;margin-top:2px" id="h-name">--</div>
       </div>
-      <button onclick="logout()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;color:#fff;font-size:18px">X</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="chargerAccueil()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
+        </button>
+        <button onclick="logout()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px">
@@ -98,36 +132,311 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       </div>
     </div>
   </div>
-  <div style="padding:24px;text-align:center">
-    <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:16px;color:#059669;font-size:14px;font-weight:600;margin-bottom:16px">
-      Connexion reussie - Suite du dashboard en cours
+  <div style="padding:20px 16px 0">
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Navigation</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="nav-grid"></div>
     </div>
-    <button onclick="logout()" class="btn" style="background:#fef2f2;color:var(--r);border:1px solid #fecaca">Se deconnecter</button>
+    <div style="background:var(--y3);border:1px solid #fde68a;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:16px">🔗</span>
+      <div style="font-size:11px;font-family:monospace;color:var(--y2)">afrim-pay-backend.onrender.com</div>
+    </div>
+  </div>
+  <div style="height:80px"></div>
+  <nav class="bnav" id="bnav-home"></nav>
+</div>
+
+<!-- USERS -->
+<div class="scr" id="s-users">
+  <div style="background:#fff;padding:52px 20px 12px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800;margin-bottom:10px">Comptes</div>
+    <div style="display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:12px;padding:10px 14px;margin-bottom:8px">
+      <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="u-search" type="text" placeholder="Rechercher..." style="border:none;background:none;font-size:14px;font-family:inherit;color:var(--t);outline:none;flex:1" oninput="filtrerUsers(this.value)"/>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px" id="u-chips"></div>
+  </div>
+  <div style="padding:12px 16px 100px"><div id="u-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div></div>
+  <nav class="bnav" id="bnav-users"></nav>
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="scr" id="s-txns">
+  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800">Flux financiers</div>
+    <div style="color:var(--m);font-size:13px;margin-top:3px">Toutes les transactions</div>
+  </div>
+  <div style="padding:12px 16px 100px"><div id="t-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div></div>
+  <nav class="bnav" id="bnav-txns"></nav>
+</div>
+
+<!-- MONITORING -->
+<div class="scr" id="s-monitoring">
+  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800">Monitoring</div>
+    <div style="color:var(--m);font-size:13px;margin-top:3px">Alertes et tickets</div>
+  </div>
+  <div style="padding:16px 16px 100px">
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Alertes actives</div>
+    <div id="m-alerts"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.07em;margin:16px 0 10px">Tickets ouverts</div>
+    <div id="m-tickets"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+  <nav class="bnav" id="bnav-monitoring"></nav>
+</div>
+
+<!-- SUPPORT -->
+<div class="scr" id="s-support">
+  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800">Service Client</div>
+    <div style="color:var(--m);font-size:13px;margin-top:3px" id="sup-zone-label">Tickets et reclamations</div>
+  </div>
+  <div style="padding:16px 16px 0">
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:10px">Rechercher un client</div>
+      <div style="display:flex;gap:8px">
+        <input class="inp" id="sup-tel" type="tel" placeholder="Numero telephone" inputmode="numeric" style="flex:1;padding:12px 14px;font-size:14px"/>
+        <button onclick="rechercherClient()" style="padding:0 14px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit">Chercher</button>
+      </div>
+      <div id="sup-result" style="display:none;margin-top:12px"></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:10px">Tickets en attente</div>
+    <div id="sup-tickets"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+    <button onclick="openSh('new-ticket')" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+ Nouveau ticket</button>
+  </div>
+  <div style="height:80px"></div>
+  <nav class="bnav" id="bnav-support"></nav>
+</div>
+
+<!-- TECH -->
+<div class="scr" id="s-tech">
+  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800">Support Technique</div>
+    <div style="color:var(--m);font-size:13px;margin-top:3px">Systeme, logs, transactions</div>
+  </div>
+  <div style="padding:16px 16px 100px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">API Backend</div><div id="sys-api" style="font-size:13px;font-weight:700;color:var(--g)">Verification...</div></div>
+      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Base donnees</div><div id="sys-db" style="font-size:13px;font-weight:700;color:var(--g)">Verification...</div></div>
+      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Expire BD</div><div style="font-size:13px;font-weight:700;color:#f59e0b">10 juin 2026</div></div>
+      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Version</div><div style="font-size:13px;font-weight:700">API v1.0</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:10px">Transactions bloquees</div>
+    <div id="tech-txns"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin:16px 0 10px">Alertes systeme</div>
+    <div id="tech-logs"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+  <nav class="bnav" id="bnav-tech"></nav>
+</div>
+
+<!-- SHEET USER -->
+<div class="sh-ov" id="sh-user">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title" id="sh-u-name">--</div><div style="color:var(--m);font-size:12px" id="sh-u-sub">--</div></div><button class="sh-x" onclick="closeSh('user')">✕</button></div>
+    <div class="sh-body" id="sh-u-body"></div>
+  </div>
+</div>
+
+<!-- SHEET INSCRIPTION -->
+<div class="sh-ov" id="sh-inscription">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Creer un compte</div><div style="color:var(--m);font-size:12px">Admin - Tout type de role</div></div><button class="sh-x" onclick="closeSh('inscription');rstIns()">✕</button></div>
+    <div class="sh-body">
+      <div id="ins-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <div id="ins-form">
+        <label class="lbl">Role — Comptes utilisateurs</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <button onclick="setInsRole('client')" id="rb-client" class="role-btn on">Client</button>
+          <button onclick="setInsRole('business')" id="rb-business" class="role-btn">Business</button>
+          <button onclick="setInsRole('agent')" id="rb-agent" class="role-btn">Agent</button>
+          <button onclick="setInsRole('mini_master')" id="rb-mini_master" class="role-btn">Mini-M.</button>
+          <button onclick="setInsRole('master')" id="rb-master" class="role-btn">Master</button>
+          <button onclick="setInsRole('superviseur')" id="rb-superviseur" class="role-btn">Superv.</button>
+        </div>
+        <div id="sec-intern">
+        <label class="lbl">Role — Equipe interne</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+          <button onclick="setInsRole('admin')" id="rb-admin" class="role-btn" style="display:none">Admin</button>
+          <button onclick="setInsRole('support_client')" id="rb-support_client" class="role-btn">Sup. Client</button>
+          <button onclick="setInsRole('support_tech')" id="rb-support_tech" class="role-btn">Sup. Tech</button>
+        </div>
+        </div>
+        <div id="ins-warn-intern" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e">
+          Compte equipe interne - acces Back-office uniquement
+        </div>
+        <label class="lbl">Prenom *</label><input class="inp" id="ins-prenom" type="text" placeholder="Prenom" style="margin-bottom:12px"/>
+        <label class="lbl">Nom *</label><input class="inp" id="ins-nom" type="text" placeholder="Nom" style="margin-bottom:12px"/>
+        <label class="lbl">Telephone *</label><input class="inp" id="ins-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:12px"/>
+        <label class="lbl">PIN *</label><input class="inp" id="ins-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="margin-bottom:12px"/>
+        <label class="lbl">Zone</label><input class="inp" id="ins-zone" type="text" placeholder="Quartier / Ville" style="margin-bottom:20px"/>
+        <button class="btn btn-y" onclick="doInscrire()">Creer le compte</button>
+      </div>
+      <div id="ins-loading" style="display:none;text-align:center;padding:40px"><div class="spin" style="width:36px;height:36px;border-width:3px"></div></div>
+      <div id="ins-success" style="display:none;text-align:center;padding:32px">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px">Compte cree !</div>
+        <div id="ins-txt" style="color:var(--m);font-size:13px;margin-bottom:24px"></div>
+        <div style="display:flex;gap:10px"><button class="btn btn-y" style="flex:1" onclick="rstIns()">Nouveau</button><button class="btn btn-gh" style="flex:1" onclick="closeSh('inscription');rstIns()">Fermer</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET NOUVEAU TICKET -->
+<div class="sh-ov" id="sh-new-ticket">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Nouveau ticket</div></div><button class="sh-x" onclick="closeSh('new-ticket')">✕</button></div>
+    <div class="sh-body">
+      <div id="nt-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <label class="lbl">Telephone client</label><input class="inp" id="nt-tel" type="tel" placeholder="07 XX XX XX" style="margin-bottom:12px"/>
+      <label class="lbl">Sujet</label><input class="inp" id="nt-sujet" type="text" placeholder="Ex: Transfert bloque" style="margin-bottom:12px"/>
+      <label class="lbl">Description</label><textarea class="inp" id="nt-desc" placeholder="Details du probleme..." rows="4" style="resize:none;margin-bottom:20px"></textarea>
+      <button class="btn btn-y" onclick="creerTicket()">Soumettre le ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET CHANGER PIN -->
+<div class="sh-ov" id="sh-change-pin">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Changer mon PIN</div></div><button class="sh-x" onclick="closeSh('change-pin');rstPin()">✕</button></div>
+    <div class="sh-body">
+      <div id="cp-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <div id="cp-form">
+        <label class="lbl">Ancien PIN</label><input id="cp-old" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="inp" style="margin-bottom:12px;text-align:center;font-size:24px;letter-spacing:10px"/>
+        <label class="lbl">Nouveau PIN</label><input id="cp-new" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="inp" style="margin-bottom:12px;text-align:center;font-size:24px;letter-spacing:10px"/>
+        <label class="lbl">Confirmer PIN</label><input id="cp-new2" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="inp" style="margin-bottom:20px;text-align:center;font-size:24px;letter-spacing:10px"/>
+        <button class="btn btn-y" onclick="doChangePin()">Confirmer</button>
+      </div>
+      <div id="cp-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
+      <div id="cp-ok" style="display:none;text-align:center;padding:24px">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-size:18px;font-weight:800;margin-bottom:8px">PIN modifie !</div>
+        <button onclick="closeSh('change-pin');logout()" class="btn btn-y">Se reconnecter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET CONFIRM SUPPRESSION -->
+<div class="sh-ov" id="sh-confirm-delete">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title" style="color:var(--r)">Supprimer le compte</div></div><button class="sh-x" onclick="closeSh('confirm-delete')">✕</button></div>
+    <div class="sh-body">
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="font-size:13px;font-weight:700;color:var(--r);margin-bottom:6px">Action irreversible</div>
+        <div style="font-size:13px;color:#7f1d1d;line-height:1.5">Suppression definitive de <strong id="sh-confirm-nom"></strong>.</div>
+      </div>
+      <input type="hidden" id="sh-confirm-id"/>
+      <label class="lbl">Tapez SUPPRIMER pour confirmer</label>
+      <input class="inp" id="sh-confirm-input" type="text" placeholder="SUPPRIMER" style="margin-bottom:12px;border-color:#fecaca"/>
+      <div id="sh-confirm-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <button onclick="supprimerCompte()" style="width:100%;padding:15px;border-radius:14px;border:none;background:var(--r);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Supprimer definitivement</button>
+      <button onclick="closeSh('confirm-delete')" class="btn btn-gh">Annuler</button>
+    </div>
   </div>
 </div>
 
 </div>
-
 <script>
 var API='https://afrim-pay-backend.onrender.com/api/v1';
 var G={token:null,refresh:null,user:null,pin:''};
 try{G.token=localStorage.getItem('afrim_token');G.refresh=localStorage.getItem('afrim_refresh');G.user=JSON.parse(localStorage.getItem('afrim_user')||'null');}catch(e){}
 
-function showScr(id){
-  var all=document.querySelectorAll('.scr');
-  for(var i=0;i<all.length;i++)all[i].classList.remove('on');
-  var el=document.getElementById(id);
-  if(el)el.classList.add('on');
-  window.scrollTo(0,0);
+var PERMS={
+  admin:         {home:1,users:1,txns:1,monitoring:1,support:1,tech:1,soldes:1,supprimer:1,rembourser:1},
+  superviseur:   {home:1,users:1,txns:0,monitoring:0,support:1,tech:0,soldes:0,supprimer:0,rembourser:0},
+  support_client:{home:0,users:0,txns:0,monitoring:0,support:1,tech:0,soldes:0,supprimer:0,rembourser:1},
+  support_tech:  {home:1,users:0,txns:1,monitoring:1,support:0,tech:1,soldes:0,supprimer:0,rembourser:0}
+};
+function perm(k){var u=G.user;if(!u)return 0;var p=PERMS[u.role];return p?p[k]||0:0;}
+
+var ROLE_C={client:'#059669',agent:'#d97706',business:'#4f46e5',mini_master:'#2563eb',master:'#92400e',superviseur:'#ea580c',admin:'#ca8a04',support_client:'#2563eb',support_tech:'#059669'};
+var insRole='client';
+var usersData=[];var uFilter='all';
+
+// ── UTILITAIRES ──
+function showScr(id){var all=document.querySelectorAll('.scr');for(var i=0;i<all.length;i++)all[i].classList.remove('on');var el=document.getElementById(id);if(el)el.classList.add('on');window.scrollTo(0,0);}
+function openSh(id){var el=document.getElementById('sh-'+id);if(el)el.classList.add('on');}
+function closeSh(id){var el=document.getElementById('sh-'+id);if(el)el.classList.remove('on');}
+function toast(msg,err){var el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.className=err?'on err':'on';clearTimeout(toast._t);toast._t=setTimeout(function(){el.className='';},2800);}
+function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function FD(d){if(!d)return'--';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+
+// ── API ──
+async function callAPI(path,opts){
+  opts=opts||{};
+  var h={'Content-Type':'application/json'};
+  if(G.token)h['Authorization']='Bearer '+G.token;
+  var r=await fetch(API+path,Object.assign({headers:h},opts));
+  var d=await r.json();
+  if(!r.ok)throw new Error(d.message||'Erreur '+r.status);
+  return d;
+}
+function apiGet(p){return callAPI(p);}
+function apiPost(p,b){return callAPI(p,{method:'POST',body:JSON.stringify(b)});}
+function apiPatch(p,b){return callAPI(p,{method:'PATCH',body:JSON.stringify(b)});}
+
+// ── NAV ──
+var NAV_DEFS=[
+  {id:'home',     label:'Admin',   svg:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'},
+  {id:'users',    label:'Comptes', svg:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>'},
+  {id:'txns',     label:'Flux',    svg:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'},
+  {id:'monitoring',label:'Suivi',  svg:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'},
+  {id:'support',  label:'Support', svg:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>'},
+  {id:'tech',     label:'Tech',    svg:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'}
+];
+
+function buildNavs(activeTab){
+  var u=G.user;if(!u)return;
+  var p=PERMS[u.role]||{};
+  var visible=NAV_DEFS.filter(function(n){return p[n.id];});
+  var navIds=['home','users','txns','monitoring','support','tech'];
+  navIds.forEach(function(id){
+    var el=document.getElementById('bnav-'+id);if(!el)return;
+    el.innerHTML=visible.map(function(n){
+      var on=n.id===activeTab?' on':'';
+      return '<button class="nb'+on+'" onclick="setTab(\''+n.id+'\')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor">'+n.svg+'</svg>'+n.label+'</button>';
+    }).join('');
+  });
 }
 
-function toast(msg,err){
-  var el=document.getElementById('toast');if(!el)return;
-  el.textContent=msg;el.className=err?'on err':'on';
-  clearTimeout(toast._t);
-  toast._t=setTimeout(function(){el.className='';},2800);
+function buildNavGrid(){
+  var u=G.user;if(!u)return;
+  var p=PERMS[u.role]||{};
+  var items=[
+    {id:'users',    icon:'👥', label:'Comptes',    fn:"setTab('users')"},
+    {id:'txns',     icon:'💳', label:'Flux',       fn:"setTab('txns')"},
+    {id:'monitoring',icon:'📊',label:'Suivi',      fn:"setTab('monitoring')"},
+    {id:'support',  icon:'💬', label:'Support',    fn:"setTab('support')"},
+    {id:'inscr',    icon:'➕', label:'Creer',      fn:"ouvrirInscription()"},
+    {id:'pin',      icon:'🔐', label:'Mon PIN',    fn:"openSh('change-pin');rstPin()"}
+  ];
+  var grid=document.getElementById('nav-grid');if(!grid)return;
+  grid.innerHTML=items.filter(function(it){return !it.id||it.id==='inscr'||it.id==='pin'||p[it.id];}).map(function(it){
+    return '<button onclick="'+it.fn+'" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:none;font-family:inherit">'
+      +'<div style="width:44px;height:44px;border-radius:12px;background:var(--y3);display:flex;align-items:center;justify-content:center;font-size:20px">'+it.icon+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:var(--t)">'+it.label+'</div>'
+    +'</button>';
+  }).join('');
 }
 
+function setTab(t){
+  buildNavs(t);
+  if(t==='home'){showScr('s-home');chargerAccueil();}
+  else if(t==='users'){showScr('s-users');chargerUsers();}
+  else if(t==='txns'){showScr('s-txns');chargerTxns();}
+  else if(t==='monitoring'){showScr('s-monitoring');chargerMonitoring();}
+  else if(t==='support'){showScr('s-support');chargerSupport();}
+  else if(t==='tech'){showScr('s-tech');chargerTech();}
+}
+
+// ── LOGIN ──
 function goPin(){
   var tel=document.getElementById('lg-tel').value.trim();
   if(!tel){toast('Entrez votre numero',true);return;}
@@ -136,7 +445,6 @@ function goPin(){
   document.getElementById('err-pin').style.display='none';
   rDots();showScr('s-pin');
 }
-
 function PIN(n){if(G.pin.length>=4)return;G.pin+=String(n);rDots();if(G.pin.length===4)setTimeout(doLogin,300);}
 function DELP(){G.pin=G.pin.slice(0,-1);rDots();}
 function rDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.classList.toggle('on',G.pin.length>i);}}
@@ -147,15 +455,11 @@ async function doLogin(){
   document.getElementById('pin-loading').style.display='';
   document.getElementById('pin-keys').style.display='none';
   try{
-    var resp=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telephone:tel,pin:G.pin})});
-    var data=await resp.json();
-    if(!resp.ok)throw new Error(data.message||'Erreur connexion');
+    var r=await apiPost('/auth/login',{telephone:tel,pin:G.pin});
     var ok=['admin','superviseur','support_client','support_tech'];
-    if(ok.indexOf(data.data.user.role)===-1)throw new Error('Acces non autorise');
-    G.token=data.data.accessToken;G.refresh=data.data.refreshToken;G.user=data.data.user;
-    localStorage.setItem('afrim_token',G.token);
-    localStorage.setItem('afrim_refresh',G.refresh);
-    localStorage.setItem('afrim_user',JSON.stringify(G.user));
+    if(ok.indexOf(r.data.user.role)===-1)throw new Error('Acces non autorise');
+    G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
+    localStorage.setItem('afrim_token',G.token);localStorage.setItem('afrim_refresh',G.refresh);localStorage.setItem('afrim_user',JSON.stringify(G.user));
     document.getElementById('pin-loading').style.display='none';
     document.getElementById('pin-keys').style.display='';
     G.pin='';rDots();
@@ -170,32 +474,287 @@ async function doLogin(){
 
 function enterApp(){
   var u=G.user;if(!u)return;
-  document.getElementById('h-name').textContent=(u.prenom||'')+' - '+(u.role||'').toUpperCase();
-  showScr('s-home');
-  setTimeout(function(){toast('Bienvenue '+u.prenom);},400);
-  loadStats();
+  var firstTab={admin:'home',superviseur:'home',support_client:'support',support_tech:'tech'};
+  buildNavGrid();
+  setTab(firstTab[u.role]||'home');
+  setTimeout(function(){toast('Bienvenue '+u.prenom+' - '+(u.role||'').toUpperCase());},400);
 }
 
-async function loadStats(){
+// ── ACCUEIL ──
+async function chargerAccueil(){
+  var u=G.user;if(!u)return;
+  document.getElementById('h-name').textContent=(u.prenom||'')+' - '+(u.role||'').toUpperCase();
   try{
-    var resp=await fetch(API+'/admin/overview',{headers:{'Authorization':'Bearer '+G.token}});
-    var data=await resp.json();
-    if(data.data){
-      document.getElementById('h-users').textContent=data.data.users||'0';
-      document.getElementById('h-txns').textContent=data.data.txns||'0';
-      document.getElementById('h-comm').textContent=Number(data.data.totalCommissions||0).toLocaleString('fr-FR')+' F';
-      document.getElementById('h-alertes').textContent=data.data.alertes||'0';
+    var r=await apiGet('/admin/overview');
+    if(r.data){
+      document.getElementById('h-users').textContent=r.data.users||'0';
+      document.getElementById('h-txns').textContent=r.data.txns||'0';
+      document.getElementById('h-comm').textContent=Number(r.data.totalCommissions||0).toLocaleString('fr-FR')+' F';
+      document.getElementById('h-alertes').textContent=r.data.alertes||'0';
     }
   }catch(e){}
 }
 
+// ── USERS ──
+async function chargerUsers(){
+  var chips=['all','client','agent','business','mini_master','master','superviseur'];
+  var chipsHtml='';
+  chips.forEach(function(r){
+    var on=uFilter===r;
+    var lbl=r==='all'?'Tous':r;
+    chipsHtml+='<button data-r="'+r+'" onclick="setUFilter(this.getAttribute(\'data-r\'))" style="padding:6px 14px;border-radius:99px;border:1.5px solid '+(on?'#ca8a04':'#e5e7eb')+';background:'+(on?'#fef3c7':'#fff')+';color:'+(on?'#a16207':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0">'+lbl+'</button>';
+  });
+  document.getElementById('u-chips').innerHTML=chipsHtml;
+  var el=document.getElementById('u-list');
+  el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var p='/users?limit=100';if(uFilter!=='all')p+='&role='+uFilter;
+    var r=await apiGet(p);usersData=r.data||[];renderU(usersData);
+  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+}
+function setUFilter(r){uFilter=r;chargerUsers();}
+function filtrerUsers(q){
+  if(!q){renderU(usersData);return;}
+  var f=usersData.filter(function(u){return(u.prenom+' '+u.nom).toLowerCase().indexOf(q.toLowerCase())>=0||u.telephone.indexOf(q)>=0;});
+  renderU(f);
+}
+function renderU(list){
+  var el=document.getElementById('u-list');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun resultat</div>';return;}
+  el.innerHTML='';
+  list.forEach(function(u){
+    var c=ROLE_C[u.role]||'#888';
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+    var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
+    var div=document.createElement('div');
+    div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
+    div.innerHTML='<div style="width:42px;height:42px;border-radius:12px;background:'+c+'22;color:'+c+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0">'+(u.prenom||'?')[0].toUpperCase()+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</span><span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:'+c+'22;color:'+c+'">'+u.role+'</span></div>'
+      +'<div style="color:#6b7280;font-size:11px;margin-top:2px">'+u.telephone+'</div></div>'
+      +'<div style="text-align:right;flex-shrink:0">'+soldeHtml+'<div style="font-size:9px;font-weight:700;margin-top:2px;color:'+(u.statut==='actif'?'#22c55e':'#f59e0b')+'">'+u.statut+'</div></div>';
+    div.addEventListener('click',function(){voirU(u.id);});
+    el.appendChild(div);
+  });
+}
+
+function voirU(id){
+  var u=usersData.find(function(x){return x.id===id;});if(!u)return;
+  var c=ROLE_C[u.role]||'#888';
+  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+  document.getElementById('sh-u-name').textContent=(u.prenom||'')+' '+(u.nom||'');
+  document.getElementById('sh-u-sub').textContent=u.role+' - '+u.telephone;
+  var body=document.getElementById('sh-u-body');
+  body.innerHTML='';
+  var info=document.createElement('div');
+  info.style.cssText='background:#f9fafb;border-radius:14px;padding:4px 0;margin-bottom:16px';
+  var rows=[['Telephone',u.telephone],['Code',u.codeParrainage||'--'],['Zone',u.zone||'--'],['KYC',u.kycNiveau||'--'],['Statut',u.statut],['Solde',perm('soldes')?F(solde):'***** FCFA']];
+  rows.forEach(function(row){
+    var div=document.createElement('div');
+    div.className='srow';div.style.padding='12px 16px';
+    div.innerHTML='<span style="color:#6b7280;font-size:13px">'+row[0]+'</span><span style="font-size:13px;font-weight:700;color:'+(row[0]==='Solde'?c:'#111827')+'">'+row[1]+'</span>';
+    info.appendChild(div);
+  });
+  body.appendChild(info);
+  function mkBtn(txt,cls,extra,fn){
+    var btn=document.createElement('button');
+    btn.className='btn '+(cls||'');btn.textContent=txt;
+    if(extra)btn.style.cssText=extra;btn.style.marginBottom='10px';
+    btn.addEventListener('click',fn);body.appendChild(btn);
+  }
+  if(u.statut==='en_attente')mkBtn('Activer le compte','btn-g','',function(){chgStatut(id,'actif');});
+  if(u.statut==='actif'){
+    mkBtn('Suspendre','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;border:1px solid #fed7aa;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){chgStatut(id,'suspendu');});
+    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+  }
+  if(u.statut==='suspendu'){
+    mkBtn('Reactiver','btn-g','',function(){chgStatut(id,'actif');});
+    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+  }
+  if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
+  if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
+  if(perm('supprimer'))mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
+    document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
+    document.getElementById('sh-confirm-id').value=id;
+    document.getElementById('sh-confirm-input').value='';
+    document.getElementById('sh-confirm-err').style.display='none';
+    closeSh('user');openSh('confirm-delete');
+  });
+  openSh('user');
+}
+
+async function chgStatut(id,statut){
+  try{await apiPatch('/users/'+id+'/status',{statut:statut});toast('Statut mis a jour');closeSh('user');chargerUsers();}
+  catch(e){toast(e.message,true);}
+}
+
+async function supprimerCompte(){
+  var id=document.getElementById('sh-confirm-id').value;
+  var saisie=document.getElementById('sh-confirm-input').value.trim();
+  var errEl=document.getElementById('sh-confirm-err');
+  if(saisie!=='SUPPRIMER'){errEl.textContent='Tapez exactement SUPPRIMER';errEl.style.display='';return;}
+  try{await callAPI('/users/'+id,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token}});toast('Compte supprime');closeSh('confirm-delete');chargerUsers();}
+  catch(e){errEl.textContent=e.message;errEl.style.display='';}
+}
+
+// ── INSCRIPTION ──
+function setInsRole(r){
+  insRole=r;
+  var allRoles=['client','business','agent','mini_master','master','superviseur','admin','support_client','support_tech'];
+  allRoles.forEach(function(k){var b=document.getElementById('rb-'+k);if(b)b.classList.toggle('on',k===r);});
+  var intern=['admin','support_client','support_tech'];
+  var warn=document.getElementById('ins-warn-intern');
+  if(warn)warn.style.display=intern.indexOf(r)>=0?'':'none';
+}
+function ouvrirInscription(){
+  var u=G.user;if(!u)return;
+  var r=u.role;
+  // Adapter les roles disponibles selon qui est connecte
+  var btnAdmin=document.getElementById('rb-admin');
+  var btnSuperv=document.getElementById('rb-superviseur');
+  var btnMaster=document.getElementById('rb-master');
+  var btnMiniM=document.getElementById('rb-mini_master');
+  if(r==='admin'){
+    if(btnAdmin)btnAdmin.style.display='';
+    if(btnSuperv)btnSuperv.style.display='';
+    if(btnMaster)btnMaster.style.display='';
+    if(btnMiniM)btnMiniM.style.display='';
+    var si=document.getElementById('sec-intern');if(si)si.style.display='';
+    var bsc=document.getElementById('rb-support_client');if(bsc)bsc.style.display='';
+    var bst=document.getElementById('rb-support_tech');if(bst)bst.style.display='';
+  } else if(r==='superviseur'){
+    // Superviseur terrain : client, agent, business, mini_master uniquement
+    if(btnAdmin)btnAdmin.style.display='none';
+    if(btnSuperv)btnSuperv.style.display='none';
+    if(btnMaster)btnMaster.style.display='';
+    if(btnMiniM)btnMiniM.style.display='';
+    var bsc=document.getElementById('rb-support_client');if(bsc)bsc.style.display='none';
+    var bst=document.getElementById('rb-support_tech');if(bst)bst.style.display='none';
+    var si=document.getElementById('sec-intern');if(si)si.style.display='none';
+  }
+  rstIns();
+  openSh('inscription');
+}
+
+function rstIns(){insRole='client';setInsRole('client');['ins-prenom','ins-nom','ins-tel','ins-pin','ins-zone'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('ins-form').style.display='';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';document.getElementById('ins-err').style.display='none';var w=document.getElementById('ins-warn-intern');if(w)w.style.display='none';}
+async function doInscrire(){
+  var prenom=document.getElementById('ins-prenom').value.trim(),nom=document.getElementById('ins-nom').value.trim(),tel=document.getElementById('ins-tel').value.trim(),pin=document.getElementById('ins-pin').value.trim(),zone=document.getElementById('ins-zone').value.trim();
+  var errEl=document.getElementById('ins-err');errEl.style.display='none';
+  if(!prenom||!nom||!tel||!pin){errEl.textContent='Champs * requis';errEl.style.display='';return;}
+  if(!/^\d{4}$/.test(pin)){errEl.textContent='PIN: 4 chiffres';errEl.style.display='';return;}
+  document.getElementById('ins-form').style.display='none';document.getElementById('ins-loading').style.display='';
+  try{
+    var r=await apiPost('/auth/register',{prenom:prenom,nom:nom,telephone:tel,pin:pin,role:insRole,zone:zone||undefined});
+    document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='';
+    document.getElementById('ins-txt').textContent=insRole+' - '+r.data.codeParrainage+' - PIN: '+pin;
+    toast('Compte cree');
+  }catch(e){document.getElementById('ins-loading').style.display='none';document.getElementById('ins-form').style.display='';errEl.textContent=e.message;errEl.style.display='';}
+}
+
+// ── TRANSACTIONS ──
+async function chargerTxns(){
+  var el=document.getElementById('t-list');
+  el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/transactions?limit=100');var list=r.data||[];
+    var TC={depot:'#059669',retrait:'#f97316',transfert:'#3b82f6',paiement_marchand:'#8b5cf6',commission:'#f59e0b'};
+    var TL={depot:'Depot',retrait:'Retrait',transfert:'Transfert',paiement_marchand:'Paiement',commission:'Commission'};
+    var TI={depot:'📥',retrait:'📤',transfert:'↔',paiement_marchand:'🏪',commission:'⭐'};
+    el.innerHTML='';
+    if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m)">Aucune transaction</div>';return;}
+    list.forEach(function(tx){
+      var c=TC[tx.type]||'#888';var l=TL[tx.type]||tx.type;var ic=TI[tx.type]||'💳';
+      var div=document.createElement('div');
+      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px';
+      div.innerHTML='<div style="width:40px;height:40px;border-radius:12px;background:'+c+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+ic+'</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+c+'">'+l+'</div><div style="color:#6b7280;font-size:11px">'+FD(tx.dateCreation)+'</div><div style="color:#9ca3af;font-size:10px;font-family:monospace">'+tx.reference+'</div></div>'
+        +'<div style="text-align:right"><div style="color:'+c+';font-size:15px;font-weight:800">'+F(tx.montant)+'</div></div>';
+      el.appendChild(div);
+    });
+  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+}
+
+// ── MONITORING ──
+async function chargerMonitoring(){
+  try{
+    var ar=await apiGet('/alerts?limit=20');var list=ar.data||[];
+    var el=document.getElementById('m-alerts');el.innerHTML='';
+    if(!list.length){el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune alerte</div>';
+    }else{list.forEach(function(a){var div=document.createElement('div');div.style.cssText='background:#fef2f2;border:1px solid #fecaca;border-radius:14px;padding:14px 16px;margin-bottom:8px';div.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--r);margin-bottom:4px">'+a.typeAlerte+'</div><div style="font-size:12px;color:#6b7280;margin-bottom:10px">'+a.description+'</div>';var btn=document.createElement('button');btn.textContent='Cloturer';btn.style.cssText='padding:7px 14px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';btn.addEventListener('click',function(){cloturerA(a.id);});div.appendChild(btn);el.appendChild(div);});}
+  }catch(e){document.getElementById('m-alerts').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+  try{
+    var tr=await apiGet('/tickets?limit=20');var tlist=tr.data||[];
+    var el2=document.getElementById('m-tickets');el2.innerHTML='';
+    if(!tlist.length){el2.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucun ticket</div>';
+    }else{tlist.forEach(function(t){var div=document.createElement('div');div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px';div.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+t.sujet+'</div><div style="font-size:12px;color:#6b7280;margin-bottom:10px">'+t.description+'</div>';if(t.statut==='ouvert'){var btn=document.createElement('button');btn.textContent='Resoudre';btn.style.cssText='padding:7px 14px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';btn.addEventListener('click',function(){cloturerT(t.id);});div.appendChild(btn);}else{var sp=document.createElement('span');sp.style.cssText='color:#059669;font-size:11px;font-weight:700';sp.textContent='Resolu';div.appendChild(sp);}el2.appendChild(div);});}
+  }catch(e){document.getElementById('m-tickets').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+}
+async function cloturerA(id){try{await apiPatch('/alerts/'+id,{statut:'resolue',actionPrise:'Cloturee par admin'});toast('Alerte cloturee');chargerMonitoring();}catch(e){toast(e.message,true);}}
+async function cloturerT(id){try{await apiPatch('/tickets/'+id+'/status',{statut:'ferme'});toast('Ticket resolu');chargerMonitoring();}catch(e){toast(e.message,true);}}
+
+// ── SUPPORT ──
+async function chargerSupport(){
+  try{
+    var r=await apiGet('/tickets?statut=ouvert&limit=50');var list=r.data||[];
+    var el=document.getElementById('sup-tickets');el.innerHTML='';
+    if(!list.length){el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucun ticket en attente</div>';
+    }else{list.forEach(function(t){var div=document.createElement('div');div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px';div.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+t.sujet+'</div><div style="font-size:12px;color:#6b7280;margin-bottom:10px">'+t.description+'</div>';var btn=document.createElement('button');btn.textContent='Resoudre';btn.style.cssText='padding:6px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';btn.addEventListener('click',function(){cloturerT(t.id);chargerSupport();});div.appendChild(btn);el.appendChild(div);});}
+  }catch(e){document.getElementById('sup-tickets').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+}
+async function rechercherClient(){
+  var tel=document.getElementById('sup-tel').value.trim();if(!tel)return;
+  var el=document.getElementById('sup-result');el.style.display='';
+  el.innerHTML='<div style="padding:10px;text-align:center"><div class="spin" style="width:18px;height:18px;border-width:2px"></div></div>';
+  try{
+    var r=await apiGet('/users?telephone='+encodeURIComponent(tel));var list=r.data||[];
+    if(!list.length){el.innerHTML='<div style="color:var(--m);font-size:13px;padding:8px">Aucun client trouve</div>';return;}
+    var u=list[0];var c=ROLE_C[u.role]||'#888';
+    el.innerHTML='<div style="background:#f9fafb;border-radius:12px;padding:12px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:36px;height:36px;border-radius:10px;background:'+c+'22;color:'+c+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">'+(u.prenom||'?')[0]+'</div><div><div style="font-size:14px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</div><div style="font-size:11px;color:#6b7280">'+u.role+' - '+u.statut+'</div></div></div>'
+      +'<div style="font-size:12px;color:#374151">KYC: '+(u.kycNiveau||'--')+'</div>'
+    +'</div>';
+  }catch(e){el.innerHTML='<div style="color:var(--r);font-size:12px;padding:8px">'+e.message+'</div>';}
+}
+async function creerTicket(){
+  var tel=document.getElementById('nt-tel').value.trim(),sujet=document.getElementById('nt-sujet').value.trim(),desc=document.getElementById('nt-desc').value.trim();
+  var errEl=document.getElementById('nt-err');errEl.style.display='none';
+  if(!sujet||!desc){errEl.textContent='Sujet et description requis';errEl.style.display='';return;}
+  try{await apiPost('/tickets',{telephone:tel||undefined,sujet:sujet,description:desc});toast('Ticket cree');closeSh('new-ticket');['nt-tel','nt-sujet','nt-desc'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});chargerSupport();}
+  catch(e){errEl.textContent=e.message;errEl.style.display='';}
+}
+
+// ── TECH ──
+async function chargerTech(){
+  try{var t0=Date.now();await apiGet('/health');var ms=Date.now()-t0;document.getElementById('sys-api').textContent='En ligne ('+ms+'ms)';document.getElementById('sys-api').style.color='#22c55e';document.getElementById('sys-db').textContent='Connectee';document.getElementById('sys-db').style.color='#22c55e';}
+  catch(e){document.getElementById('sys-api').textContent='Hors ligne';document.getElementById('sys-api').style.color='#ef4444';document.getElementById('sys-db').textContent='Inconnu';document.getElementById('sys-db').style.color='#f59e0b';}
+  try{var r=await apiGet('/transactions?statut=en_attente&limit=20');var list=r.data||[];var el=document.getElementById('tech-txns');el.innerHTML='';if(!list.length){el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune transaction bloquee</div>';}else{list.forEach(function(tx){var div=document.createElement('div');div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px';div.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:#f59e0b">'+tx.type+'</div><div style="font-size:14px;font-weight:800">'+F(tx.montant)+'</div></div><div style="font-size:10px;color:#9ca3af;font-family:monospace;margin-bottom:10px">'+tx.reference+'</div>';var bf=document.createElement('button');bf.textContent='Forcer succes';bf.style.cssText='padding:6px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;margin-right:8px';bf.addEventListener('click',function(){forcerTx(tx.id,'completee');});div.appendChild(bf);var be=document.createElement('button');be.textContent='Marquer echoue';be.style.cssText='padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#ef4444;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';be.addEventListener('click',function(){forcerTx(tx.id,'echec');});div.appendChild(be);el.appendChild(div);});}}catch(e){document.getElementById('tech-txns').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+  try{var ar=await apiGet('/alerts?type=systeme&limit=10');var alist=ar.data||[];var el2=document.getElementById('tech-logs');el2.innerHTML='';if(!alist.length){el2.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune alerte systeme</div>';}else{alist.forEach(function(a){var div=document.createElement('div');div.style.cssText='background:#fef2f2;border:1px solid #fecaca;border-radius:14px;padding:12px 16px;margin-bottom:8px';div.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--r)">'+a.typeAlerte+'</div><div style="font-size:11px;color:#6b7280;margin-top:3px">'+a.description+'</div>';el2.appendChild(div);});}}catch(e){document.getElementById('tech-logs').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+}
+async function forcerTx(id,statut){if(!confirm('Forcer en "'+statut+'" ?'))return;try{await apiPatch('/transactions/'+id+'/status',{statut:statut});toast('Transaction mise a jour');chargerTech();}catch(e){toast(e.message,true);}}
+
+// ── PIN ──
+function rstPin(){['cp-old','cp-new','cp-new2'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('cp-err').style.display='none';document.getElementById('cp-form').style.display='';document.getElementById('cp-loading').style.display='none';document.getElementById('cp-ok').style.display='none';}
+async function doChangePin(){
+  var a=document.getElementById('cp-old').value.trim(),n=document.getElementById('cp-new').value.trim(),n2=document.getElementById('cp-new2').value.trim();
+  var errEl=document.getElementById('cp-err');errEl.style.display='none';
+  if(!a||!n||!n2){errEl.textContent='Tous les champs obligatoires';errEl.style.display='';return;}
+  if(n.length!==4||isNaN(n)){errEl.textContent='PIN: 4 chiffres';errEl.style.display='';return;}
+  if(n!==n2){errEl.textContent='Les PIN ne correspondent pas';errEl.style.display='';return;}
+  document.getElementById('cp-form').style.display='none';document.getElementById('cp-loading').style.display='';
+  try{await apiPost('/users/change-pin',{ancienPin:a,nouveauPin:n});document.getElementById('cp-loading').style.display='none';document.getElementById('cp-ok').style.display='';}
+  catch(e){document.getElementById('cp-loading').style.display='none';document.getElementById('cp-form').style.display='';errEl.textContent=e.message;errEl.style.display='';}
+}
+
+// ── LOGOUT ──
 function logout(){
-  try{fetch(API+'/auth/logout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},body:JSON.stringify({refreshToken:G.refresh})});}catch(e){}
+  try{apiPost('/auth/logout',{refreshToken:G.refresh});}catch(e){}
   G.token=G.refresh=G.user=null;G.pin='';
   try{localStorage.removeItem('afrim_token');localStorage.removeItem('afrim_refresh');localStorage.removeItem('afrim_user');}catch(e){}
   showScr('s-login');
 }
 
+document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);}});});
+
+// ── INIT ──
 (function(){
   if(G.token&&G.user){var ok=['admin','superviseur','support_client','support_tech'];if(ok.indexOf(G.user.role)>=0){enterApp();return;}}
   showScr('s-login');
