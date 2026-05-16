@@ -54,7 +54,16 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .pin-key:active{background:var(--b)}
 .pin-key.empty{background:transparent;border-color:transparent;cursor:default}
 .stat-card{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:16px;flex:1}
+
+.qr-scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.qr-scan-overlay.on{display:flex}
+.params-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:14px;border:1px solid #f3f4f6;cursor:pointer;margin-bottom:8px;text-align:left;width:100%;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.params-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.params-label{font-size:14px;font-weight:700;color:#111827}
+.params-sub{font-size:12px;color:#6b7280;margin-top:1px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
 </head>
 <body>
 <div id="app">
@@ -171,7 +180,7 @@ function setTab(t){document.querySelectorAll('.nb').forEach(b=>b.classList.remov
   <nav class="bnav">
     <button class="nb on" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ventes</button>
-    <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
+    <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Parametres</button>
   </nav>
 </div>
 
@@ -182,28 +191,71 @@ function setTab(t){document.querySelectorAll('.nb').forEach(b=>b.classList.remov
   <nav class="bnav">
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb on" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ventes</button>
-    <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
+    <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Parametres</button>
   </nav>
 </div>
 
 <!-- PROFILE -->
+<!-- PARAMETRES -->
 <div class="scr" id="s-profile">
-  <div class="ph"><div style="font-size:24px;font-weight:800">Mon Commerce</div></div>
-  <div class="sc">
-    <div style="text-align:center;margin-bottom:24px">
-      <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,var(--a2),var(--a));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;box-shadow:0 8px 24px rgba(99,102,241,.2)">🏪</div>
-      <div style="font-size:20px;font-weight:800" id="prof-name">—</div>
-      <div style="color:var(--m);font-size:13px;margin-top:2px" id="prof-tel">—</div>
+  <div style="background:linear-gradient(135deg,var(--a2),var(--a));padding:28px 22px 24px;text-align:center">
+    <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">ESPACE BUSINESS</div>
+    <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:3px" id="prof-name-top">—</div>
+    <div style="color:rgba(255,255,255,.7);font-size:13px;font-family:monospace;margin-bottom:20px" id="prof-tel-top">—</div>
+    <div onclick="ouvrirScanner(function(tel,parts){T('Scanne: '+tel);})" style="display:inline-block;cursor:pointer">
+      <div style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);position:relative">
+        <canvas id="qr-profil-canvas" width="130" height="130" style="display:block;border-radius:6px"></canvas>
+        <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center">
+          <span style="background:rgba(0,0,0,.55);border-radius:8px;padding:3px 8px;color:#fff;font-size:10px;font-weight:700">Scanner</span>
+        </div>
+      </div>
+      <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:600;margin-top:8px">Mon QR · Toucher pour scanner</div>
     </div>
-    <div class="card" style="margin-bottom:14px" id="prof-info"></div>
-    <button class="btn btn-r" onclick="logout()">← Se déconnecter</button>
   </div>
-  <nav class="bnav">
-    <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
-    <button class="nb" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ventes</button>
-    <button class="nb on" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</button>
-  </nav>
+  <div style="padding:16px 16px 100px;background:#f9fafb">
+    <div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Mon compte</div>
+    <button class="params-item" onclick="ouvrirInfos()">
+      <div class="params-icon" style="background:#ecfdf5">👤</div>
+      <div><div class="params-label">Mes informations</div><div class="params-sub">Nom, Prenom, Telephone, KYC</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="params-item" onclick="openSh('change-pin')">
+      <div class="params-icon" style="background:#fef3c7">🔐</div>
+      <div><div class="params-label">Modifier le code secret</div><div class="params-sub">Changer votre PIN de connexion</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    
+    <div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:18px;margin-bottom:10px">Services</div>
+    <button class="params-item" onclick="trouverAgents()">
+      <div class="params-icon" style="background:#fdf4ff">📍</div>
+      <div><div class="params-label">Trouver des agents</div><div class="params-sub">Agents AFRIM PAY pres de vous</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="params-item" onclick="inviterAmi()">
+      <div class="params-icon" style="background:#ecfdf5">🎁</div>
+      <div><div class="params-label">Inviter un ami</div><div class="params-sub">Partager votre code parrainage</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:18px;margin-bottom:10px">Partenaires</div>
+    <div style="background:#fff;border-radius:14px;border:1px solid #f3f4f6;padding:16px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:12px">Partenaires bancaires</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">BNI</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">SIB</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">SGBCI</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">ECOBANK</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">UBA</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">MTN MoMo</span>
+        <span style="padding:7px 12px;background:#f9fafb;border-radius:10px;font-size:12px;font-weight:700;color:#374151">Orange Money</span>
+      </div>
+    </div>
+    <button class="params-item" style="background:#fef2f2;border:1px solid #fecaca;margin-top:8px" onclick="logout()">
+      <div class="params-icon" style="background:#fee2e2">🚪</div>
+      <div><div class="params-label" style="color:#ef4444">Deconnexion</div><div class="params-sub">Quitter l'application</div></div>
+    </button>
+  </div>
 </div>
+
 
 <!-- SHEET QR PAIEMENT -->
 <div class="sh-ov" id="sh-qr">
@@ -403,6 +455,188 @@ function chargerProfil(){
   document.getElementById('prof-info').innerHTML=html;
 }
 
+
+// MON QR CODE
+function ouvrirMonQR(){
+  var u=G.user;if(!u)return;
+  openSh('mon-qr');
+  document.getElementById('my-qr-name').textContent=(u.prenom||'')+' '+(u.nom||'');
+  document.getElementById('my-qr-tel').textContent=u.telephone;
+  document.getElementById('my-qr-role').textContent=u.role?u.role.replace('_',' ').toUpperCase():'';
+  dessinerMonQR(u.telephone+'|'+(u.codeParrainage||'')+'|'+(u.role||''));
+}
+function dessinerMonQR(data){
+  var c=document.getElementById('my-qr-canvas');if(!c)return;
+  var ctx=c.getContext('2d');var w=180,h=180;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  var seed=0;for(var i=0;i<data.length;i++)seed+=data.charCodeAt(i);
+  var cell=4;var cols=Math.floor(w/cell);var rows=Math.floor(h/cell);
+  ctx.fillStyle='#111827';
+  for(var r=0;r<rows;r++){for(var col=0;col<cols;col++){var v=(seed*(r+1)*(col+1)*2654435761)&0xFFFFFFFF;if(v%3!==0)ctx.fillRect(col*cell,r*cell,cell-1,cell-1);}}
+  [[0,0],[w-44,0],[0,h-44]].forEach(function(p){
+    ctx.fillStyle='#111827';ctx.fillRect(p[0],p[1],40,40);
+    ctx.fillStyle='#fff';ctx.fillRect(p[0]+4,p[1]+4,32,32);
+    ctx.fillStyle='#111827';ctx.fillRect(p[0]+8,p[1]+8,24,24);
+    ctx.fillStyle='#fff';ctx.fillRect(p[0]+12,p[1]+12,16,16);
+    ctx.fillStyle='#111827';ctx.fillRect(p[0]+14,p[1]+14,12,12);
+  });
+}
+
+// SCANNER QR
+var scannerStream=null;var scannerInterval=null;
+function ouvrirScannerQR(callback){
+  document.getElementById('scanner-result').style.display='none';
+  var video=document.getElementById('qr-video');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(function(stream){
+      scannerStream=stream;video.srcObject=stream;video.play();
+      scannerInterval=setInterval(function(){
+        var canvas=document.getElementById('qr-scan-canvas');
+        var ctx=canvas.getContext('2d');
+        canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+        if(!canvas.width)return;
+        ctx.drawImage(video,0,0);
+        try{
+          if(window.jsQR){
+            var img=ctx.getImageData(0,0,canvas.width,canvas.height);
+            var code=jsQR(img.data,img.width,img.height);
+            if(code&&code.data){
+              var parts=code.data.split('|');
+              var tel=parts[0];var role=parts[2]||'';
+              document.getElementById('scanner-result').style.display='';
+              document.getElementById('scanner-result-text').textContent=tel+(role?' ('+role+')':'');
+              fermerScanner();
+              if(typeof scanCallback==='function')scanCallback(tel,parts);
+            }
+          }
+        }catch(e){}
+      },500);
+    })
+    .catch(function(err){T('Camera non disponible',true);fermerScanner();});
+}
+var scanCallback=null;
+function fermerScanner(){
+  if(scannerStream){scannerStream.getTracks().forEach(function(t){t.stop();});scannerStream=null;}
+  if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;}
+  closeSh('scanner');
+}
+
+// CHANGER PIN
+function rstChangePin(){
+  ['old-pin','new-pin','new-pin2'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('change-pin-err').style.display='none';
+  document.getElementById('change-pin-form').style.display='';
+  document.getElementById('change-pin-loading').style.display='none';
+  document.getElementById('change-pin-success').style.display='none';
+}
+async function doChangePin(){
+  var ancienPin=document.getElementById('old-pin').value.trim();
+  var nouveauPin=document.getElementById('new-pin').value.trim();
+  var nouveauPin2=document.getElementById('new-pin2').value.trim();
+  var errEl=document.getElementById('change-pin-err');errEl.style.display='none';
+  if(!ancienPin||!nouveauPin||!nouveauPin2){errEl.textContent='Tous les champs sont obligatoires';errEl.style.display='';return;}
+  if(nouveauPin.length!==4||isNaN(nouveauPin)){errEl.textContent='Le nouveau PIN doit contenir 4 chiffres';errEl.style.display='';return;}
+  if(nouveauPin!==nouveauPin2){errEl.textContent='Les deux PIN ne correspondent pas';errEl.style.display='';return;}
+  document.getElementById('change-pin-form').style.display='none';
+  document.getElementById('change-pin-loading').style.display='';
+  try{
+    await post('/users/change-pin',{ancienPin:ancienPin,nouveauPin:nouveauPin});
+    document.getElementById('change-pin-loading').style.display='none';
+    document.getElementById('change-pin-success').style.display='';
+  }catch(e){
+    document.getElementById('change-pin-loading').style.display='none';
+    document.getElementById('change-pin-form').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
+
+function dessinerQRHome(cid,data,color){
+  var c=document.getElementById(cid);if(!c)return;
+  var ctx=c.getContext('2d');var w=c.width,h=c.height;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  var seed=0;for(var i=0;i<data.length;i++)seed+=data.charCodeAt(i);
+  var cell=Math.floor(w/36);var cols=Math.floor(w/cell);var rows=Math.floor(h/cell);
+  ctx.fillStyle=color||'#111827';
+  for(var r=0;r<rows;r++){for(var col2=0;col2<cols;col2++){var v=(seed*(r+1)*(col2+1)*2654435761)&0xFFFFFFFF;if(v%3!==0)ctx.fillRect(col2*cell,r*cell,cell-1,cell-1);}}
+  var fp=Math.floor(w*0.22);
+  [[0,0],[w-fp-4,0],[0,h-fp-4]].forEach(function(p){
+    ctx.fillStyle=color||'#111827';ctx.fillRect(p[0],p[1],fp,fp);
+    ctx.fillStyle='#fff';ctx.fillRect(p[0]+Math.floor(fp*.1),p[1]+Math.floor(fp*.1),Math.floor(fp*.8),Math.floor(fp*.8));
+    ctx.fillStyle=color||'#111827';ctx.fillRect(p[0]+Math.floor(fp*.2),p[1]+Math.floor(fp*.2),Math.floor(fp*.6),Math.floor(fp*.6));
+    ctx.fillStyle='#fff';ctx.fillRect(p[0]+Math.floor(fp*.3),p[1]+Math.floor(fp*.3),Math.floor(fp*.4),Math.floor(fp*.4));
+    ctx.fillStyle=color||'#111827';ctx.fillRect(p[0]+Math.floor(fp*.35),p[1]+Math.floor(fp*.35),Math.floor(fp*.3),Math.floor(fp*.3));
+  });
+}
+var scannerStream=null;var scannerInterval=null;var onScanResult=null;
+function ouvrirScanner(callback){
+  onScanResult=callback||null;
+  document.getElementById('qr-scan-overlay').classList.add('on');
+  document.getElementById('scan-result-box').style.display='none';
+  var video=document.getElementById('qr-video-main');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(function(stream){
+      scannerStream=stream;video.srcObject=stream;video.play();
+      scannerInterval=setInterval(function(){
+        var canvas=document.getElementById('qr-canvas-main');
+        var ctx=canvas.getContext('2d');
+        canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+        if(!canvas.width)return;
+        ctx.drawImage(video,0,0);
+        try{if(window.jsQR){var img=ctx.getImageData(0,0,canvas.width,canvas.height);var code=jsQR(img.data,img.width,img.height);if(code&&code.data){var parts=code.data.split('|');document.getElementById('scan-result-box').style.display='';document.getElementById('scan-result-text').textContent=parts[0]+(parts[2]?' - '+parts[2].toUpperCase():'');fermerScanner();if(typeof onScanResult==='function')onScanResult(parts[0],parts);}}}catch(e){}
+      },400);
+    })
+    .catch(function(){T('Camera non disponible',true);fermerScanner();});
+}
+function fermerScanner(){
+  if(scannerStream){scannerStream.getTracks().forEach(function(t){t.stop();});scannerStream=null;}
+  if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;}
+  document.getElementById('qr-scan-overlay').classList.remove('on');
+}
+function rstChangePin(){['cp-old','cp-new','cp-new2'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('cp-err').style.display='none';document.getElementById('cp-form').style.display='';document.getElementById('cp-loading').style.display='none';document.getElementById('cp-ok').style.display='none';}
+async function doChangePin(){
+  var a=document.getElementById('cp-old').value.trim();var n=document.getElementById('cp-new').value.trim();var n2=document.getElementById('cp-new2').value.trim();
+  var errEl=document.getElementById('cp-err');errEl.style.display='none';
+  if(!a||!n||!n2){errEl.textContent='Tous les champs sont obligatoires';errEl.style.display='';return;}
+  if(n.length!==4||isNaN(n)){errEl.textContent='Le nouveau PIN doit etre 4 chiffres';errEl.style.display='';return;}
+  if(n!==n2){errEl.textContent='Les PIN ne correspondent pas';errEl.style.display='';return;}
+  document.getElementById('cp-form').style.display='none';document.getElementById('cp-loading').style.display='';
+  try{await post('/users/change-pin',{ancienPin:a,nouveauPin:n});document.getElementById('cp-loading').style.display='none';document.getElementById('cp-ok').style.display='';}
+  catch(e){document.getElementById('cp-loading').style.display='none';document.getElementById('cp-form').style.display='';errEl.textContent=e.message;errEl.style.display='';}
+}
+function chargerProfil(){
+  var u=G.user;if(!u)return;
+  if(document.getElementById('prof-name-top'))document.getElementById('prof-name-top').textContent=(u.prenom||'')+' '+(u.nom||'');
+  if(document.getElementById('prof-tel-top'))document.getElementById('prof-tel-top').textContent=u.telephone;
+  if(document.getElementById('qr-profil-canvas'))dessinerQRHome('qr-profil-canvas',u.telephone+'|'+(u.codeParrainage||'')+'|'+(u.role||''),null);
+}
+function ouvrirInfos(){
+  var u=G.user;if(!u)return;openSh('infos');
+  document.getElementById('sh-infos-body').innerHTML=
+    '<div class="srow"><span style="color:var(--m);font-size:13px">Prenom</span><span style="font-weight:700">'+u.prenom+'</span></div>'+
+    '<div class="srow"><span style="color:var(--m);font-size:13px">Nom</span><span style="font-weight:700">'+u.nom+'</span></div>'+
+    '<div class="srow"><span style="color:var(--m);font-size:13px">Telephone</span><span style="font-weight:700;font-family:monospace">'+u.telephone+'</span></div>'+
+    '<div class="srow"><span style="color:var(--m);font-size:13px">Niveau KYC</span><span style="font-weight:700;color:var(--a)">'+u.kycNiveau+'</span></div>'+
+    '<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Statut</span><span style="font-weight:700;color:'+(u.statut==='actif'?'#22c55e':'#f59e0b')+'">'+u.statut+'</span></div>'+
+    (u.codeParrainage?'<div style="margin-top:16px;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:4px">Code parrainage</div><div style="font-size:24px;font-weight:900;font-family:monospace;color:var(--a)">'+u.codeParrainage+'</div></div>':'');
+}
+function voirPlafond(){
+  var u=G.user;if(!u)return;openSh('plafond');
+  var plafonds={'KYC1':200000,'KYC2':1000000,'KYC3':5000000};
+  var p=plafonds[u.kycNiveau]||200000;
+  document.getElementById('sh-plafond-body').innerHTML=
+    '<div style="text-align:center;padding:20px 0"><div style="font-size:36px;font-weight:900;color:var(--a)">'+Number(p).toLocaleString('fr-FR')+' FCFA</div><div style="color:var(--m);font-size:14px;margin-top:4px">Plafond mensuel '+u.kycNiveau+'</div></div>'+
+    '<div class="srow"><span style="color:var(--m);font-size:13px">Depot mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>'+
+    '<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Retrait mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>';
+}
+function trouverAgents(){T('Fonctionnalite bientot disponible');}
+function inviterAmi(){
+  var u=G.user;if(!u)return;var code=u.codeParrainage||'';
+  var msg='Rejoignez AFRIM PAY avec mon code '+code+' !';
+  if(navigator.share)navigator.share({title:'AFRIM PAY',text:msg});
+  else if(navigator.clipboard){navigator.clipboard.writeText(msg);T('Message copie !');}
+  else T('Code: '+code);
+}
+
 async function logout(){
   try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}
   G.token=G.refresh=G.user=G.compte=null;
@@ -417,6 +651,90 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
   S('s-login');
 })();
 </script>
+</div>
+
+<!-- SHEET MON QR CODE -->
+<div class="sh-ov" id="sh-mon-qr">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Mon QR Code</div><div style="color:var(--m);font-size:12px">Faites scanner pour m'identifier</div></div><button class="sh-x" onclick="closeSh('mon-qr')">X</button></div>
+    <div class="sh-body" style="text-align:center">
+      <div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px;display:inline-block;margin:0 auto 16px">
+        <div style="background:#fff;border-radius:12px;padding:12px">
+          <canvas id="my-qr-canvas" width="180" height="180" style="display:block;border-radius:8px"></canvas>
+        </div>
+      </div>
+      <div id="my-qr-name" style="font-size:18px;font-weight:800;margin-bottom:4px"></div>
+      <div id="my-qr-tel" style="color:var(--m);font-size:14px;font-family:monospace;margin-bottom:8px"></div>
+      <div id="my-qr-role" style="display:inline-block;padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.06);font-size:12px;font-weight:700"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET SCANNER QR -->
+<div class="sh-ov" id="sh-scanner">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Scanner un QR</div><div style="color:var(--m);font-size:12px">Pointez la camera vers le QR code</div></div><button class="sh-x" onclick="fermerScanner()">X</button></div>
+    <div class="sh-body">
+      <div style="background:#000;border-radius:16px;overflow:hidden;position:relative;aspect-ratio:1;max-width:320px;margin:0 auto">
+        <video id="qr-video" style="width:100%;height:100%;object-fit:cover" playsinline autoplay muted></video>
+        <canvas id="qr-scan-canvas" style="display:none"></canvas>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+          <div style="width:180px;height:180px;border:3px solid var(--a);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.6)"></div>
+        </div>
+      </div>
+      <div id="scanner-result" style="display:none;margin-top:16px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:13px;font-weight:600;color:#059669;margin-bottom:4px">QR detecte</div>
+        <div id="scanner-result-text" style="font-size:14px;font-weight:800"></div>
+      </div>
+      <button onclick="fermerScanner()" style="width:100%;padding:13px;margin-top:14px;border-radius:12px;border:none;background:#f3f4f6;color:#374151;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET CHANGER PIN -->
+<div class="sh-ov" id="sh-change-pin">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Changer mon PIN</div><div style="color:var(--m);font-size:12px">Modifier votre code secret</div></div><button class="sh-x" onclick="closeSh('change-pin');rstChangePin()">X</button></div>
+    <div class="sh-body">
+      <div id="change-pin-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <div id="change-pin-form">
+        <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block">Ancien code PIN</label>
+        <input id="old-pin" type="password" inputmode="numeric" maxlength="4" placeholder="..." style="width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;font-size:24px;font-family:inherit;color:#111827;outline:none;text-align:center;letter-spacing:12px;margin-bottom:12px"/>
+        <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block">Nouveau code PIN</label>
+        <input id="new-pin" type="password" inputmode="numeric" maxlength="4" placeholder="..." style="width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;font-size:24px;font-family:inherit;color:#111827;outline:none;text-align:center;letter-spacing:12px;margin-bottom:12px"/>
+        <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block">Confirmer nouveau PIN</label>
+        <input id="new-pin2" type="password" inputmode="numeric" maxlength="4" placeholder="..." style="width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;font-size:24px;font-family:inherit;color:#111827;outline:none;text-align:center;letter-spacing:12px;margin-bottom:20px"/>
+        <button onclick="doChangePin()" style="width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--a2),var(--a));color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer</button>
+      </div>
+      <div id="change-pin-loading" style="display:none;text-align:center;padding:32px">
+        <div style="width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:var(--a);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto"></div>
+      </div>
+      <div id="change-pin-success" style="display:none;text-align:center;padding:24px">
+        <div style="font-size:48px;margin-bottom:12px">OK</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px">PIN modifie !</div>
+        <div style="color:var(--m);font-size:14px;margin-bottom:20px">Vous allez etre deconnecte.</div>
+        <button onclick="closeSh('change-pin');logout()" style="width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--a2),var(--a));color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Se reconnecter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sh-ov" id="sh-infos">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Mes informations</div></div><button class="sh-x" onclick="closeSh('infos')">x</button></div>
+    <div style="padding:0 22px 40px" id="sh-infos-body"></div>
+  </div>
+</div>
+<div class="sh-ov" id="sh-plafond">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Mon plafond</div></div><button class="sh-x" onclick="closeSh('plafond')">x</button></div>
+    <div style="padding:0 22px 40px" id="sh-plafond-body"></div>
+  </div>
 </div>
 </body>
 </html>
