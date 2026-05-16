@@ -77,7 +77,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',-apple-system,Bli
       <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🔗 URL correcte</div>
       <div style="font-size:12px;font-family:monospace;color:#111827;word-break:break-all;line-height:1.6">https://samassivaladji-cmyk.github.io/<br/>afrim-pay-apps/<br/>afrim-backoffice.html</div>
     </div>
-    <button onclick="window.location.href='https://samassivaladji-cmyk.github.io/afrim-pay-apps/afrim-backoffice.html'" style="width:100%;padding:15px;background:linear-gradient(135deg,#a16207,#ca8a04);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">
+    <button onclick="window.location.href='https://samassivaladji-cmyk.github.io/afrim-pay-apps/afrim-backoffice.html?v=3'" style="width:100%;padding:15px;background:linear-gradient(135deg,#a16207,#ca8a04);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">
       Ouvrir la bonne URL →
     </button>
     <p style="font-size:11px;color:#9ca3af">Ou déposez d'abord le fichier sur GitHub Pages</p>
@@ -575,7 +575,7 @@ async function doLogin(){
     document.getElementById('pin-loading').style.display='none';
     document.getElementById('pin-keys').style.display='';
     G.pin='';rDots();
-    adaptVueRôle();
+    adaptVueRole();
   }catch(e){
     G.pin='';rDots();
     errEl.textContent=e.message;errEl.style.display='';
@@ -968,7 +968,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){
     if(warn){document.querySelectorAll('.scr').forEach(e=>e.classList.remove('on'));warn.classList.add('on');return;}
   }
   if(G.token&&G.user&&['admin','superviseur','support_client','support_tech'].includes(G.user.role)){
-    adaptVueRôle();return;
+    adaptVueRole();return;
   }
   S('s-login');
 })();
@@ -982,7 +982,7 @@ var PERMS={
 };
 function perm(key){var u=G.user;if(!u)return false;var p=PERMS[u.role];return p?!!p[key]:false;}
 
-function adaptVueRôle(){
+function adaptVueRole(){
   var u=G.user;if(!u)return;
   var r=u.role;
   var p=PERMS[r]||{};
