@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TEST AFRIM</title>
+<style>
+body{margin:0;font-family:sans-serif;background:#fffbeb;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;padding:24px;text-align:center}
+.ok{color:#059669;font-size:18px;font-weight:700;margin:8px 0}
+.err{color:#ef4444;font-size:18px;font-weight:700;margin:8px 0}
+.box{background:#fff;border-radius:16px;padding:20px;margin:10px 0;width:100%;max-width:360px;border:1px solid #e5e7eb;text-align:left}
+</style>
+</head>
+<body>
+<h2 style="color:#ca8a04;margin-bottom:20px">🔍 Diagnostic AFRIM PAY</h2>
+
+<div class="box">
+  <div id="r1">⏳ Test JavaScript...</div>
+  <div id="r2">⏳ Test localStorage...</div>
+  <div id="r3">⏳ Test fetch/API...</div>
+  <div id="r4">⏳ Test DOM manipulation...</div>
+  <div id="r5">⏳ Test async/await...</div>
+</div>
+
+<div id="conclusion" style="margin-top:16px;font-size:14px;color:#6b7280"></div>
+
+<script>
+// Test 1 : JS de base
+try {
+  document.getElementById('r1').textContent = '✅ JavaScript fonctionne';
+  document.getElementById('r1').style.color = '#059669';
+} catch(e) {
+  document.getElementById('r1').textContent = '❌ JS bloqué: ' + e.message;
+}
+
+// Test 2 : localStorage
+try {
+  localStorage.setItem('test','ok');
+  var v = localStorage.getItem('test');
+  localStorage.removeItem('test');
+  document.getElementById('r2').textContent = v === 'ok' ? '✅ localStorage OK' : '❌ localStorage retourne null';
+  document.getElementById('r2').style.color = v === 'ok' ? '#059669' : '#ef4444';
+} catch(e) {
+  document.getElementById('r2').textContent = '❌ localStorage bloqué: ' + e.message;
+  document.getElementById('r2').style.color = '#ef4444';
+}
+
+// Test 3 : fetch disponible
+try {
+  if(typeof fetch === 'function') {
+    document.getElementById('r3').textContent = '✅ fetch disponible';
+    document.getElementById('r3').style.color = '#059669';
+  } else {
+    document.getElementById('r3').textContent = '❌ fetch non disponible';
+    document.getElementById('r3').style.color = '#ef4444';
+  }
+} catch(e) {
+  document.getElementById('r3').textContent = '❌ fetch erreur: ' + e.message;
+  document.getElementById('r3').style.color = '#ef4444';
+}
+
+// Test 4 : DOM manipulation
+try {
+  var el = document.createElement('div');
+  el.id = 'test-el';
+  document.body.appendChild(el);
+  document.getElementById('test-el').remove();
+  document.getElementById('r4').textContent = '✅ DOM manipulation OK';
+  document.getElementById('r4').style.color = '#059669';
+} catch(e) {
+  document.getElementById('r4').textContent = '❌ DOM erreur: ' + e.message;
+  document.getElementById('r4').style.color = '#ef4444';
+}
+
+// Test 5 : async/await
+async function testAsync() {
+  try {
+    var result = await Promise.resolve('ok');
+    document.getElementById('r5').textContent = result === 'ok' ? '✅ async/await OK' : '❌ async retourne mauvaise valeur';
+    document.getElementById('r5').style.color = result === 'ok' ? '#059669' : '#ef4444';
+  } catch(e) {
+    document.getElementById('r5').textContent = '❌ async erreur: ' + e.message;
+    document.getElementById('r5').style.color = '#ef4444';
+  }
+
+  // Conclusion
+  var errs = document.querySelectorAll('[style*="ef4444"]').length;
+  var conc = document.getElementById('conclusion');
+  if(errs === 0) {
+    conc.innerHTML = '<strong style="color:#059669">✅ Tout fonctionne — le problème vient du fichier backoffice lui-même</strong><br/><small>Naviguateur: ' + navigator.userAgent.substring(0,80) + '</small>';
+  } else {
+    conc.innerHTML = '<strong style="color:#ef4444">❌ ' + errs + ' test(s) échoué(s) — problème navigateur/environnement</strong><br/><small>Naviguateur: ' + navigator.userAgent.substring(0,80) + '</small>';
+  }
+}
+testAsync();
+</script>
+</body>
+</html>
