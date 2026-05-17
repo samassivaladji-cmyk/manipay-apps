@@ -409,7 +409,7 @@ var KYC_CONFIG = {
       {id:'cni_recto', label:'CNI Gerant Recto',            camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Gerant Verso',            camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)', camera:'environment', requis:false, icon:'📋'},
-      {id:'dfe',       label:'DFE (Declaration fiscale)',   camera:'environment', requis:false, icon:'📄'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   },
   // AGENT / MINI-MASTER / MASTER / SUPERVISEUR
@@ -421,7 +421,7 @@ var KYC_CONFIG = {
       {id:'cni_recto', label:'CNI Recto',                    camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Verso',                    camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)',  camera:'environment', requis:false, icon:'📋'},
-      {id:'dfe',       label:'DFE (Declaration fiscale)',    camera:'environment', requis:false, icon:'📄'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   }
 };
@@ -519,7 +519,7 @@ async function uploadPhotoCloudinary(file, docId, userId) {
     body: JSON.stringify({ userId: userId, typeDocument: docId, urlFichier: url })
   });
   var d2 = await r2.json();
-  if (!r2.ok) throw new Error('Backend KYC: '+(d2.message||'Erreur'));
+  if (!r2.ok) throw new Error('Backend KYC '+docId+': '+(d2.message||JSON.stringify(d2)));
   return { ok: true, url: url, docId: docId };
 }
 
@@ -1276,7 +1276,7 @@ var KYC_CONFIG = {
       {id:'cni_recto', label:'CNI Gerant Recto',            camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Gerant Verso',            camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)', camera:'environment', requis:false, icon:'📋'},
-      {id:'dfe',       label:'DFE (Declaration fiscale)',   camera:'environment', requis:false, icon:'📄'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   },
   // AGENT / MINI-MASTER / MASTER / SUPERVISEUR
@@ -1288,7 +1288,7 @@ var KYC_CONFIG = {
       {id:'cni_recto', label:'CNI Recto',                    camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Verso',                    camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)',  camera:'environment', requis:false, icon:'📋'},
-      {id:'dfe',       label:'DFE (Declaration fiscale)',    camera:'environment', requis:false, icon:'📄'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   }
 };
