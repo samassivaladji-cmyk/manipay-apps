@@ -1131,6 +1131,9 @@ async function rechercherClient(){
   el.appendChild(photosDiv);
   chargerPhotosKycClient(u.id);
 
+  // Stocker l'id client courant pour remboursements
+  currentClientId=u.id;
+
   // Charger photo KYC selfie dans l'avatar
   chargerPhotoKyc(u.id,'sup-client-photo',ini);
 
@@ -1989,6 +1992,9 @@ async function rechercherClient(){
   el.appendChild(photosDiv);
   chargerPhotosKycClient(u.id);
 
+  // Stocker l'id client courant pour remboursements
+  currentClientId=u.id;
+
   // Charger photo KYC selfie dans l'avatar
   chargerPhotoKyc(u.id,'sup-client-photo',ini);
 
@@ -2176,9 +2182,13 @@ async function chargerHistoriqueClient(userId){
         var btnR=document.createElement('button');
         btnR.textContent='Rembourser';
         btnR.style.cssText='padding:4px 10px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:4px';
-        btnR.addEventListener('click',(function(txId,montant,ref){
-          return function(){rembourserTransaction(txId,montant,ref,currentClientId);};
-        })(tx.id,tx.montant,tx.reference));
+        (function(b,txId,montant,ref){
+          b.addEventListener('click',function(){
+            var uid=currentClientId;
+            if(!uid){toast('Erreur: client non identifie',true);return;}
+            rembourserTransaction(txId,montant,ref,uid);
+          });
+        })(btnR,tx.id,tx.montant,tx.reference);
         row.appendChild(btnR);
       }
       el.appendChild(row);
