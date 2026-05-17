@@ -10,7 +10,7 @@
 :root{--y:#ca8a04;--y2:#a16207;--y3:#fef3c7;--t:#111827;--m:#6b7280;--d:#9ca3af;--r:#ef4444;--g:#22c55e;--b:#3b82f6}
 body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:var(--t)}
 #app{max-width:430px;margin:0 auto;min-height:100vh}
-.scr{display:none;flex-direction:column;min-height:100vh}
+.scr{display:none;flex-direction:column;min-height:100vh;padding-bottom:70px}
 .scr.on{display:flex}
 .inp{width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 16px;font-size:15px;font-family:inherit;color:var(--t);outline:none}
 .inp:focus{border-color:var(--y)}
@@ -143,7 +143,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     </div>
   </div>
   <div style="height:80px"></div>
-  <nav class="bnav" id="bnav-home"></nav>
 </div>
 
 <!-- USERS -->
@@ -157,17 +156,23 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px" id="u-chips"></div>
   </div>
   <div style="padding:12px 16px 100px"><div id="u-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div></div>
-  <nav class="bnav" id="bnav-users"></nav>
 </div>
 
 <!-- TRANSACTIONS -->
 <div class="scr" id="s-txns">
   <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
     <div style="font-size:22px;font-weight:800">Flux financiers</div>
-    <div style="color:var(--m);font-size:13px;margin-top:3px">Toutes les transactions</div>
+    <div style="color:var(--m);font-size:13px;margin-top:3px">Cumuls et transactions</div>
   </div>
-  <div style="padding:12px 16px 100px"><div id="t-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div></div>
-  <nav class="bnav" id="bnav-txns"></nav>
+  <div style="padding:12px 16px 100px">
+    <!-- Cumuls -->
+    <div id="t-cumuls" style="margin-bottom:16px">
+      <div style="padding:24px;text-align:center"><div class="spin"></div></div>
+    </div>
+    <!-- Liste transactions -->
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Dernières transactions</div>
+    <div id="t-list"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+  </div>
 </div>
 
 <!-- MONITORING -->
@@ -182,7 +187,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.07em;margin:16px 0 10px">Tickets ouverts</div>
     <div id="m-tickets"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
   </div>
-  <nav class="bnav" id="bnav-monitoring"></nav>
 </div>
 
 <!-- SUPPORT -->
@@ -210,7 +214,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <button onclick="openSh('new-ticket')" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+ Nouveau ticket</button>
   </div>
   <div style="height:80px"></div>
-  <nav class="bnav" id="bnav-support"></nav>
 </div>
 
 <!-- TECH -->
@@ -236,7 +239,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin:16px 0 10px">Alertes systeme</div>
     <div id="tech-logs"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
   </div>
-  <nav class="bnav" id="bnav-tech"></nav>
 </div>
 
 <!-- SHEET USER -->
@@ -363,6 +365,9 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
+
+<!-- NAVBAR GLOBALE UNIQUE -->
+<nav class="bnav" id="global-bnav"></nav>
 </div>
 <script>// ═══════════════════════════════════════════════════════
 // MODULE KYC UNIVERSEL — AFRIM PAY
@@ -618,39 +623,15 @@ function buildNavs(activeTab){
   var u=G.user;if(!u)return;
   var p=PERMS[u.role]||{};
   var visible=NAV_DEFS.filter(function(n){return p[n.id];});
-  var navIds=['home','users','txns','monitoring','support','tech'];
-  navIds.forEach(function(id){
-    var el=document.getElementById('bnav-'+id);if(!el)return;
-    el.innerHTML=visible.map(function(n){
-      var on=n.id===activeTab?' on':'';
-      return '<button class="nb'+on+'" onclick="setTab(\''+n.id+'\')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor">'+n.svg+'</svg>'+n.label+'</button>';
-    }).join('');
-  });
-}
-
-function buildNavGrid(){
-  var u=G.user;if(!u)return;
-  var p=PERMS[u.role]||{};
-  var allItems=[
-    {id:'users',    icon:'👥', label:'Comptes',  fn:"setTab('users')",   need:'users'},
-    {id:'txns',     icon:'💳', label:'Flux',     fn:"setTab('txns')",    need:'txns'},
-    {id:'monitoring',icon:'📊',label:'Suivi',   fn:"setTab('monitoring')",need:'monitoring'},
-    {id:'support',  icon:'💬', label:'Support',  fn:"setTab('support')", need:'support'},
-    {id:'tech',     icon:'🛠', label:'Technique',fn:"setTab('tech')",    need:'tech'},
-    {id:'inscr',    icon:'➕', label:'Creer',   fn:"ouvrirInscription()",need:'creer'},
-    {id:'pin',      icon:'🔐', label:'Mon PIN',  fn:"openSh('change-pin');rstPin()", need:null},
-    {id:'quitter',  icon:'🚪', label:'Quitter',  fn:"logout()",                           need:null}
-  ];
-  var grid=document.getElementById('nav-grid');if(!grid)return;
-  grid.innerHTML='';
-  allItems.forEach(function(it){
-    if(it.need&&!p[it.need])return;
+  var nav=document.getElementById('global-bnav');
+  if(!nav)return;
+  nav.innerHTML='';
+  visible.forEach(function(n){
     var btn=document.createElement('button');
-    btn.onclick=new Function(it.fn);
-    btn.style.cssText='background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-family:inherit';
-    btn.innerHTML='<div style="width:44px;height:44px;border-radius:12px;background:var(--y3);display:flex;align-items:center;justify-content:center;font-size:20px">'+it.icon+'</div>'
-      +'<div style="font-size:11px;font-weight:700;color:var(--t)">'+it.label+'</div>';
-    grid.appendChild(btn);
+    btn.className='nb'+(n.id===activeTab?' on':'');
+    btn.innerHTML='<svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor">'+n.svg+'</svg>'+n.label;
+    btn.addEventListener('click',function(){setTab(n.id);});
+    nav.appendChild(btn);
   });
 }
 
@@ -974,25 +955,62 @@ async function doInscrire(){
 
 // ── TRANSACTIONS ──
 async function chargerTxns(){
-  var el=document.getElementById('t-list');
-  el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  var elList=document.getElementById('t-list');
+  var elCumuls=document.getElementById('t-cumuls');
+  if(elList)elList.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
   try{
-    var r=await apiGet('/transactions?limit=100');var list=r.data||[];
-    var TC={depot:'#059669',retrait:'#f97316',transfert:'#3b82f6',paiement_marchand:'#8b5cf6',commission:'#f59e0b'};
-    var TL={depot:'Depot',retrait:'Retrait',transfert:'Transfert',paiement_marchand:'Paiement',commission:'Commission'};
-    var TI={depot:'📥',retrait:'📤',transfert:'↔',paiement_marchand:'🏪',commission:'⭐'};
-    el.innerHTML='';
-    if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m)">Aucune transaction</div>';return;}
+    var r=await apiGet('/transactions?limit=200');
+    var list=r.data||[];
+    var cumuls={depot:{n:0,m:0},retrait:{n:0,m:0},transfert:{n:0,m:0},paiement:{n:0,m:0}};
     list.forEach(function(tx){
-      var c=TC[tx.type]||'#888';var l=TL[tx.type]||tx.type;var ic=TI[tx.type]||'💳';
-      var div=document.createElement('div');
-      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px';
-      div.innerHTML='<div style="width:40px;height:40px;border-radius:12px;background:'+c+'22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+ic+'</div>'
-        +'<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+c+'">'+l+'</div><div style="color:#6b7280;font-size:11px">'+FD(tx.dateCreation)+'</div><div style="color:#9ca3af;font-size:10px;font-family:monospace">'+tx.reference+'</div></div>'
-        +'<div style="text-align:right"><div style="color:'+c+';font-size:15px;font-weight:800">'+F(tx.montant)+'</div></div>';
-      el.appendChild(div);
+      var m=Number(tx.montant||0);var f=Number(tx.frais||0);
+      if(tx.type==='depot'){cumuls.depot.n++;cumuls.depot.m+=m;}
+      else if(tx.type==='retrait'){cumuls.retrait.n++;cumuls.retrait.m+=m;}
+      else if(tx.type==='transfert'){cumuls.transfert.n++;cumuls.transfert.m+=m;}
+      else if(tx.type==='paiement_marchand'){cumuls.paiement.n++;cumuls.paiement.m+=m;}
     });
-  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+    var commDepot=Math.round(cumuls.depot.m*0.002);
+    var commRetrait=Math.round(cumuls.retrait.m*0.009*0.35);
+    if(elCumuls){
+      elCumuls.innerHTML='';
+      var cards=[
+        {icon:'↓',color:'#22c55e',titre:'Dépôts',lignes:['Volume : '+F(cumuls.depot.m)+' ('+cumuls.depot.n+' op.)','Commissions agents payées : +'+F(commDepot)]},
+        {icon:'↑',color:'#f97316',titre:'Retraits',lignes:['Volume : '+F(cumuls.retrait.m)+' ('+cumuls.retrait.n+' op.)','Commissions agents perçues : +'+F(commRetrait)]},
+        {icon:'⇄',color:'#3b82f6',titre:'Transferts internes AFRIM PAY',lignes:['Volume : '+F(cumuls.transfert.m)+' ('+cumuls.transfert.n+' op.)','Entre comptes du réseau']},
+        {icon:'◈',color:'#8b5cf6',titre:'Paiements marchands',lignes:['Volume : '+F(cumuls.paiement.m)+' ('+cumuls.paiement.n+' op.)','Frais marchands : 0,8%']},
+        {icon:'→',color:'#9ca3af',titre:'Transferts sortants (autres réseaux)',lignes:['Vers MTN MoMo, Orange Money...'],'bientot':true},
+        {icon:'←',color:'#9ca3af',titre:'Transferts entrants (autres réseaux)',lignes:['Depuis MTN MoMo, Orange Money...'],'bientot':true}
+      ];
+      cards.forEach(function(c){
+        var div=document.createElement('div');
+        div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;gap:12px';
+        var badge=c.bientot?'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;margin-left:6px">Bientôt</span>':'';
+        div.innerHTML='<div style="width:40px;height:40px;border-radius:12px;background:'+c.color+'18;color:'+c.color+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+c.icon+'</div>'
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:4px">'+c.titre+badge+'</div>'
+          +c.lignes.map(function(l){return '<div style="font-size:12px;color:#6b7280;margin-top:2px">'+l+'</div>';}).join('')+'</div>';
+        elCumuls.appendChild(div);
+      });
+    }
+    var TC={depot:'#22c55e',retrait:'#f97316',transfert:'#3b82f6',paiement_marchand:'#8b5cf6',commission:'#f59e0b'};
+    var TL={depot:'Depot',retrait:'Retrait',transfert:'Transfert',paiement_marchand:'Paiement',commission:'Commission'};
+    var TI={depot:'↓',retrait:'↑',transfert:'⇄',paiement_marchand:'◈',commission:'★'};
+    if(elList){elList.innerHTML='';
+      if(!list.length){elList.innerHTML='<div style="text-align:center;padding:24px;color:var(--m)">Aucune transaction</div>';}
+      else{list.slice(0,50).forEach(function(tx){
+        var c=TC[tx.type]||'#888';var l=TL[tx.type]||tx.type;var ic=TI[tx.type]||'·';
+        var div=document.createElement('div');
+        div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px';
+        div.innerHTML='<div style="width:36px;height:36px;border-radius:10px;background:'+c+'18;color:'+c+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+ic+'</div>'
+          +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:'+c+'">'+l+'</div>'
+          +'<div style="color:#9ca3af;font-size:10px;font-family:monospace">'+tx.reference+'</div></div>'
+          +'<div style="text-align:right;flex-shrink:0"><div style="color:'+c+';font-size:14px;font-weight:800">'+F(tx.montant)+'</div>'
+          +'<div style="color:#9ca3af;font-size:10px">'+FD(tx.dateCreation||tx.date_creation)+'</div></div>';
+        elList.appendChild(div);
+      });}
+    }
+  }catch(e){
+    if(elList)elList.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';
+  }
 }
 
 // ── MONITORING ──
@@ -1509,7 +1527,8 @@ function buildNavGrid(){
     {id:'tech',     icon:'🛠', label:'Technique',fn:"setTab('tech')",    need:'tech'},
     {id:'inscr',    icon:'➕', label:'Creer',   fn:"ouvrirInscription()",need:'creer'},
     {id:'pin',      icon:'🔐', label:'Mon PIN',  fn:"openSh('change-pin');rstPin()", need:null},
-    {id:'quitter',  icon:'🚪', label:'Quitter',  fn:"logout()",                           need:null}
+    {id:'quitter',  icon:'🚪', label:'Quitter',  fn:"logout()",                           need:null},
+    {id:'qr',       icon:'📲', label:'Mon QR',   fn:"afficherQrSuperviseur()",            need:null}
   ];
   var grid=document.getElementById('nav-grid');if(!grid)return;
   grid.innerHTML='';
@@ -2235,6 +2254,25 @@ async function rembourserTransaction(txId,montant,ref,userId){
   }catch(e){toast(e.message,true);}
 }
 
+
+function afficherQrSuperviseur(){
+  var u=G.user;if(!u)return;
+  var code=u.codeParrainage||u.id;
+  // Créer un overlay QR
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="background:#fff;border-radius:24px;padding:28px 24px;max-width:320px;width:100%;text-align:center">'
+    +'<div style="font-size:14px;font-weight:800;margin-bottom:6px">'+(u.prenom||'')+' '+(u.nom||'')+'</div>'
+    +'<div style="font-size:11px;color:#6b7280;margin-bottom:16px">'+u.role.toUpperCase()+' · '+(u.zone||'')+'</div>'
+    +'<div style="background:#f9fafb;border-radius:16px;padding:16px;margin-bottom:16px">'
+    +'<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AFRIM:'+encodeURIComponent(code)+'" style="width:200px;height:200px;border-radius:8px"/>'
+    +'</div>'
+    +'<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:4px">Code : '+code+'</div>'
+    +'<div style="font-size:11px;color:#6b7280;margin-bottom:20px">Faites scanner ce QR pour rejoindre votre reseau</div>'
+    +'<button onclick="this.parentNode.parentNode.remove()" style="width:100%;padding:14px;background:#111827;color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Fermer</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+}
 
 function logout(){
   try{apiPost('/auth/logout',{refreshToken:G.refresh});}catch(e){}
