@@ -1138,7 +1138,8 @@ async function rechercherClient(){
 
   // Stocker l'id client courant pour remboursements
   currentClientId=u.id;
-  currentClientCompteId=u.comptes&&u.comptes[0]?u.comptes[0].id:'';
+  currentClientCompteId=u.comptes&&u.comptes[0]?u.comptes[0].id:null;
+  console.log('Client compte ID:', currentClientCompteId);
 
   // Charger photo KYC selfie dans l'avatar
   chargerPhotoKyc(u.id,'sup-client-photo',ini);
@@ -2007,7 +2008,8 @@ async function rechercherClient(){
 
   // Stocker l'id client courant pour remboursements
   currentClientId=u.id;
-  currentClientCompteId=u.comptes&&u.comptes[0]?u.comptes[0].id:'';
+  currentClientCompteId=u.comptes&&u.comptes[0]?u.comptes[0].id:null;
+  console.log('Client compte ID:', currentClientCompteId);
 
   // Charger photo KYC selfie dans l'avatar
   chargerPhotoKyc(u.id,'sup-client-photo',ini);
@@ -2183,10 +2185,11 @@ async function chargerHistoriqueClient(userId){
       var c=TC[tx.type]||'#888';var l=TL[tx.type]||tx.type;
       var row=document.createElement('div');
       row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f9fafb';
-      // Afficher Rembourser sur tous les transferts dans le délai
-      // Le backend vérifie si le client est bien l'émetteur
       var isTransfert=tx.type==='transfert'&&tx.statut==='complete';
-      var dansDelai=isTransfert&&new Date(tx.dateCreation)>=limiteRemb;
+      // Vérifier si le client est la source (a envoyé l'argent)
+      var estSource=currentClientCompteId&&tx.compteSourceId===currentClientCompteId;
+      // Si on n'a pas l'info compteSourceId, afficher le bouton quand même
+      var dansDelai=isTransfert&&(estSource||!currentClientCompteId)&&new Date(tx.dateCreation)>=limiteRemb;
       row.innerHTML='<div style="width:32px;height:32px;border-radius:8px;background:'+c+'18;color:'+c+';display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">'+(TI[tx.type]||'·')+'</div>'
         +'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:'+c+'">'+l+'</div>'
         +'<div style="font-size:10px;color:#9ca3af">'+FD(tx.dateCreation)+'</div>'
