@@ -256,24 +256,33 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 <!-- POPUP QR STYLE WAVE -->
 <div class="wave-qr-popup" id="wave-qr-popup">
   <!-- ONGLET SCANNER -->
-  <div id="wqr-scanner" style="flex:1;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;">
+  <div id="wqr-scanner" style="flex:1;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;">
     <button onclick="fermerPopupQR()" style="position:absolute;top:20px;left:20px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
       <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
-    <button id="wqr-flash-btn" onclick="toggleFlash()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;">
-      <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    </button>
-    <div style="position:relative;width:260px;height:260px;border-radius:20px;overflow:hidden;">
-      <video id="wqr-video" style="width:100%;height:100%;object-fit:cover;" autoplay playsinline muted></video>
-      <canvas id="wqr-canvas" style="display:none;"></canvas>
-      <div style="position:absolute;inset:0;pointer-events:none;">
-        <div style="position:absolute;top:14px;left:14px;width:34px;height:34px;border-top:3px solid #fff;border-left:3px solid #fff;border-radius:4px 0 0 0;"></div>
-        <div style="position:absolute;top:14px;right:14px;width:34px;height:34px;border-top:3px solid #fff;border-right:3px solid #fff;border-radius:0 4px 0 0;"></div>
-        <div style="position:absolute;bottom:14px;left:14px;width:34px;height:34px;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 4px;"></div>
-        <div style="position:absolute;bottom:14px;right:14px;width:34px;height:34px;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 4px 0;"></div>
+    <!-- Vidéo caché — gardé pour compatibilité -->
+    <video id="wqr-video" style="display:none;" autoplay playsinline muted></video>
+    <canvas id="wqr-canvas" style="display:none;"></canvas>
+    <!-- Interface scanner native Android -->
+    <div id="wqr-scan-ui" style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:32px 24px;">
+      <!-- Cadre QR animé -->
+      <div style="position:relative;width:220px;height:220px;">
+        <div style="position:absolute;top:0;left:0;width:40px;height:40px;border-top:3px solid #059669;border-left:3px solid #059669;border-radius:4px 0 0 0;"></div>
+        <div style="position:absolute;top:0;right:0;width:40px;height:40px;border-top:3px solid #059669;border-right:3px solid #059669;border-radius:0 4px 0 0;"></div>
+        <div style="position:absolute;bottom:0;left:0;width:40px;height:40px;border-bottom:3px solid #059669;border-left:3px solid #059669;border-radius:0 0 0 4px;"></div>
+        <div style="position:absolute;bottom:0;right:0;width:40px;height:40px;border-bottom:3px solid #059669;border-right:3px solid #059669;border-radius:0 0 4px 0;"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M14 20h.01M17 20h.01M20 17h.01M20 20h.01"/></svg>
+        </div>
       </div>
+      <div style="color:rgba(255,255,255,.85);font-size:14px;font-weight:600;text-align:center;">Scannez le QR code du destinataire</div>
+      <!-- Bouton principal — ouvre la caméra native Android -->
+      <input type="file" id="wqr-native-input" accept="image/*" capture="environment" style="display:none;"/>
+      <button onclick="document.getElementById('wqr-native-input').click()" style="background:#059669;color:#fff;border:none;border-radius:16px;padding:16px 40px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;max-width:260px;">
+        📷 Ouvrir la caméra
+      </button>
+      <div style="color:rgba(255,255,255,.5);font-size:12px;text-align:center;">Pointez vers le QR code AFRIM PAY</div>
     </div>
-    <div style="color:rgba(255,255,255,.8);font-size:14px;font-weight:600;margin-top:22px;text-align:center;padding:0 40px;">Scanner un Code QR pour payer ou envoyer</div>
     <div class="wave-tab-bar" style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);">
       <button class="wave-tab-btn on" id="wtab-scan" onclick="wqrTab('scan')">Scanner un code</button>
       <button class="wave-tab-btn" id="wtab-carte" onclick="wqrTab('carte')">Ma carte</button>
@@ -1002,13 +1011,32 @@ function wqrTab(tab){
     if(btn3)btn3.classList.add('on');if(btn4)btn4.classList.add('on');
     if(wqrStream){wqrStream.getTracks().forEach(t=>t.stop());wqrStream=null;}
     if(wqrInterval){clearInterval(wqrInterval);wqrInterval=null;}
-    var u=G.user;
-    if(u){
-      document.getElementById('wqr-carte-name').textContent=(u.prenom||'')+' '+(u.nom||'');
-      document.getElementById('wqr-carte-tel').textContent=u.telephone||'';
-      var data=u.telephone+'|'+(u.codeParrainage||u.id||'')+'|client';
-      dessinerQRHome('wqr-carte-canvas',data,'#059669');
+    // Récupérer user depuis mémoire ou localStorage
+    var u=G.user||JSON.parse(localStorage.getItem('afrim_user')||'null');
+    var carteEl=document.getElementById('wqr-carte-canvas');
+    var nameEl=document.getElementById('wqr-carte-name');
+    var telEl=document.getElementById('wqr-carte-tel');
+    function afficherCarteQR(usr){
+      var tel=usr.telephone||'';
+      var code=usr.codeParrainage||usr.id||tel;
+      var qdata=tel+'|'+code+'|client';
+      if(nameEl)nameEl.textContent=(usr.prenom||'')+' '+(usr.nom||'');
+      if(telEl)telEl.textContent=tel;
+      if(carteEl)dessinerQRHome('wqr-carte-canvas',qdata,'#059669');
     }
+    if(u&&u.telephone){
+      afficherCarteQR(u);
+    }
+    // Toujours recharger depuis l'API pour avoir le codeParrainage à jour
+    get('/users/me').then(function(r){
+      var fresh=r.data||r;
+      if(fresh&&fresh.telephone){
+        G.user=Object.assign(G.user||{},fresh);
+        afficherCarteQR(fresh);
+      }
+    }).catch(function(e){
+      if(!u)carteEl.innerHTML='<div style="padding:16px;text-align:center;color:#6b7280;font-size:12px">Erreur: '+e.message+'</div>';
+    });
   }
 }
 
@@ -1242,7 +1270,10 @@ function inviterAmi(){
 
 async function chargerCommissions(){
   var el=document.getElementById('comm-content');
-  if(!el)return;
+  if(!el){
+    setTimeout(chargerCommissions, 300);
+    return;
+  }
   var u=G.user||{};
   var kyc=u.kycNiveau||'KYC1';
   var nbRatt=Number(u.nbRattaches)||0;
@@ -1341,7 +1372,50 @@ async function logout(){try{await post('/auth/logout',{refreshToken:G.refresh});
 
 document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);if(id==='send')rstSend();if(id==='pay')rstPay();if(id==='inscription')rstIns();}});});
 
-(function init(){setKyc('KYC1',null);if(G.token&&G.user&&G.user.role==='client'){setTab('home');return;}S('s-login');})();
+(function init(){
+  setKyc('KYC1',null);
+  // Scanner natif Android
+  document.addEventListener('DOMContentLoaded',function(){
+    var ni=document.getElementById('wqr-native-input');
+    if(ni)ni.addEventListener('change',function(){
+      if(!this.files||!this.files[0])return;
+      var file=this.files[0];
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        var img=new Image();
+        img.onload=function(){
+          var cvs=document.createElement('canvas');
+          cvs.width=img.width;cvs.height=img.height;
+          var ctx=cvs.getContext('2d');
+          ctx.drawImage(img,0,0);
+          if(window.jsQR){
+            var d=ctx.getImageData(0,0,img.width,img.height);
+            var code=jsQR(d.data,d.width,d.height);
+            if(code&&code.data){
+              var parts=code.data.split('|');
+              var tel=parts[0]||code.data;
+              fermerPopupQR();
+              if(typeof wqrOnScan==='function')wqrOnScan(tel,parts);
+              else{
+                var st=document.getElementById('send-tel');
+                if(st){st.value=tel;st.dispatchEvent(new Event('input'));}
+                openSh('send');selDest(tel);
+              }
+              return;
+            }
+          }
+          // QR non reconnu — essayer avec l'URL du numéro directement
+          T('QR non reconnu. Saisissez le numéro manuellement.',true);
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      this.value=''; // Reset pour pouvoir rescanner
+    });
+  });
+  if(G.token&&G.user&&G.user.role==='client'){setTab('home');return;}
+  S('s-login');
+})();
 
 // ═══ CLOUDINARY UPLOAD ═══
 async function uploadPhotoCloudinary(file, docId, userId) {
