@@ -74,6 +74,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 .params-sub{font-size:12px;color:#6b7280;margin-top:1px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -164,7 +165,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
         <div style="position:absolute;bottom:32px;left:10px;width:22px;height:22px;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 4px"></div>
         <div style="position:absolute;bottom:32px;right:10px;width:22px;height:22px;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 4px 0"></div>
         <div style="background:#fff;border-radius:12px;padding:12px">
-          <canvas id="h-qr-canvas" width="200" height="200" style="display:block;width:100%;border-radius:6px"></canvas>
+          <div id="h-qr-canvas" style="width:200px;height:200px;margin:0 auto;display:flex;align-items:center;justify-content:center"></div>
         </div>
         <div style="text-align:center;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px">
           <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -172,6 +173,10 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
         </div>
       </div>
       <div id="h-qr-name" style="color:rgba(255,255,255,.9);font-size:13px;font-weight:700;text-align:center;margin-top:8px;letter-spacing:.02em"></div>
+      <div id="h-filleuls-badge" style="display:none;margin-top:6px;justify-content:center;gap:8px;flex-wrap:wrap">
+        <span id="h-filleuls-count" style="background:rgba(255,255,255,.15);color:#fff;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700">👥 0 parrainés</span>
+        <span id="h-rattaches-count" style="background:rgba(255,255,255,.25);color:#fff;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700">✓ 0 rattachés</span>
+      </div>
     </div>
   </div>
 
@@ -226,6 +231,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   <nav class="bnav">
     <button class="nb on" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Accueil</button>
     <button class="nb" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Historique</button>
+    <button class="nb" id="nb-commissions-h" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Paramètres</button>
   </nav>
 </div>
@@ -243,6 +249,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   <nav class="bnav">
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Accueil</button>
     <button class="nb on" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Historique</button>
+    <button class="nb" id="nb-commissions-s-history" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Paramètres</button>
   </nav>
 </div>
@@ -282,7 +289,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       <div style="position:absolute;inset:0;opacity:.08;background-image:repeating-linear-gradient(45deg,#fff 0,#fff 2px,transparent 0,transparent 50%);background-size:12px 12px;"></div>
       <div style="position:relative;z-index:1;">
         <div style="background:#fff;border-radius:16px;padding:14px;margin-bottom:14px;">
-          <canvas id="wqr-carte-canvas" width="220" height="220" style="display:block;width:100%;border-radius:8px;"></canvas>
+          <div id="wqr-carte-canvas" style="width:200px;height:200px;margin:0 auto;display:flex;align-items:center;justify-content:center"></div>
         </div>
         <div id="wqr-carte-name" style="color:#fff;font-size:17px;font-weight:800;margin-bottom:4px;"></div>
         <div id="wqr-carte-tel" style="color:rgba(255,255,255,.8);font-size:13px;font-family:monospace;"></div>
@@ -328,6 +335,14 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       </div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="voirGains()">
+      <div class="params-icon" style="background:#fefce8">💰</div>
+      <div>
+        <div class="params-label">Mes gains parrainage</div>
+        <div class="params-sub" id="gains-label">Commissions de ce mois</div>
+      </div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <button class="params-item" onclick="voirPlafond()">
       <div class="params-icon" style="background:#eff6ff">📊</div>
       <div><div class="params-label">Verifier mon plafond</div><div class="params-sub">Limites KYC et transactions</div></div>
@@ -366,6 +381,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   <nav class="bnav">
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Accueil</button>
     <button class="nb" id="nb-history" onclick="setTab('history')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Historique</button>
+    <button class="nb" id="nb-commissions-s-profile" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
     <button class="nb on" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Paramètres</button>
   </nav>
 </div>
@@ -563,6 +579,10 @@ async function api(path,opts){
   if(!r.ok){if(r.status===401&&!opts._retry&&G.refresh){var ok=await doRefresh();if(ok)return api(path,Object.assign({},opts,{_retry:true}));}throw new Error(d.message||'Erreur '+r.status);}
   return d;
 }
+function get(p){return api(p);}
+function post(p,b){return api(p,{method:'POST',body:JSON.stringify(b)});}
+function patch(p,b){return api(p,{method:'PATCH',body:JSON.stringify(b)});}
+
 var get=p=>api(p);
 var post=(p,b)=>api(p,{method:'POST',body:JSON.stringify(b)});
 
@@ -581,15 +601,21 @@ function closeSh(id){document.getElementById('sh-'+id).classList.remove('on');}
 
 function setTab(t){
   G.tab=t;
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('#nb-'+t).forEach(b=>b.classList.add('on'));
-  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
-  if(t==='home'){document.getElementById('s-home').classList.add('on');chargerAccueil();}
-  else if(t==='history'){document.getElementById('s-history').classList.add('on');chargerHistorique();}
+  // Désactiver tous les boutons nav
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
+  // Activer le bon bouton dans toutes les navs (plusieurs écrans ont la même nav)
+  ['','2','-c','-h','-history','-s-history','-s-profile'].forEach(function(sfx){
+    var btn=document.getElementById('nb-'+t+sfx)||document.getElementById('nb-'+t+'-'+sfx);
+    if(btn)btn.classList.add('on');
+  });
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  var scr=document.getElementById('s-'+t);
+  if(scr)scr.classList.add('on');
+  if(t==='home')chargerAccueil();
+  else if(t==='history')chargerHistorique();
   else if(t==='receive'){ouvrirPopupQR();return;}
-  else if(t==='profile'){document.getElementById('s-profile').classList.add('on');chargerProfil();}
-  else if(t==='paiements'){document.getElementById('s-paiements').classList.add('on');}
-  else if(t==='pay-detail'){document.getElementById('s-pay-detail').classList.add('on');}
+  else if(t==='profile')chargerProfil();
+  else if(t==='commissions')chargerCommissions();
 }
 
 function chkLogin(){var v=document.getElementById('login-tel').value.trim();document.getElementById('lg-btn').disabled=!v;document.getElementById('lg-btn').style.opacity=v?'1':'.4';}
@@ -604,6 +630,15 @@ async function chargerAccueil(){
     dessinerQRHome('h-qr-canvas', u.telephone+'|'+(u.codeParrainage||'')+'|client', '#059669');
   }
   if(document.getElementById('h-qr-name'))document.getElementById('h-qr-name').textContent=(u.prenom||'')+' '+(u.nom||'').toUpperCase();
+  // Afficher compteurs filleuls si compte actif
+  var badgeEl=document.getElementById('h-filleuls-badge');
+  var fcEl=document.getElementById('h-filleuls-count');
+  var rcEl=document.getElementById('h-rattaches-count');
+  if(badgeEl&&u.statut==='actif'){
+    if(badgeEl)badgeEl.style.display='flex';
+    if(fcEl)fcEl.textContent='👥 '+(u.nbFilleuls||0)+' parrainés';
+    if(rcEl)rcEl.textContent='✓ '+(u.nbRattaches||0)+' rattachés';
+  }
   // Bannière statut en_attente
   var banEl=document.getElementById('home-statut-banner');
   if(banEl){
@@ -681,8 +716,9 @@ function chargerProfil(){
   var u=G.user;if(!u)return;
   if(document.getElementById('prof-name-top'))document.getElementById('prof-name-top').textContent=(u.prenom||'')+' '+(u.nom||'');
   if(document.getElementById('prof-tel-top'))document.getElementById('prof-tel-top').textContent=u.telephone;
-  // Avatar initiales
   if(document.getElementById('prof-avatar')){var ini=((u.prenom||'').charAt(0)+(u.nom||'').charAt(0)).toUpperCase();document.getElementById('prof-avatar').textContent=ini||'AP';}
+  // Vérifier les docs KYC et mettre à jour le label
+  verifierDocsKyc();
 }
 
 var sendDest=null;
@@ -887,20 +923,28 @@ async function doLogin(){
 
 
 function dessinerQRHome(cid,data,color){
-  var c=document.getElementById(cid);if(!c)return;
-  var parent=c.parentNode;
-  var imgId=cid+'-img';
-  var imgEl=document.getElementById(imgId);
-  if(!imgEl){
-    imgEl=document.createElement('img');
-    imgEl.id=imgId;
-    imgEl.style.cssText='width:'+c.width+'px;height:'+c.height+'px;border-radius:8px;display:block';
-    imgEl.alt='QR Code AFRIM PAY';
-    parent.insertBefore(imgEl,c);
-    c.style.display='none';
+  var el=document.getElementById(cid);
+  if(!el)return;
+  el.innerHTML=''; // Vider
+  if(window.QRCode){
+    try{
+      new QRCode(el,{
+        text:data,
+        width:200,height:200,
+        colorDark:(color&&color!=='#059669'?color:'#059669'),
+        colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.M
+      });
+      return;
+    }catch(e){console.warn('QRCode.js:',e);}
   }
-  imgEl.src='https://api.qrserver.com/v1/create-qr-code/?size='+c.width+'x'+c.height+'&data='+encodeURIComponent(data)+'&color='+(color||'059669').replace('#','')+'&bgcolor=ffffff&qzone=1';
-  imgEl.onerror=function(){imgEl.style.display='none';c.style.display='';};
+  // Fallback : image externe si QRCode.js pas dispo
+  var img=document.createElement('img');
+  img.style.cssText='width:200px;height:200px;border-radius:6px;display:block';
+  img.alt='QR Code';
+  var col=(color||'#059669').replace('#','');
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(data)+'&color='+col+'&bgcolor=ffffff&qzone=1';
+  el.appendChild(img);
 }
 
 function ouvrirPopupQR(scanCallback){
@@ -938,7 +982,8 @@ function wqrTab(tab){
     if(u){
       document.getElementById('wqr-carte-name').textContent=(u.prenom||'')+' '+(u.nom||'');
       document.getElementById('wqr-carte-tel').textContent=u.telephone||'';
-      dessinerQRHome('wqr-carte-canvas',u.telephone+'|'+(u.codeParrainage||'')+'|client','#059669');
+      var data=u.telephone+'|'+(u.codeParrainage||u.id||'')+'|client';
+      dessinerQRHome('wqr-carte-canvas',data,'#059669');
     }
   }
 }
@@ -970,7 +1015,50 @@ function demarrerScannerWave(){
         }catch(e){}
       },400);
     })
-    .catch(function(){T('Caméra non disponible',true);fermerPopupQR();});
+    .catch(function(err){
+      console.warn('Caméra:', err.message||err);
+      // Si fichier local (content://) → ouvrir directement l'input caméra
+      var video=document.getElementById('wqr-video');
+      var scanZone=document.getElementById('wqr-scanner');
+      if(scanZone){
+        scanZone.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;background:#111;padding:20px">'
+          +'<div style="color:#fff;font-size:14px;font-weight:700;text-align:center">Caméra directe non disponible</div>'
+          +'<div style="color:rgba(255,255,255,.6);font-size:12px;text-align:center">Disponible sur afrim-pay-apps.github.io</div>'
+          +'<div style="color:rgba(255,255,255,.5);font-size:11px;text-align:center;margin-bottom:8px">Ou choisissez une photo QR depuis la galerie</div>'
+          +'<input type="file" accept="image/*" id="qr-fallback-input" style="display:none"/>'
+          +'<button id="qr-fallback-btn" style="padding:12px 24px;background:#059669;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">📷 Choisir une photo</button>'
+          +'<button onclick="fermerPopupQR()" style="padding:10px 20px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit">Fermer</button>'
+          +'</div>';
+        // Gérer la sélection de fichier
+        setTimeout(function(){
+          var fallbBtn=document.getElementById('qr-fallback-btn');
+          if(fallbBtn)fallbBtn.addEventListener('click',function(){document.getElementById('qr-fallback-input').click();});
+          var inp=document.getElementById('qr-fallback-input');
+          if(inp)inp.addEventListener('change',function(){
+            if(this.files&&this.files[0]){
+              var reader=new FileReader();
+              reader.onload=function(e){
+                var img=new Image();img.src=e.target.result;
+                img.onload=function(){
+                  var cvs=document.createElement('canvas');cvs.width=img.width;cvs.height=img.height;
+                  var ctx=cvs.getContext('2d');ctx.drawImage(img,0,0);
+                  if(window.jsQR){
+                    var d=ctx.getImageData(0,0,img.width,img.height);
+                    var code=jsQR(d.data,d.width,d.height);
+                    if(code&&code.data){
+                      var parts=code.data.split('|');
+                      fermerPopupQR();
+                      if(typeof wqrOnScan==='function')wqrOnScan(parts[0],parts);
+                      else{document.getElementById('send-tel').value=parts[0];openSh('send');selDest(parts[0]);}
+                    } else {T('QR code non reconnu',true);}
+                  }
+                };
+              };reader.readAsDataURL(this.files[0]);
+            }
+          });
+        },100);
+      }
+    });
 }
 
 function toggleFlash(){
@@ -1003,14 +1091,117 @@ function ouvrirInfos(){
     '<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Statut</span><span style="font-weight:700;color:'+(u.statut==='actif'?'#22c55e':'#f59e0b')+'">'+(u.statut==='actif'?'Actif':'En attente de validation')+'</span></div>'+
     (u.statut==='actif'&&u.codeParrainage?'<div style="margin-top:16px;background:#f0fdf4;border:1px solid #d1fae5;border-radius:12px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px">Code parrainage</div><div style="font-size:24px;font-weight:900;font-family:monospace;color:#059669">'+u.codeParrainage+'</div></div>':'');
 }
+async function verifierDocsKyc(){
+  // Vérifier les documents du client connecté et afficher l'état
+  try{
+    var r=await get('/kyc/documents?userId='+(G.user&&G.user.id));
+    var docs=r.data||[];
+    var KYC_REQ={'KYC1':['selfie'],'KYC2':['selfie','cni_recto','cni_verso'],'KYC3':['selfie','cni_recto','cni_verso','extrait_naissance','justificatif_domicile']};
+    var KYC_LBL={selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',extrait_naissance:'Extrait naissance',justificatif_domicile:'Justif. domicile'};
+    var soumisIds=docs.map(function(d){return d.typeDocument;});
+    var niveau=(G.user&&G.user.kycNiveau)||'KYC1';
+    var requis=KYC_REQ[niveau]||['selfie'];
+    var manquants=requis.filter(function(r){return soumisIds.indexOf(r)<0;});
+    // Mettre à jour le label du bouton KYC dans paramètres
+    var lbl=document.getElementById('kyc-status-label');
+    if(lbl){
+      if(manquants.length>0){
+        lbl.textContent='Photo(s) manquante(s) pour '+niveau+' : '+manquants.map(function(d){return KYC_LBL[d]||d;}).join(', ');
+        lbl.style.color='#f59e0b';
+      } else if(G.user&&G.user.statut==='en_attente'){
+        lbl.textContent=niveau+' soumis — en attente de validation';
+        lbl.style.color='#f59e0b';
+      } else {
+        lbl.textContent=niveau+' actif · Plafond '+(niveau==='KYC1'?'20 000':niveau==='KYC2'?'50 000':'100 000')+' F/mois';
+        lbl.style.color='#22c55e';
+      }
+    }
+    return {docs:docs, manquants:manquants, niveau:niveau};
+  }catch(e){return {docs:[],manquants:[],niveau:'KYC1'};}
+}
+
+async function voirGains(){
+  openSh('gains');
+  var el=document.getElementById('sh-gains-body');
+  el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await get('/commissions?type=commission_parrain&userId='+(G.user&&G.user.id)+'&limit=100');
+    var comms=r.data||[];
+    // Calculer totaux
+    var now=new Date();
+    var debutMois=new Date(now.getFullYear(),now.getMonth(),1);
+    var totalMois=0,totalHistorique=0;
+    var commsMois=[];
+    comms.forEach(function(c){
+      var d=new Date(c.dateCalcul||c.date_calcul||0);
+      var m=Number(c.montant||0);
+      totalHistorique+=m;
+      if(d>=debutMois){totalMois+=m;commsMois.push(c);}
+    });
+    var lbl=document.getElementById('gains-label');
+    if(lbl)lbl.textContent='+'+Number(totalMois).toLocaleString('fr-FR')+' FCFA ce mois';
+    el.innerHTML=
+      '<div style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:16px;padding:20px;margin-bottom:14px;text-align:center">'
+      +'<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ce mois-ci</div>'
+      +'<div style="font-size:32px;font-weight:900;color:#fff">'+Number(totalMois).toLocaleString('fr-FR')+'</div>'
+      +'<div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px">FCFA de commissions</div>'
+      +'</div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Total historique</span><span style="font-weight:700">'+Number(totalHistorique).toLocaleString('fr-FR')+' FCFA</span></div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Transactions ce mois</span><span style="font-weight:700">'+commsMois.length+'</span></div>'
+      +'<div class="srow" style="border:none"><span style="color:#6b7280;font-size:13px">Filleuls rattachés</span><span style="font-weight:700;color:#22c55e">'+((G.user&&G.user.nbRattaches)||0)+'</span></div>'
+      +'<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin:14px 0 8px">Détail du mois</div>';
+    if(!commsMois.length){
+      el.innerHTML+='<div style="text-align:center;padding:16px;color:var(--m);font-size:13px">Aucune commission ce mois. Vos filleuls rattachés génèrent 10% des frais de leurs retraits/paiements.</div>';
+    } else {
+      commsMois.slice(0,20).forEach(function(c){
+        var d=new Date(c.dateCalcul||c.date_calcul);
+        var heure=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6">'
+          +'<div><div style="font-size:13px;font-weight:600">Commission filleul</div><div style="font-size:11px;color:var(--m)">'+heure+'</div></div>'
+          +'<div style="font-size:14px;font-weight:800;color:#f59e0b">+'+Number(c.montant).toLocaleString('fr-FR')+' FCFA</div>'
+          +'</div>';
+      });
+    }
+  }catch(e){
+    el.innerHTML='<div style="color:var(--r);font-size:13px;padding:16px;text-align:center">'+e.message+'</div>';
+  }
+}
+
 function voirPlafond(){
   var u=G.user;if(!u)return;openSh('plafond');
-  var plafonds={'KYC1':200000,'KYC2':1000000,'KYC3':5000000};
-  var p=plafonds[u.kycNiveau]||200000;
-  document.getElementById('sh-plafond-body').innerHTML=
-    '<div style="text-align:center;padding:20px 0"><div style="font-size:36px;font-weight:900;color:#059669">'+Number(p).toLocaleString('fr-FR')+' FCFA</div><div style="color:#6b7280;font-size:14px;margin-top:4px">Plafond mensuel '+u.kycNiveau+'</div></div>'+
-    '<div class="srow"><span style="color:#6b7280;font-size:13px">Depot mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>'+
-    '<div class="srow" style="border:none"><span style="color:#6b7280;font-size:13px">Retrait mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>';
+  var el=document.getElementById('sh-plafond-body');
+  el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
+  // Utiliser le plafond effectif retourné par l'API (calculé selon KYC + filleuls)
+  get('/users/me').then(function(r){
+    var data=r.data||r;
+    var kyc=data.kycNiveau||'KYC1';
+    var plafondEffectif=data.plafondEffectif||20000;
+    var nbFilleuls=data.nbFilleuls||0;
+    var statut=data.statut||'en_attente';
+    // Plafond de base selon KYC pur
+    var plafondKyc={'KYC1':20000,'KYC2':50000,'KYC3':100000}[kyc]||20000;
+    // Condition filleuls
+    var condFilleuls=kyc==='KYC2'?200:kyc==='KYC3'?500:0;
+    var msg='';
+    var nbRattaches=data.nbRattaches||0;
+    if(kyc==='KYC2'&&nbRattaches<200){msg='Filleuls rattachés : '+nbRattaches+'/200. Un filleul est rattaché dès qu il effectue un dépôt ou reçoit un transfert de 500 FCFA minimum.';}
+    if(kyc==='KYC3'&&nbRattaches<500){msg='Filleuls rattachés : '+nbRattaches+'/'+(nbRattaches>=200?'500 — plafond KYC2 actif (50 000 F)':'500. Atteignez 200 pour KYC2, 500 pour KYC3.');}
+    el.innerHTML=
+      '<div style="background:linear-gradient(135deg,var(--g2),var(--g));border-radius:16px;padding:20px;margin-bottom:14px;text-align:center">'
+      +'<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Plafond mensuel effectif</div>'
+      +'<div style="font-size:36px;font-weight:900;color:#fff">'+Number(plafondEffectif).toLocaleString('fr-FR')+'</div>'
+      +'<div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px">FCFA / mois</div>'
+      +'</div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Niveau KYC</span><span style="font-weight:700;color:var(--g)">'+kyc+'</span></div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Filleuls parrainés</span><span style="font-weight:700">'+nbFilleuls+'</span></div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Filleuls rattachés ✓</span><span style="font-weight:700;color:#22c55e">'+(data.nbRattaches||0)+(condFilleuls?' / '+condFilleuls+' requis':'')+'</span></div>'
+      +'<div class="srow"><span style="color:#6b7280;font-size:13px">Plafond KYC pur</span><span style="font-weight:700">'+Number(plafondKyc).toLocaleString('fr-FR')+' FCFA</span></div>'
+      +(msg?'<div style="background:#fef3c7;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:12px;color:#92400e;font-weight:600">⚠️ '+msg+'</div>':'')
+      +'<div class="srow" style="border:none"><span style="color:#6b7280;font-size:13px">Statut compte</span><span style="font-weight:700;color:'+(statut==='actif'?'#22c55e':'#f59e0b')+'">'+( statut==='actif'?'Actif':'En attente')+'</span></div>';
+  }).catch(function(){
+    var plafond=20000;
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--m);font-size:13px">Impossible de charger le plafond. Vérifiez votre connexion.</div>';
+  });
 }
 function trouverAgents(){T('Fonctionnalite bientot disponible');}
 function inviterAmi(){
@@ -1019,6 +1210,100 @@ function inviterAmi(){
   if(navigator.share)navigator.share({title:'AFRIM PAY',text:msg});
   else if(navigator.clipboard){navigator.clipboard.writeText(msg);T('Message copie !');}
   else T('Code: '+code);
+}
+
+async function chargerCommissions(){
+  var el=document.getElementById('comm-content');if(!el)return;
+  el.innerHTML='<div style="padding:32px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await get('/commissions?type=commission_parrain&userId='+(G.user&&G.user.id)+'&limit=200');
+    var comms=r.data||[];
+    var now=new Date();
+    var debutMois=new Date(now.getFullYear(),now.getMonth(),1);
+    var moisPrecedent=new Date(now.getFullYear(),now.getMonth()-1,1);
+    var finMoisPrec=new Date(now.getFullYear(),now.getMonth(),0);
+
+    // Calculs par période
+    var totalMois=0,totalPrec=0,totalHistorique=0,nbMois=0,nbPrec=0;
+    var commsMois=[];
+    comms.forEach(function(c){
+      var d=new Date(c.dateCalcul||c.date_calcul||0);
+      var m=Number(c.montant||0);
+      totalHistorique+=m;
+      if(d>=debutMois){totalMois+=m;nbMois++;commsMois.push(c);}
+      else if(d>=moisPrecedent&&d<=finMoisPrec){totalPrec+=m;nbPrec++;}
+    });
+
+    var nbRatt=(G.user&&G.user.nbRattaches)||0;
+    var nbFil=(G.user&&G.user.nbFilleuls)||0;
+    var kyc=(G.user&&G.user.kycNiveau)||'KYC1';
+    var condFilleuls=kyc==='KYC3'?500:kyc==='KYC2'?200:0;
+
+    el.innerHTML=
+      // Carte résumé ce mois
+      '<div style="background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:16px;padding:20px;margin-bottom:14px;text-align:center;color:#fff">'
+      +'<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ce mois-ci</div>'
+      +'<div style="font-size:38px;font-weight:900">'+Number(totalMois).toLocaleString('fr-FR')+'</div>'
+      +'<div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px">FCFA de commissions</div>'
+      +'<div style="display:flex;gap:16px;justify-content:center;margin-top:14px">'
+      +'<div><div style="font-size:18px;font-weight:800">'+nbMois+'</div><div style="font-size:10px;color:rgba(255,255,255,.7)">transactions</div></div>'
+      +'<div style="width:1px;background:rgba(255,255,255,.2)"></div>'
+      +'<div><div style="font-size:18px;font-weight:800">'+Number(totalPrec).toLocaleString('fr-FR')+' FCFA</div><div style="font-size:10px;color:rgba(255,255,255,.7)">mois précédent</div></div>'
+      +'</div></div>'
+
+      // Stats filleuls
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+      +'<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px;text-align:center">'
+      +'<div style="font-size:24px;font-weight:900;color:#059669">'+nbFil+'</div>'
+      +'<div style="font-size:11px;color:#6b7280;margin-top:2px">Parrainés</div>'
+      +'</div>'
+      +'<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px;text-align:center">'
+      +'<div style="font-size:24px;font-weight:900;color:#f59e0b">'+nbRatt+'</div>'
+      +'<div style="font-size:11px;color:#6b7280;margin-top:2px">Rattachés ✓'+(condFilleuls?'<br><span style="color:'+(nbRatt>=condFilleuls?'#22c55e':'#f59e0b')+';font-size:10px">'+nbRatt+'/'+condFilleuls+'</span>':'')+'</div>'
+      +'</div></div>'
+
+      // Comment ça marche
+      +'<div style="background:#fefce8;border:1px solid #fde68a;border-radius:14px;padding:14px;margin-bottom:14px">'
+      +'<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">💡 Comment gagner plus ?</div>'
+      +'<div style="font-size:11px;color:#a16207;line-height:1.6">'
+      +'• Parrainez des amis avec votre code<br>'
+      +'• Ils font un dépôt ou reçoivent un transfert ≥500 FCFA → <strong>rattachés à vie</strong><br>'
+      +'• À chaque retrait ou paiement de votre filleul → <strong>vous recevez 10% des frais</strong><br>'
+      +'• Atteignez 200 rattachés → plafond KYC2 (50 000 F/mois)<br>'
+      +'• Atteignez 500 rattachés → plafond KYC3 (100 000 F/mois)'
+      +'</div></div>'
+
+      // Total historique
+      +'<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div><div style="font-size:13px;font-weight:700">Total historique</div><div style="font-size:11px;color:#6b7280">Depuis votre inscription</div></div>'
+      +'<div style="font-size:18px;font-weight:800;color:#f59e0b">'+Number(totalHistorique).toLocaleString('fr-FR')+' FCFA</div>'
+      +'</div>'
+
+      // Détail transactions
+      +'<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Détail ce mois</div>';
+
+    if(!commsMois.length){
+      el.innerHTML+='<div style="text-align:center;padding:24px;background:#f9fafb;border-radius:14px">'
+        +'<div style="font-size:32px;margin-bottom:8px">📊</div>'
+        +'<div style="font-size:13px;font-weight:700;margin-bottom:4px">Aucune commission ce mois</div>'
+        +'<div style="font-size:12px;color:#6b7280">Parrainez des contacts — quand ils font des retraits ou paiements, vous gagnez 10% des frais automatiquement.</div>'
+        +'</div>';
+    } else {
+      commsMois.forEach(function(c){
+        var d=new Date(c.dateCalcul||c.date_calcul);
+        var dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+        el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border:1px solid #f3f4f6;border-radius:12px;margin-bottom:6px">'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<div style="width:36px;height:36px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:16px">💰</div>'
+          +'<div><div style="font-size:13px;font-weight:700">Commission filleul</div>'
+          +'<div style="font-size:11px;color:#6b7280">'+dateStr+'</div></div></div>'
+          +'<div style="font-size:15px;font-weight:900;color:#f59e0b">+'+Number(c.montant).toLocaleString('fr-FR')+'</div>'
+          +'</div>';
+      });
+    }
+  }catch(e){
+    el.innerHTML='<div style="color:var(--r);font-size:13px;padding:24px;text-align:center">'+e.message+'</div>';
+  }
 }
 
 async function logout(){try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}G.token=G.refresh=G.user=G.compte=null;localStorage.removeItem('afrim_token');localStorage.removeItem('afrim_refresh');localStorage.removeItem('afrim_user');S('s-login');}
@@ -1064,50 +1349,183 @@ async function ouvrirKycUpgrade(){
   document.getElementById('kyc-upload-zone').style.display='none';
   document.getElementById('kyc-levels-list').style.display='';
   document.getElementById('kyc-success').style.display='none';
-  var niveau=(G.user&&G.user.kycNiveau)||'KYC1';
-  var el=document.getElementById('kyc-level-badge');if(el)el.textContent=niveau;
-  var el2=document.getElementById('kyc-level-label');if(el2)el2.textContent='Plafond : '+(KYC_PLAFONDS[niveau]||'20 000')+' F/mois';
-  var bar=document.getElementById('kyc-progress-bar');
-  if(bar)bar.style.width={'en_attente':'10%','KYC1':'33%','KYC2':'66%','KYC3':'100%'}[niveau]||'33%';
-  var listEl=document.getElementById('kyc-levels-list');listEl.innerHTML='';
+
+  var niveauKyc=(G.user&&G.user.kycNiveau)||'KYC1';
+  var statutCompte=(G.user&&G.user.statut)||'en_attente';
   var kycDemande=(G.user&&G.user.kycNiveauDemande)||null;
-  // Vérifier selfie déjà soumis
-  var selfieOk=false;
-  try{var docs=await get('/kyc/documents?userId='+(G.user&&G.user.id));selfieOk=(docs.data||[]).some(function(d){return d.typeDocument==='selfie';});}catch(e){}
+
+  // Barre de progression selon niveau KYC
+  var el=document.getElementById('kyc-level-badge');if(el)el.textContent=niveauKyc;
+  var nbFilleulsAffiche=(G.user&&G.user.nbFilleuls)||0;
+  var plafondAffiche=(G.user&&G.user.plafondEffectif)||20000;
+  var el2=document.getElementById('kyc-level-label');
+  if(el2)el2.textContent='Plafond effectif : '+Number(plafondAffiche).toLocaleString('fr-FR')+' F/mois · '+nbFilleulsAffiche+' filleuls';
+  var bar=document.getElementById('kyc-progress-bar');
+  if(bar)bar.style.width={'KYC1':'33%','KYC2':'66%','KYC3':'100%'}[niveauKyc]||'33%';
+
+  // Charger les docs existants en BDD
+  var docsExistants=[];
+  var docsIds=[];
+  try{
+    var r=await get('/kyc/documents?userId='+(G.user&&G.user.id));
+    docsExistants=r.data||[];
+    docsIds=docsExistants.map(function(d){return d.typeDocument;});
+  }catch(e){}
+
+  var KYC_REQ={
+    'KYC1':['selfie'],
+    'KYC2':['selfie','cni_recto','cni_verso'],
+    'KYC3':['selfie','cni_recto','cni_verso','extrait_naissance','justificatif_domicile']
+  };
+  var KYC_DOC_LABELS={
+    selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',
+    extrait_naissance:'Extrait de naissance',justificatif_domicile:'Justificatif de domicile'
+  };
+
+  // Calculer le niveau max validable avec les docs fournis
+  function niveauValidable(){
+    if(KYC_REQ['KYC3'].every(function(d){return docsIds.indexOf(d)>=0;})) return 'KYC3';
+    if(KYC_REQ['KYC2'].every(function(d){return docsIds.indexOf(d)>=0;})) return 'KYC2';
+    if(KYC_REQ['KYC1'].every(function(d){return docsIds.indexOf(d)>=0;})) return 'KYC1';
+    return null;
+  }
+
+  var listEl=document.getElementById('kyc-levels-list');
+  listEl.innerHTML='';
+
+  var nbRatt=(G.user&&G.user.nbRattaches)||0;
   var levels=[
-    {id:'KYC1',label:'KYC 1',plafond:'20 000 F/mois',docs:'Selfie uniquement',color:'#22c55e'},
-    {id:'KYC2',label:'KYC 2',plafond:'50 000 F/mois',docs:'Selfie + CNI recto + CNI verso',color:'#3b82f6'},
-    {id:'KYC3',label:'KYC 3',plafond:'100 000 F/mois',docs:'Selfie + CNI + Extrait naissance + Justificatif domicile',color:'#8b5cf6'}
+    {id:'KYC1',label:'KYC 1',plafond:'20 000 F/mois',requis:KYC_REQ['KYC1'],color:'#22c55e',
+     condFilleuls:0,condLabel:'Pas de condition de filleuls'},
+    {id:'KYC2',label:'KYC 2',plafond:'50 000 F/mois (si ≥200 rattachés)',requis:KYC_REQ['KYC2'],color:'#3b82f6',
+     condFilleuls:200,condLabel:'200 filleuls rattachés requis · '+nbRatt+'/200'},
+    {id:'KYC3',label:'KYC 3',plafond:'100 000 F/mois (si ≥500 rattachés)',requis:KYC_REQ['KYC3'],color:'#8b5cf6',
+     condFilleuls:500,condLabel:'500 filleuls rattachés requis · '+nbRatt+'/500'}
   ];
+
   levels.forEach(function(lv){
-    var isActive=niveau===lv.id;
+    var requis=lv.requis;
+    var fournis=requis.filter(function(d){return docsIds.indexOf(d)>=0;});
+    var manquants=requis.filter(function(d){return docsIds.indexOf(d)<0;});
+    var complet=manquants.length===0;
+    var isCurrentLevel=niveauKyc===lv.id;
     var isPending=kycDemande===lv.id;
-    var selfieManquant=lv.id==='KYC1'&&isActive&&!selfieOk;
+    var isActif=isCurrentLevel&&statutCompte==='actif'&&complet;
+    var isEnAttente=isCurrentLevel&&(statutCompte==='en_attente'||!complet);
+
+    // Badge statut
+    var badge;
+    if(isActif){
+      badge='<span style="background:'+lv.color+'22;color:'+lv.color+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">Actif ✓</span>';
+    } else if(isPending||isEnAttente){
+      badge='<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">En attente</span>';
+    } else {
+      badge='<span style="background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">A debloquer</span>';
+    }
+
+    // Bordure selon état
+    var borderColor=isActif?lv.color:(isPending||isEnAttente)?'#f59e0b':'#e5e7eb';
     var card=document.createElement('div');
-    card.style.cssText='background:#fff;border:1.5px solid '+(selfieManquant?'#f59e0b':isActive?lv.color:isPending?'#f59e0b':'#e5e7eb')+';border-radius:14px;padding:14px 16px;margin-bottom:10px';
-    var badge=selfieManquant?'<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">Photo manquante</span>'
-      :isActive?'<span style="background:'+lv.color+'22;color:'+lv.color+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">Actif</span>'
-      :isPending?'<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">En attente validation</span>'
-      :'<span style="background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700">A debloquer</span>';
-    card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:16px;font-weight:900;color:'+lv.color+'">'+lv.label+'</div>'+badge+'</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-bottom:4px">Plafond : <strong>'+lv.plafond+'</strong></div>'
-      +'<div style="font-size:11px;color:#9ca3af;margin-bottom:10px">'+lv.docs+'</div>';
-    if(selfieManquant){
-      var btn=document.createElement('button');btn.textContent='Envoyer mon selfie';
-      btn.style.cssText='width:100%;padding:11px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
-      btn.addEventListener('click',function(){lancerUploadKyc('KYC1');});card.appendChild(btn);
-    }else if(!isActive&&!isPending){
-      var btn=document.createElement('button');btn.textContent='Soumettre mes documents';
-      btn.style.cssText='width:100%;padding:11px;background:'+lv.color+';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
-      btn.addEventListener('click',(function(lvId){return function(){lancerUploadKyc(lvId);};})(lv.id));card.appendChild(btn);
-    }else if(isPending){
+    card.style.cssText='background:#fff;border:1.5px solid '+borderColor+';border-radius:14px;padding:14px 16px;margin-bottom:10px';
+
+    var docsHtml='';
+    // Afficher les docs requis avec état (✅ fourni / 📷 manquant)
+    requis.forEach(function(d){
+      var ok=docsIds.indexOf(d)>=0;
+      docsHtml+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
+        +'<span style="font-size:12px">'+(ok?'✅':'📷')+'</span>'
+        +'<span style="font-size:11px;color:'+(ok?'#22c55e':'#9ca3af')+'">'+(KYC_DOC_LABELS[d]||d)+'</span>'
+        +'</div>';
+    });
+
+    // Badge filleuls requis
+    var filleulsHtml='';
+    if(lv.condFilleuls>0){
+      var ok=nbRatt>=lv.condFilleuls;
+      filleulsHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:6px 8px;background:'+(ok?'#f0fdf4':'#fef3c7')+';border-radius:8px">'
+        +'<span style="font-size:11px">'+(ok?'✅':'⚠️')+'</span>'
+        +'<span style="font-size:11px;color:'+(ok?'#15803d':'#92400e')+';font-weight:600">'+lv.condLabel+'</span>'
+        +'<span style="font-size:10px;color:#6b7280;margin-left:auto">dépôt/transfert reçu ≥500 FCFA</span>'
+        +'</div>';
+    }
+    card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<div style="font-size:16px;font-weight:900;color:'+lv.color+'">'+lv.label+'</div>'+badge+'</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-bottom:6px">Plafond : <strong>'+lv.plafond+'</strong></div>'
+      +filleulsHtml
+      +'<div style="margin-bottom:10px">'+docsHtml+'</div>';
+
+    // Bouton d'action selon état
+    if(isActif){
+      // Rien — niveau validé
+    } else if(isPending&&complet){
+      // Docs complets mais en attente de validation admin
       var msg=document.createElement('div');
       msg.style.cssText='padding:8px 12px;background:#fef3c7;border-radius:10px;font-size:12px;color:#92400e;text-align:center;font-weight:600';
-      msg.textContent='Documents envoyes - validation en cours par le support';card.appendChild(msg);
+      msg.textContent='Documents complets — validation en cours (sous 48h)';
+      card.appendChild(msg);
+    } else if(isCurrentLevel&&!complet){
+      // Niveau actuel mais docs incomplets — compléter
+      var btn=document.createElement('button');
+      btn.textContent='Compléter les documents manquants';
+      btn.style.cssText='width:100%;padding:11px;background:'+lv.color+';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.addEventListener('click',(function(lvId){return function(){lancerUploadKycManquants(lvId,manquants);};})(lv.id));
+      card.appendChild(btn);
+    } else if(!isCurrentLevel&&!isActif){
+      // Niveau supérieur à débloquer
+      var btn=document.createElement('button');
+      btn.textContent='Soumettre mes documents';
+      btn.style.cssText='width:100%;padding:11px;background:'+lv.color+';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.addEventListener('click',(function(lvId){return function(){lancerUploadKyc(lvId);};})(lv.id));
+      card.appendChild(btn);
     }
+
     listEl.appendChild(card);
   });
 }
+
+
+// Upload uniquement les documents manquants d'un niveau
+function lancerUploadKycManquants(niveau, manquants){
+  kycTargetLevel=niveau;kycPhotosClient={};
+  document.getElementById('kyc-levels-list').style.display='none';
+  document.getElementById('kyc-upload-zone').style.display='';
+  document.getElementById('kyc-upload-title').textContent='Documents manquants pour '+niveau;
+  document.getElementById('kyc-upload-err').style.display='none';
+  var listEl=document.getElementById('kyc-docs-list');listEl.innerHTML='';
+  var KYC_DOC_LABELS={
+    selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',
+    extrait_naissance:'Extrait de naissance',justificatif_domicile:'Justificatif de domicile'
+  };
+  var KYC_DOC_CAM={selfie:'user',cni_recto:'environment',cni_verso:'environment',extrait_naissance:'environment',justificatif_domicile:'environment'};
+  var KYC_DOC_ICO={selfie:'🤳',cni_recto:'🪪',cni_verso:'🪪',extrait_naissance:'📄',justificatif_domicile:'🏠'};
+  // N'afficher QUE les docs manquants
+  manquants.forEach(function(docId){
+    var slot=document.createElement('div');slot.id='kyc-slot-'+docId;
+    slot.style.cssText='display:flex;align-items:center;gap:12px;padding:11px 12px;background:#f9fafb;border-radius:12px;border:1.5px solid #e5e7eb;margin-bottom:8px;cursor:pointer';
+    slot.innerHTML='<div id="kyc-ico-'+docId+'" style="width:40px;height:40px;border-radius:10px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(KYC_DOC_ICO[docId]||'📄')+'</div>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:700">'+(KYC_DOC_LABELS[docId]||docId)+'</div>'
+      +'<div id="kyc-lbl-'+docId+'" style="font-size:11px;color:#9ca3af;margin-top:1px">Appuyez pour prendre la photo</div></div>'
+      +'<div id="kyc-chk-'+docId+'" style="color:#d1d5db;font-size:18px">📷</div>';
+    slot.addEventListener('click',(function(id){return function(){document.getElementById('kyc-inp-'+id).click();};})(docId));
+    listEl.appendChild(slot);
+    var inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';inp.capture=KYC_DOC_CAM[docId]||'environment';
+    inp.id='kyc-inp-'+docId;inp.style.display='none';
+    inp.addEventListener('change',(function(id){return function(){
+      if(this.files&&this.files[0]){
+        kycPhotosClient[id]=this.files[0];
+        var sl=document.getElementById('kyc-slot-'+id);if(sl){sl.style.border='1.5px solid #22c55e';sl.style.background='#f0fdf4';}
+        var ic=document.getElementById('kyc-ico-'+id);if(ic){ic.style.background='#dcfce7';ic.textContent='✅';}
+        var lb=document.getElementById('kyc-lbl-'+id);if(lb){lb.style.color='#22c55e';lb.textContent='Photo prise';}
+        var ck=document.getElementById('kyc-chk-'+id);if(ck){ck.textContent='✓';ck.style.color='#22c55e';}
+      }
+    };})(docId));
+    listEl.appendChild(inp);
+  });
+  // Modifier soumettreKyc pour n'envoyer que les docs manquants
+  document.getElementById('kyc-submit-btn').setAttribute('data-manquants', JSON.stringify(manquants));
+}
+
 
 function lancerUploadKyc(niveau){
   kycTargetLevel=niveau;kycPhotosClient={};
@@ -1140,18 +1558,36 @@ function lancerUploadKyc(niveau){
 }
 
 async function soumettreKyc(){
-  var docs=KYC_UPGRADE_DOCS[kycTargetLevel]||[];
-  var manquants=docs.filter(function(d){return !kycPhotosClient[d.id];});
+  // Vérifier si mode "docs manquants seulement"
+  var btn=document.getElementById('kyc-submit-btn');
+  var manquantsMode=btn&&btn.getAttribute('data-manquants');
+  var docsIds=manquantsMode?JSON.parse(manquantsMode):null;
+
+  var docs;
+  if(docsIds){
+    // Mode manquants : vérifier uniquement les docs manquants
+    docs=docsIds.map(function(id){return {id:id};});
+  } else {
+    docs=KYC_UPGRADE_DOCS[kycTargetLevel]||[];
+  }
+  var manquants=docs.filter(function(d){return !kycPhotosClient[d.id||d];});
   var errEl=document.getElementById('kyc-upload-err');
-  if(manquants.length){errEl.textContent='Photos manquantes : '+manquants.map(function(d){return d.label;}).join(', ');errEl.style.display='';return;}
+  if(manquants.length){
+    errEl.textContent='Photos manquantes : '+manquants.map(function(d){return d.label||d.id||d;}).join(', ');
+    errEl.style.display='';return;
+  }
   errEl.style.display='none';
   var btn=document.getElementById('kyc-submit-btn');btn.disabled=true;btn.textContent='Envoi en cours...';
   var userId=G.user&&G.user.id;
   for(var i=0;i<docs.length;i++){
-    var doc=docs[i];var file=kycPhotosClient[doc.id];if(!file)continue;
-    try{await uploadPhotoCloudinary(file,doc.id,userId);}
-    catch(e){errEl.textContent='Erreur '+doc.label+' : '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Envoyer';return;}
+    var doc=docs[i];
+    var docId=doc.id||doc;
+    var file=kycPhotosClient[docId];if(!file)continue;
+    try{await uploadPhotoCloudinary(file,docId,userId);}
+    catch(e){errEl.textContent='Erreur '+(doc.label||docId)+' : '+e.message;errEl.style.display='';btn.disabled=false;btn.textContent='Envoyer';return;}
   }
+  // Nettoyer le mode manquants
+  if(btn)btn.removeAttribute('data-manquants');
   var isSelfieOnly=kycTargetLevel==='KYC1';
   if(!isSelfieOnly){
     try{
@@ -1244,5 +1680,36 @@ async function soumettreKyc(){
     </div>
   </div>
 </div>
+
+<!-- SHEET GAINS PARRAINAGE -->
+<div class="sh-ov" id="sh-gains">
+  <div class="sh"><div class="sh-bar"></div>
+    <div class="sh-top">
+      <div><div class="sh-title">Mes gains parrainage</div><div style="color:var(--m);font-size:12px">10% des frais de vos filleuls rattachés</div></div>
+      <button class="sh-x" onclick="closeSh('gains')">✕</button>
+    </div>
+    <div class="sh-body" id="sh-gains-body">
+      <div style="padding:24px;text-align:center"><div class="spin"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉCRAN COMMISSIONS -->
+<div class="scr" id="s-commissions">
+  <div style="background:linear-gradient(135deg,#d97706,#f59e0b);padding:52px 20px 20px;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800;color:#fff">Mes gains 💰</div>
+    <div style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px">Commissions de parrainage</div>
+  </div>
+  <div style="padding:16px 16px 100px" id="comm-content">
+    <div style="padding:32px;text-align:center"><div class="spin"></div></div>
+  </div>
+  <nav class="bnav">
+    <button class="nb" id="nb-home-c" onclick="setTab('home')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Accueil</button>
+    <button class="nb" id="nb-history-c" onclick="setTab('history')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Historique</button>
+    <button class="nb on" id="nb-commissions-c" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-profile-c" onclick="setTab('profile')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Paramètres</button>
+  </nav>
+</div>
+
 </body>
 </html>
