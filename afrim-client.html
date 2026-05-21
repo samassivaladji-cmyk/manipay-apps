@@ -617,11 +617,12 @@ function T(msg,isErr){var el=document.getElementById('toast');el.textContent=msg
 function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 
-function S(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
+function S(id){if(G.locked)return;document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
 function openSh(id){document.getElementById('sh-'+id).classList.add('on');}
 function closeSh(id){document.getElementById('sh-'+id).classList.remove('on');}
 
 function setTab(t){
+  if(G.locked)return;
   G.tab=t;
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
   document.querySelectorAll('[id^="nb-'+t+'"]').forEach(function(b){b.classList.add('on');});
@@ -1317,6 +1318,7 @@ var _lockDelay=60000;
 
 function verrouillerApp(){
   if(!G.token)return;
+  G.locked=true;
   document.querySelectorAll('.sh-ov.on').forEach(function(s){s.classList.remove('on');});
   var p=document.getElementById('wave-qr-popup');if(p)p.style.display='none';
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
@@ -1341,6 +1343,7 @@ async function deverrouillerApp(){
     if(r.data&&r.data.accessToken){G.token=r.data.accessToken;LS.set('afrim_token',G.token);}
     errEl.style.display='none';
     pinEl.value='';
+    G.locked=false;
     document.getElementById('s-lock').classList.remove('on');
     setTab(G.tab||'home');
   }catch(e){
@@ -1370,20 +1373,34 @@ window.addEventListener('pagehide',function(){
   if(G.token)LS.set('afrim_lock_time',Date.now().toString());
 });
 
-// Au chargement : vérifier si 60s écoulées
-(function(){
+// Au chargement : vérifier si 60s écoulées (exécuté dans init)
+function checkLockOnLoad(){
   var t=LS.get('afrim_lock_time');
-  if(t&&G.token&&Date.now()-Number(t)>=_lockDelay){
-    setTimeout(verrouillerApp,500);
-  }
   LS.remove('afrim_lock_time');
-})();
+  if(t&&G.token&&Date.now()-Number(t)>=_lockDelay){
+    return true; // doit verrouiller
+  }
+  return false;
+}
 
 async function logout(){try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}G.token=G.refresh=G.user=G.compte=null;LS.remove('afrim_token');LS.remove('afrim_refresh');LS.remove('afrim_user');S('s-login');}
 
 document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);if(id==='send')rstSend();if(id==='pay')rstPay();if(id==='inscription')rstIns();}});});
 
-(function init(){setKyc('KYC1',null);if(G.token&&G.user&&G.user.role==='client'){setTab('home');return;}S('s-login');})();
+(function init(){
+  setKyc('KYC1',null);
+  if(G.token&&G.user&&G.user.role==='client'){
+    // Vérifier si l'app doit être verrouillée
+    if(checkLockOnLoad()){
+      G.locked=false; // reset pour que verrouillerApp puisse s'afficher
+      verrouillerApp();
+    } else {
+      setTab('home');
+    }
+    return;
+  }
+  S('s-login');
+})();
 </script>
 </div>
 <div class="sh-ov" id="sh-change-pin">
