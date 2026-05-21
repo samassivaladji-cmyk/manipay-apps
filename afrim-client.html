@@ -907,7 +907,7 @@ function dessinerQRHome(cid,data,color){
   el.appendChild(img);
 }
 
-var _scanStream=null,_scanInterval=null;
+var _scanStream=null,_scanInterval=null,wqrTrack=null,wqrFlashOn=false;
 
 function ouvrirPopupQR(){
   var popup=document.getElementById('wave-qr-popup');
@@ -934,6 +934,7 @@ function _lancerCamera(){
     navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}})
     .then(function(stream){
       _scanStream=stream;
+      wqrTrack=stream.getVideoTracks()[0];
       video.srcObject=stream;
       video.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block';
       video.play().catch(function(){});
@@ -961,6 +962,7 @@ function _lancerCamera(){
     navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}})
     .then(function(stream){
       _scanStream=stream;
+      wqrTrack=stream.getVideoTracks()[0];
       video.srcObject=stream;
       video.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block';
       video.play().catch(function(){});
