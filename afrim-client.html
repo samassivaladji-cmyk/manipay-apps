@@ -1540,5 +1540,41 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
     </div>
   </div>
 </div>
+
+<!-- Firebase Analytics -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCtWT_Z6VznIIgM5mOp_Ikt-aTyrm5JGyY",
+    authDomain: "afrim-pay.firebaseapp.com",
+    projectId: "afrim-pay",
+    storageBucket: "afrim-pay.firebasestorage.app",
+    messagingSenderId: "20456105449",
+    appId: "1:20456105449:web:7cd703cf77924420621778",
+    measurementId: "G-VZ1C89BDTE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Événement : ouverture de l'app
+  logEvent(analytics, 'app_open', { app: 'afrim-client' });
+
+  // Suivi des navigations entre écrans
+  window.fbLogScreen = (screenName) => {
+    logEvent(analytics, 'screen_view', { screen_name: screenName, app: 'afrim-client' });
+  };
+
+  // Suivi des transactions
+  window.fbLogTransaction = (type, amount) => {
+    logEvent(analytics, 'transaction', { type: type, amount: amount, currency: 'XOF' });
+  };
+
+  // Suivi login/logout
+  window.fbLogLogin = () => logEvent(analytics, 'login', { method: 'PIN' });
+  window.fbLogLogout = () => logEvent(analytics, 'logout');
+</script>
 </body>
 </html>
