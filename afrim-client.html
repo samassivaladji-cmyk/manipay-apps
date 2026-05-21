@@ -431,6 +431,11 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
           <input class="inp" id="send-tel" type="tel" placeholder="07 XX XX XX" inputmode="numeric" style="flex:1" oninput="var ok=!!this.value;document.getElementById('send-ok-btn').disabled=!ok;document.getElementById('send-ok-btn').style.opacity=ok?'1':'.4'"/>
           <button id="send-ok-btn" onclick="selDest(document.getElementById('send-tel').value)" disabled style="opacity:.4;padding:0 18px;background:var(--g);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">OK</button>
         </div>
+        <button id="contacts-btn" onclick="choisirContact()" style="width:100%;padding:12px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;color:#059669;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Choisir dans les contacts
+        </button>
+        <div id="contacts-list" style="max-height:200px;overflow-y:auto;margin-bottom:4px"></div>
       </div>
       <div id="send-s2" style="display:none">
         <div id="send-dest" class="card" style="margin-bottom:16px;display:flex;align-items:center;gap:12px"></div>
@@ -722,7 +727,7 @@ function selDest(tel){if(!tel)return;sendDest={tel};document.getElementById('sen
 function setSendAmt(v){document.getElementById('send-amt').value=v;calcSend();}
 function calcSend(){var v=Number(document.getElementById('send-amt').value),ok=v>0;document.getElementById('send-recap').style.display=ok?'':'none';if(ok)document.getElementById('send-recap').innerHTML='<div class="srow"><span style="color:var(--m);font-size:13px">Montant</span><span style="font-weight:700">'+F(v)+'</span></div><div class="srow"><span style="color:var(--m);font-size:13px">Frais</span><span style="color:var(--g);font-weight:700">Gratuit ✓</span></div><div class="row" style="padding-top:10px"><span style="font-weight:700">Total débité</span><span style="color:var(--g);font-size:18px;font-weight:900">'+F(v)+'</span></div>';document.getElementById('btn-send').disabled=!ok;document.getElementById('btn-send').style.opacity=ok?'1':'.4';}
 async function doSend(){var amt=Number(document.getElementById('send-amt').value);var motif=document.getElementById('send-motif').value;var solde=G.compte?Number(G.compte.solde):0;if(amt>solde){document.getElementById('send-err2').textContent='Solde insuffisant ('+F(solde)+' disponible)';document.getElementById('send-err2').style.display='';return;}document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='';try{var r=await post('/transactions/transfer',{telephone:sendDest.tel,montant:amt,motif:motif||undefined});document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='';document.getElementById('send-succ-txt').textContent=F(amt)+' envoyés à '+sendDest.tel;document.getElementById('send-succ-ref').textContent=r.data.reference;rafraichir();}catch(e){document.getElementById('send-loading').style.display='none';document.getElementById('send-s2').style.display='';document.getElementById('send-err2').textContent=e.message;document.getElementById('send-err2').style.display='';}}
-function rstSend(){sendDest=null;['send-tel','send-amt','send-motif'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('send-s1').style.display='';document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='none';document.getElementById('send-recap').style.display='none';document.getElementById('send-err1').style.display='none';document.getElementById('send-err2').style.display='none';document.getElementById('btn-send').disabled=true;document.getElementById('btn-send').style.opacity='.4';document.getElementById('send-ok-btn').disabled=true;document.getElementById('send-ok-btn').style.opacity='.4';}
+function rstSend(){var cl=document.getElementById('contacts-list');if(cl)cl.innerHTML='';var cb=document.getElementById('contacts-btn');if(cb)cb.style.display='';sendDest=null;['send-tel','send-amt','send-motif'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('send-s1').style.display='';document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='none';document.getElementById('send-recap').style.display='none';document.getElementById('send-err1').style.display='none';document.getElementById('send-err2').style.display='none';document.getElementById('btn-send').disabled=true;document.getElementById('btn-send').style.opacity='.4';document.getElementById('send-ok-btn').disabled=true;document.getElementById('send-ok-btn').style.opacity='.4';}
 
 // ——— PAGE PAIEMENTS STYLE WAVE ———
 var SERVICES_PAY=[
@@ -1388,6 +1393,82 @@ function checkLockOnLoad(){
     return true; // doit verrouiller
   }
   return false;
+}
+
+async function choisirContact(){
+  var btn=document.getElementById('contacts-btn');
+  var listEl=document.getElementById('contacts-list');
+
+  // Méthode 1 : Contact Picker API (Android Chrome 80+)
+  if('contacts' in navigator && 'ContactsManager' in window){
+    try{
+      var contacts=await navigator.contacts.select(['name','tel'],{multiple:false});
+      if(contacts&&contacts.length&&contacts[0].tel&&contacts[0].tel.length){
+        var tel=contacts[0].tel[0].replace(/[^0-9+]/g,'');
+        var inp=document.getElementById('send-tel');
+        if(inp){
+          inp.value=tel;
+          inp.dispatchEvent(new Event('input'));
+          // Activer le bouton OK
+          var okBtn=document.getElementById('send-ok-btn');
+          if(okBtn){okBtn.disabled=false;okBtn.style.opacity='1';}
+        }
+        if(listEl)listEl.innerHTML='';
+      }
+      return;
+    }catch(e){
+      // Utilisateur a annulé ou API non dispo — continuer
+      if(e.name==='AbortError')return;
+    }
+  }
+
+  // Méthode 2 : Afficher les contacts récents AFRIM PAY (depuis l'historique)
+  if(btn)btn.style.display='none';
+  if(listEl){
+    listEl.innerHTML='<div style="padding:8px;color:#6b7280;font-size:12px;text-align:center">Chargement des contacts récents...</div>';
+  }
+  try{
+    var r=await get('/transactions?limit=50&type=transfert');
+    var txns=r.data||[];
+    // Extraire les destinataires uniques
+    var seen={};var contacts2=[];
+    txns.forEach(function(t){
+      var tel=t.destinataireTelephone||t.receiverPhone||'';
+      var nom=t.destinataireNom||t.receiverName||tel;
+      if(tel&&!seen[tel]){seen[tel]=1;contacts2.push({tel:tel,nom:nom});}
+    });
+    if(!contacts2.length){
+      if(listEl)listEl.innerHTML='<div style="padding:10px;color:#6b7280;font-size:13px;text-align:center">Aucun contact récent</div>';
+      if(btn)btn.style.display='';
+      return;
+    }
+    if(!listEl)return;
+    listEl.innerHTML='<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;padding:6px 4px;margin-bottom:4px">Contacts récents</div>';
+    contacts2.slice(0,10).forEach(function(c){
+      var initiale=(c.nom||c.tel).charAt(0).toUpperCase();
+      var div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:12px;border:1px solid #f3f4f6;margin-bottom:6px;cursor:pointer';
+      div.innerHTML='<div style="width:40px;height:40px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#059669;flex-shrink:0">'+initiale+'</div><div><div style="font-size:14px;font-weight:700">'+c.nom+'</div><div style="font-size:12px;color:#6b7280;font-family:monospace">'+c.tel+'</div></div>';
+      (function(tel,nom){div.addEventListener('click',function(){selContactRecent(tel,nom);});})(c.tel,c.nom);
+      listEl.appendChild(div);
+    });
+    if(btn)btn.style.display='';
+  }catch(e){
+    if(listEl)listEl.innerHTML='';
+    if(btn)btn.style.display='';
+  }
+}
+
+function selContactRecent(tel,nom){
+  var inp=document.getElementById('send-tel');
+  if(inp){
+    inp.value=tel;
+    inp.dispatchEvent(new Event('input'));
+    var okBtn=document.getElementById('send-ok-btn');
+    if(okBtn){okBtn.disabled=false;okBtn.style.opacity='1';}
+  }
+  var listEl=document.getElementById('contacts-list');
+  if(listEl)listEl.innerHTML='';
 }
 
 async function logout(){try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}G.token=G.refresh=G.user=G.compte=null;LS.remove('afrim_token');LS.remove('afrim_refresh');LS.remove('afrim_user');S('s-login');}
