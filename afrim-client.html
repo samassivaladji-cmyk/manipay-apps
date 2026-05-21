@@ -74,7 +74,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 .params-sub{font-size:12px;color:#6b7280;margin-top:1px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
 </head>
 <body>
 <div id="app">
@@ -1357,20 +1357,27 @@ async function deverrouillerApp(){
 // Détecter arrière-plan / premier plan
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
-    if(G.token&&!_lockTimer){
+    // App passe en arrière-plan → sauvegarder l'heure
+    if(G.token&&G.user){
+      LS.set('afrim_lock_time', Date.now().toString());
       _lockTimer=setTimeout(function(){
-        verrouillerApp();
         _lockTimer=null;
+        verrouillerApp();
       },_lockDelay);
     }
   } else {
+    // App revenue au premier plan → vérifier le temps écoulé
     if(_lockTimer){clearTimeout(_lockTimer);_lockTimer=null;}
+    var t=LS.get('afrim_lock_time');
+    if(t&&G.token&&G.user&&(Date.now()-Number(t))>=_lockDelay){
+      verrouillerApp();
+    }
   }
 });
 
-// Sauvegarder l'heure de sortie
+// Sauvegarder l'heure à la fermeture
 window.addEventListener('pagehide',function(){
-  if(G.token)LS.set('afrim_lock_time',Date.now().toString());
+  if(G.token&&G.user)LS.set('afrim_lock_time',Date.now().toString());
 });
 
 // Au chargement : vérifier si 60s écoulées (exécuté dans init)
