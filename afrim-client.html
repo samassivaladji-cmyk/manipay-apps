@@ -1193,101 +1193,173 @@ function ouvrirKycUpgrade(){
 
 function _renderKyc(docsExistants){
   var u=G.user||{};
-  var kyc=u.kycNiveau||'KYC1';
-  var statut=u.statut||'';
+  var kyc=u.kycNiveau||'KYC1';   // niveau actuel de l'utilisateur
+  var statut=u.statut||'';        // 'actif' ou 'en_attente'
   var el=document.getElementById('kyc-body');
   if(!el)return;
 
-  // IDs des docs déjà soumis/validés en base
-  var docsValides={};
-  (docsExistants||[]).forEach(function(d){
-    docsValides[d.typeDocument||d.type_document]=true;
-  });
-
+  // ── Définitions ──────────────────────────────────────────────────
   var KYC_DOCS={
-    KYC1:[{id:'selfie',label:'Selfie',icon:'🤳',desc:'Votre visage bien visible',camera:'user'}],
-    KYC2:[{id:'selfie',label:'Selfie',icon:'🤳',desc:'Votre visage bien visible',camera:'user'},
-          {id:'cni_recto',label:'CNI Recto',icon:'🪪',desc:'Recto carte identité nationale',camera:'environment'},
-          {id:'cni_verso',label:'CNI Verso',icon:'🪪',desc:'Verso carte identité nationale',camera:'environment'}],
-    KYC3:[{id:'selfie',label:'Selfie',icon:'🤳',desc:'Votre visage bien visible',camera:'user'},
-          {id:'cni_recto',label:'CNI Recto',icon:'🪪',desc:'Recto carte identité nationale',camera:'environment'},
-          {id:'cni_verso',label:'CNI Verso',icon:'🪪',desc:'Verso carte identité nationale',camera:'environment'},
-          {id:'extrait_naissance',label:'Extrait de naissance',icon:'📄',desc:'Original ou copie certifiée',camera:'environment'},
-          {id:'justificatif_domicile',label:'Justificatif de domicile',icon:'🏠',desc:'Facture ou attestation récente',camera:'environment'}]
+    KYC1:[{id:'selfie',         label:'Selfie',                  icon:'🤳',camera:'user'}],
+    KYC2:[{id:'selfie',         label:'Selfie',                  icon:'🤳',camera:'user'},
+          {id:'cni_recto',      label:'CNI Recto',               icon:'🪪',camera:'environment'},
+          {id:'cni_verso',      label:'CNI Verso',               icon:'🪪',camera:'environment'}],
+    KYC3:[{id:'selfie',         label:'Selfie',                  icon:'🤳',camera:'user'},
+          {id:'cni_recto',      label:'CNI Recto',               icon:'🪪',camera:'environment'},
+          {id:'cni_verso',      label:'CNI Verso',               icon:'🪪',camera:'environment'},
+          {id:'extrait_naissance',     label:'Extrait de naissance',    icon:'📄',camera:'environment'},
+          {id:'justificatif_domicile', label:'Justificatif de domicile',icon:'🏠',camera:'environment'}]
   };
-
-  var NOUVEAUX_DOCS={
+  // Docs propres à chaque niveau (ceux qu'on soumet pour ce niveau)
+  var DOCS_NIVEAU={
     KYC1:['selfie'],
     KYC2:['cni_recto','cni_verso'],
     KYC3:['extrait_naissance','justificatif_domicile']
   };
-
   var PLAFONDS={KYC1:'20 000',KYC2:'50 000',KYC3:'100 000'};
   var KYC_CONDITIONS={
-    KYC1:{filleuls:0,desc:'Accès de base — Un simple selfie suffit'},
+    KYC1:{filleuls:0,  desc:'Accès de base — Un simple selfie suffit'},
     KYC2:{filleuls:200,desc:'200 filleuls requis pour le plafond 50 000 F'},
     KYC3:{filleuls:500,desc:'500 filleuls requis pour le plafond 100 000 F'}
   };
-
-  var nbRatt=Number((u.nbRattaches)||0);
-  var niveaux=['KYC1','KYC2','KYC3'];
   var colors={KYC1:'#22c55e',KYC2:'#3b82f6',KYC3:'#8b5cf6'};
-  var kycOrder={KYC1:1,KYC2:2,KYC3:3};
+  var ORDER={KYC1:1,KYC2:2,KYC3:3};
+  var niveaux=['KYC1','KYC2','KYC3'];
+  var nbRatt=Number(u.nbRattaches||0);
+
+  // Docs soumis en base (peu importe le statut)
+  var docsSoumis={};
+  (docsExistants||[]).forEach(function(d){
+    docsSoumis[d.typeDocument||d.type_document]=true;
+  });
 
   window._kycPhotos={};
 
+  // ── Règle centrale ───────────────────────────────────────────────
+  // Un document est VERROUILLÉ (non modifiable) si :
+  //   a) Son niveau est STRICTEMENT inférieur au niveau actuel  → forcément validé
+  //   b) Son niveau EST le niveau actuel ET statut === 'actif'  → validé par back-office
+  // Un document est MODIFIABLE si :
+  //   Son niveau EST le niveau actuel ET statut === 'en_attente'
+  // Un document est À FOURNIR si :
+  //   Son niveau est le PROCHAIN niveau (niveau actuel + 1)
+
+  function docVerrouille(niv, docId){
+    var ord=ORDER[niv];
+    var actOrd=ORDER[kyc];
+    if(ord < actOrd) return true;                         // niveau passé → verrouillé
+    if(ord === actOrd && statut==='actif') return true;   // niveau actuel validé → verrouillé
+    // Niveau suivant : doc déjà soumis en base (ex: selfie du KYC2 déjà validé au KYC1)
+    if(ord === actOrd+1 && docsSoumis[docId]) return true;
+    return false;
+  }
+
+  function docModifiable(niv, docId){
+    // Niveau actuel EN ATTENTE → les docs de ce niveau sont modifiables
+    return ORDER[niv]===ORDER[kyc] && statut!=='actif';
+  }
+
+  function docAFournir(niv, docId){
+    // Prochain niveau → docs à fournir pour upgrade
+    return ORDER[niv]===ORDER[kyc]+1;
+  }
+
+  // ── Barre de progression ─────────────────────────────────────────
+  var statutLabel = statut==='actif'
+    ? '<span style="color:#22c55e;font-size:11px;font-weight:700">● Actif</span>'
+    : '<span style="color:#f59e0b;font-size:11px;font-weight:700">● En attente</span>';
   var h='<div style="background:#f9fafb;border-radius:14px;padding:14px;margin-bottom:16px">';
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
   h+='<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">Niveau actuel : '+kyc+'</div>';
-  h+='<div style="font-size:11px;color:#6b7280">'+kycOrder[kyc]+'/3</div></div>';
+  h+=statutLabel+'</div>';
   h+='<div style="background:#e5e7eb;border-radius:99px;height:8px">';
-  h+='<div style="background:var(--g);border-radius:99px;height:8px;width:'+(kyc==='KYC1'?'33':kyc==='KYC2'?'66':'100')+'%;transition:.4s"></div></div></div>';
+  h+='<div style="background:var(--g);border-radius:99px;height:8px;transition:.4s;width:'+(kyc==='KYC1'?'33':kyc==='KYC2'?'66':'100')+'%"></div>';
+  h+='</div></div>';
 
+  // ── Rendu de chaque niveau ───────────────────────────────────────
   niveaux.forEach(function(niv){
     var col=colors[niv];
-    var isActive=kyc===niv&&statut==='actif';
-    var isNext=kycOrder[niv]===kycOrder[kyc]+1;
-    var isFuture=kycOrder[niv]>kycOrder[kyc]+1;
-    var dejaCeNiveau=kycOrder[niv]<=kycOrder[kyc];
-    var nouvDocs=NOUVEAUX_DOCS[niv]||[];
+    var ord=ORDER[niv];
+    var actOrd=ORDER[kyc];
     var allDocs=KYC_DOCS[niv]||[];
+    var docsNiv=DOCS_NIVEAU[niv]||[];
+    var estNiveauActuel=(ord===actOrd);
+    var estNiveauSuivant=(ord===actOrd+1);
+    var estNiveauFutur=(ord>actOrd+1);
+    var estNiveauPasse=(ord<actOrd);
+    var estActif=(estNiveauActuel && statut==='actif');
+    var estEnAttente=(estNiveauActuel && statut!=='actif');
 
-    var borderStyle=isActive?'2px solid '+col:(isNext?'1.5px solid '+col+'88':'1.5px solid #e5e7eb');
-    var opacity=isFuture?'opacity:.45;':'';
-    h+='<div style="'+opacity+'border:'+borderStyle+';border-radius:16px;padding:16px;margin-bottom:12px">';
+    // Style bordure
+    var border;
+    if(estActif||estNiveauPasse) border='2px solid '+col;
+    else if(estEnAttente)        border='2px solid #f59e0b';
+    else if(estNiveauSuivant)    border='1.5px solid '+col+'66';
+    else                         border='1.5px solid #e5e7eb';
 
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    var opacity=estNiveauFutur?'opacity:.4;':'';
+    h+='<div style="'+opacity+'border:'+border+';border-radius:16px;padding:16px;margin-bottom:12px">';
+
+    // En-tête
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     h+='<div style="font-size:16px;font-weight:900;color:'+col+'">'+niv+'</div>';
-    if(isActive){
-      h+='<span style="background:'+col+'22;color:'+col+';padding:4px 12px;border-radius:99px;font-size:10px;font-weight:800">✓ Actif</span>';
-    } else if(dejaCeNiveau){
-      h+='<span style="background:#f0fdf4;color:#15803d;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">✓ Complété</span>';
+    if(estActif){
+      h+='<span style="background:'+col+'18;color:'+col+';padding:4px 12px;border-radius:99px;font-size:10px;font-weight:800">✓ Actif</span>';
+    } else if(estNiveauPasse){
+      h+='<span style="background:#f0fdf4;color:#15803d;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">✓ Validé</span>';
+    } else if(estEnAttente){
+      h+='<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">⏳ En attente</span>';
     } else {
       h+='<span style="background:#f3f4f6;color:#6b7280;padding:4px 12px;border-radius:99px;font-size:10px">'+PLAFONDS[niv]+' F/mois</span>';
     }
     h+='</div>';
 
+    // Message informatif
+    if(estActif){
+      h+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#15803d">✅ Dossier validé par le back-office. Documents verrouillés.</div>';
+    } else if(estEnAttente){
+      h+='<div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#92400e">⏳ En attente de validation (délai : 48h). Vous pouvez encore remplacer vos photos.</div>';
+    }
+
+    // Conditions filleuls pour le niveau suivant
     var cond=KYC_CONDITIONS[niv];
-    if(cond&&(isNext||isActive)){
-      var condOk=cond.filleuls===0||nbRatt>=cond.filleuls;
-      h+='<div style="background:'+(condOk?'#f0fdf4':'#fef3c7')+';border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:'+(condOk?'#15803d':'#92400e')+'">';
-      h+=(condOk?'✅ ':'⚠️ ')+cond.desc;
-      if(cond.filleuls>0)h+=' <b>('+nbRatt+'/'+cond.filleuls+')</b>';
+    if(cond&&estNiveauSuivant&&cond.filleuls>0){
+      var condOk=nbRatt>=cond.filleuls;
+      h+='<div style="background:'+(condOk?'#f0fdf4':'#fef3c7')+';border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:'+(condOk?'#15803d':'#92400e')+'">';
+      h+=(condOk?'✅ ':'⚠️ ')+cond.desc+' <b>('+nbRatt+'/'+cond.filleuls+')</b>';
       h+='</div>';
     }
 
+    // Documents
     allDocs.forEach(function(doc){
       var key=niv+'-'+doc.id;
-      // Un doc est validé si : il est dans les docs du backend OU le niveau actuel dépasse ce niveau
-      var estValide=docsValides[doc.id]||(dejaCeNiveau&&nouvDocs.indexOf(doc.id)<0);
+      var verr=docVerrouille(niv,doc.id);
+      var modif=docModifiable(niv,doc.id);
+      var afournir=docAFournir(niv,doc.id);
 
-      if(estValide){
+      if(verr){
+        // ✅ Verrouillé — validé définitivement
         h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:10px;border:1px solid #a7f3d0;margin-bottom:6px">';
         h+='<div style="width:38px;height:38px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#15803d">'+doc.label+'</div>';
-        h+='<div style="font-size:11px;color:#22c55e">Déjà validé ✓</div></div>';
+        h+='<div style="font-size:11px;color:#22c55e">Validé ✓</div></div>';
         h+='<div style="font-size:20px">✅</div></div>';
-      } else if(isNext||isActive){
+      } else if(modif){
+        // 🔄 Modifiable — soumis mais en attente, peut remplacer
+        var dejaSoumis=docsSoumis[doc.id];
+        var bg=dejaSoumis?'#fef3c7':'#f9fafb';
+        var borderC=dejaSoumis?'#fde68a':'#e5e7eb';
+        var textColor=dejaSoumis?'#92400e':'#6b7280';
+        var desc=dejaSoumis?'Soumis — Appuyer pour remplacer':'Appuyer pour prendre la photo';
+        var icon=dejaSoumis?'🔄':'📷';
+        h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+bg+';border-radius:10px;border:1px solid '+borderC+';margin-bottom:6px;cursor:pointer">';
+        h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+textColor+'">'+doc.label+'</div>';
+        h+='<div id="kl-'+key+'" style="font-size:11px;color:'+textColor+'">'+desc+'</div></div>';
+        h+='<div id="kc-'+key+'" style="font-size:18px">'+icon+'</div></div>';
+        h+='<input type="file" accept="image/*" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
+      } else if(afournir){
+        // 📷 À fournir pour le niveau suivant
         h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:6px;cursor:pointer">';
         h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+doc.label+'</div>';
@@ -1297,14 +1369,18 @@ function _renderKyc(docsExistants){
       }
     });
 
-    if(isNext){
-      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:'+col+';color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;opacity:.5">Upgrade vers '+niv+' →</button>';
+    // Boutons d'action
+    if(estEnAttente){
+      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:#f59e0b;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5">Resoumettre le dossier →</button>';
+    } else if(estNiveauSuivant){
+      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:'+col+';color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5">Upgrade vers '+niv+' →</button>';
     }
     h+='</div>';
   });
 
   el.innerHTML=h;
 
+  // Clic slot → ouvre caméra directement
   el.querySelectorAll('[data-niv][data-doc]').forEach(function(slot){
     slot.addEventListener('click',function(){
       var inp=document.getElementById('ki-'+slot.dataset.niv+'-'+slot.dataset.doc);
@@ -1312,9 +1388,9 @@ function _renderKyc(docsExistants){
     });
   });
 
+  // Photo prise → aperçu + vérification bouton
   niveaux.forEach(function(niv){
-    var allDocs=KYC_DOCS[niv]||[];
-    allDocs.forEach(function(doc){
+    KYC_DOCS[niv].forEach(function(doc){
       var inp=document.getElementById('ki-'+niv+'-'+doc.id);
       if(!inp)return;
       inp.addEventListener('change',function(){
@@ -1322,7 +1398,7 @@ function _renderKyc(docsExistants){
         var file=this.files[0];
         window._kycPhotos[niv+'-'+doc.id]=file;
         var sl=document.getElementById('ks-'+niv+'-'+doc.id);
-        if(sl){sl.style.background='#f0fdf4';sl.style.border='1px solid #22c55e';}
+        if(sl){sl.style.background='#f0fdf4';sl.style.borderColor='#22c55e';}
         var lb=document.getElementById('kl-'+niv+'-'+doc.id);
         if(lb){lb.textContent='Photo prise ✓';lb.style.color='#22c55e';}
         var ck=document.getElementById('kc-'+niv+'-'+doc.id);
@@ -1340,6 +1416,7 @@ function _renderKyc(docsExistants){
     if(btn)btn.addEventListener('click',function(){soumettreKyc(this.dataset.niv);});
   });
 }
+
 
 function _checkKycBtn(niv){
   var NOUVEAUX_DOCS={KYC1:['selfie'],KYC2:['cni_recto','cni_verso'],KYC3:['extrait_naissance','justificatif_domicile']};
