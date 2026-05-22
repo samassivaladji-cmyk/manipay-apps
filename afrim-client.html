@@ -1455,7 +1455,6 @@ function photoKycChange(niv,docId,inp){
   if(chk)chk.textContent='✅';
 }
 async function soumettreKyc(niv){
-  // Seuls les nouveaux documents à envoyer pour ce niveau
   var NOUVEAUX_DOCS={
     'KYC1':[{id:'selfie'}],
     'KYC2':[{id:'cni_recto'},{id:'cni_verso'}],
@@ -1465,7 +1464,12 @@ async function soumettreKyc(niv){
   var photos=window._kycPhotos||{};
   var manq=docs.filter(function(d){return !photos[niv+'-'+d.id];}).map(function(d){return d.id;});
   if(manq.length){T('Documents manquants : '+manq.join(', '),true);return;}
+
+  // Désactiver le bouton pendant l'envoi
+  var btn=document.getElementById('btn-kyc-'+niv);
+  if(btn){btn.disabled=true;btn.textContent='Envoi en cours...';}
   T('Envoi en cours...');
+
   var uid=G.user&&G.user.id;
   for(var i=0;i<docs.length;i++){
     var doc=docs[i];var file=photos[niv+'-'+doc.id];if(!file)continue;
@@ -1476,13 +1480,35 @@ async function soumettreKyc(niv){
       fd.append('folder','afrim-pay/kyc');
       var r=await fetch('https://api.cloudinary.com/v1_1/dzofjvhwu/image/upload',{method:'POST',body:fd});
       var d=await r.json();
-      if(!r.ok||!d.secure_url)throw new Error('Upload échoué');
+      if(!r.ok||!d.secure_url)throw new Error('Upload échoué pour '+doc.id);
       await post('/kyc/documents',{userId:uid,typeDocument:doc.id,urlFichier:d.secure_url});
-    }catch(e){T('Erreur '+doc.id+': '+e.message,true);return;}
+    }catch(e){
+      T('Erreur '+doc.id+': '+e.message,true);
+      if(btn){btn.disabled=false;btn.textContent='Réessayer →';}
+      return;
+    }
   }
-  await post('/kyc/request',{userId:uid,niveauDemande:niv}).catch(function(){});
-  T('Documents envoyés ✓ Validation sous 48h.');
+
+  // Soumettre la demande → le backend passe statut à 'en_attente'
+  try{
+    await post('/kyc/request',{userId:uid,niveauDemande:niv});
+  }catch(e){
+    T('Erreur soumission: '+e.message,true);
+    if(btn){btn.disabled=false;}
+    return;
+  }
+
+  // Mettre à jour G.user localement immédiatement
+  if(G.user){
+    G.user.statut='en_attente';
+    // Sauvegarder dans localStorage pour persistance
+    try{LS.set('afrim_user',JSON.stringify(G.user));}catch(e){}
+  }
+
   window._kycPhotos={};
+  T('✓ Dossier soumis — Validation sous 48h.');
+
+  // Rafraîchir le sheet KYC pour afficher "En attente" immédiatement
   closeSh('kyc-upgrade');
   rafraichir();
 }
