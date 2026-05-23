@@ -1009,7 +1009,7 @@ function renderPhotos(){
   var list=photos[kycLevel]||[];
   document.getElementById('photos-kyc').innerHTML=list.map(function(p){
     var cam=p.id==='selfie'?'user':'environment';
-    return'<div style="margin-bottom:10px"><label class="lbl">'+p.label+'</label><div class="photo-slot" id="slot-'+p.id+'" onclick="document.getElementById(\'file-'+p.id+'\').click()"><input type="file" id="file-'+p.id+'" accept="image/*;capture=camera" capture="'+cam+'" style="display:none" onchange="photoChange(\''+p.id+'\',this)"/><div id="preview-'+p.id+'" style="color:var(--m);font-size:13px">📷 Appuyer pour prendre une photo</div></div></div>';
+    return'<div style="margin-bottom:10px"><label class="lbl">'+p.label+'</label><div class="photo-slot" id="slot-'+p.id+'" onclick="document.getElementById(\'file-'+p.id+'\').click()"><input type="file" id="file-'+p.id+'" accept="image/*" capture="'+cam+'" style="display:none" onchange="photoChange(\''+p.id+'\',this)"/><div id="preview-'+p.id+'" style="color:var(--m);font-size:13px">📷 Appuyer pour prendre une photo</div></div></div>';
   }).join('');
 }
 function photoChange(id,input){if(!input.files[0])return;var reader=new FileReader();reader.onload=function(e){kycPhotos[id]=e.target.result;document.getElementById('preview-'+id).innerHTML='<img src="'+e.target.result+'" style="width:100%;height:80px;object-fit:cover;border-radius:8px"/>';document.getElementById('slot-'+id).classList.add('done');};reader.readAsDataURL(input.files[0]);}
@@ -1484,7 +1484,7 @@ function _renderKyc(docsExistants){
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+textColor+'">'+doc.label+'</div>';
         h+='<div id="kl-'+key+'" style="font-size:11px;color:'+textColor+'">'+desc+'</div></div>';
         h+='<div id="kc-'+key+'" style="font-size:18px">'+icon+'</div></div>';
-        h+='<input type="file" accept="image/*;capture=camera" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
+        h+='<input type="file" accept="image/*" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
       } else if(afournir){
         // 📷 À fournir pour le niveau suivant
         h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:6px;cursor:pointer">';
@@ -1492,7 +1492,7 @@ function _renderKyc(docsExistants){
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+doc.label+'</div>';
         h+='<div id="kl-'+key+'" style="font-size:11px;color:#9ca3af">Appuyer pour prendre la photo</div></div>';
         h+='<div id="kc-'+key+'" style="font-size:18px">📷</div></div>';
-        h+='<input type="file" accept="image/*;capture=camera" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
+        h+='<input type="file" accept="image/*" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
       }
     });
 
