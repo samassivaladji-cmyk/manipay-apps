@@ -684,8 +684,9 @@ var _notifCount=0;
 async function chargerBadgeNotifs(){
   if(!G.token)return;
   try{
-    var r=await get('/notifications?limit=1');
-    _notifCount=Number(r.nonLues||0);
+    var tel=G.user&&G.user.telephone?'&tel='+encodeURIComponent(G.user.telephone):'';
+    var r=await get('/notifications?limit=1'+tel);
+    _notifCount=Number(r.nonLues||r.data&&r.data.nonLues||0);
     var badge=document.getElementById('notif-badge');
     if(badge){
       badge.style.display=_notifCount>0?'flex':'none';
@@ -704,9 +705,10 @@ async function ouvrirNotifications(){
   if(!el)return;
   el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
   try{
-    var r=await get('/notifications?limit=50');
-    var list=r.notifications||[];
-    _notifCount=r.nonLues||0;
+    var tel=G.user&&G.user.telephone?'&tel='+encodeURIComponent(G.user.telephone):'';
+    var r=await get('/notifications?limit=50'+tel);
+    var list=(r.notifications||r.data&&r.data.notifications)||[];
+    _notifCount=r.nonLues||(r.data&&r.data.nonLues)||0;
     if(btnLire)btnLire.style.display=_notifCount>0?'block':'none';
     var badge=document.getElementById('notif-badge');
     if(badge)badge.style.display='none';
