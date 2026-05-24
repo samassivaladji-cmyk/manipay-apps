@@ -646,7 +646,7 @@ function setTab(t){
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
   document.querySelectorAll('[id^="nb-'+t+'"]').forEach(function(b){b.classList.add('on');});
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
-  if(t==='home'){document.getElementById('s-home').classList.add('on');chargerAccueil();}
+  if(t==='home'){document.getElementById('s-home').classList.add('on');chargerAccueil();chargerBadgeNotifs();}
   else if(t==='history'){document.getElementById('s-history').classList.add('on');chargerHistorique();}
   else if(t==='receive'){ouvrirPopupQR();return;}
   else if(t==='profile'){document.getElementById('s-profile').classList.add('on');chargerProfil();}
@@ -686,7 +686,7 @@ async function chargerBadgeNotifs(){
   try{
     var tel=G.user&&G.user.telephone?'&tel='+encodeURIComponent(G.user.telephone):'';
     var r=await get('/notifications?limit=1'+tel);
-    _notifCount=Number(r.nonLues||r.data&&r.data.nonLues||0);
+    _notifCount=Number((r.data&&r.data.nonLues!=null?r.data.nonLues:r.nonLues)||0);
     var badge=document.getElementById('notif-badge');
     if(badge){
       badge.style.display=_notifCount>0?'flex':'none';
@@ -707,8 +707,8 @@ async function ouvrirNotifications(){
   try{
     var tel=G.user&&G.user.telephone?'&tel='+encodeURIComponent(G.user.telephone):'';
     var r=await get('/notifications?limit=50'+tel);
-    var list=(r.notifications||r.data&&r.data.notifications)||[];
-    _notifCount=r.nonLues||(r.data&&r.data.nonLues)||0;
+    var list=(r.data&&r.data.notifications)||r.notifications||[];
+    _notifCount=Number(r.data&&r.data.nonLues!=null?r.data.nonLues:r.nonLues)||0;
     if(btnLire)btnLire.style.display=_notifCount>0?'block':'none';
     var badge=document.getElementById('notif-badge');
     if(badge)badge.style.display='none';
@@ -1036,7 +1036,7 @@ function rDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)
 
 async function doLogin(){
   document.getElementById('pin-keys').style.display='none';document.getElementById('pin-loading').style.display='';document.getElementById('err-pin').style.display='none';
-  try{var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin});G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');}
+  try{var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin});G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');chargerBadgeNotifs();}
   catch(e){document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';document.getElementById('err-pin').textContent=e.message;document.getElementById('err-pin').style.display='';G.pin='';rDots();}
 }
 
