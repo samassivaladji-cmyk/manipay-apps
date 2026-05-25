@@ -431,12 +431,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <div id="sup-nh-list"></div>
       <button id="sup-nh-plus" onclick="supNhPlus()" style="display:none;width:100%;padding:8px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;color:#6b7280;margin-top:6px">Charger plus &#x25BC;</button>
     </div>
-    <!-- ── Tickets Support Client (sous onglet Suivi) ── -->
-    <div id="sup-tk-zone" style="display:none;margin-top:18px">
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">&#x1F3AB; Tickets Support Client</div>
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px" id="sup-tk-filters"></div>
-      <div id="sup-tk-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
-    </div>
+
   </div>
   <div style="height:100px"></div>
   <nav class="bnav" id="bnav-support"></nav>
@@ -1547,20 +1542,15 @@ function setSupTab(tab) {
     }
     if (panel) panel.style.display = isActive ? 'block' : 'none';
   });
-  // Sections additionnelles
+  // Sections additionnelles - historique notifs sous onglet Notif
   var zoneNH = document.getElementById('sup-notif-hist-zone');
-  var zoneTK = document.getElementById('sup-tk-zone');
   if (zoneNH) zoneNH.style.display = tab === 'notif' ? 'block' : 'none';
-  if (zoneTK) zoneTK.style.display = tab === 'tickets' ? 'block' : 'none';
   if (tab === 'tickets') {
     chargerTicketsSupport(_supTicketFilter||'');
     _tkInitFilters('sup-tk-filters', 'sup-tk-', function(v){ _tkLoadList('sup-tk-list', v, ''); });
     _tkLoadList('sup-tk-list', '', '');
   }
-  if (tab === 'notif') {
-    // Charger historique notifs sous l'onglet Notif
-    _initSupNotifHist();
-  }
+  if (tab === 'notif') _initSupNotifHist();
 }
 
 function filtrerTicketsSupport(statut) {
@@ -3115,6 +3105,7 @@ async function chargerTech(){
       });
     }
   }catch(e){document.getElementById('tech-logs').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+  if(typeof _techInitTicketsSafe==='function')_techInitTicketsSafe();
 }
 
 async function forcerTx(id,statut){if(!confirm('Forcer en "'+statut+'" ?'))return;try{await apiPatch('/transactions/'+id+'/status',{statut:statut});toast('Transaction mise a jour');chargerTech();}catch(e){toast(e.message,true);}}
@@ -4637,17 +4628,12 @@ async function _loadSupNh(append) {
 function supNhPlus() { _supNhOffset += 15; _loadSupNh(true); }
 
 // ════════════════════════════════════════════════════════════════
-// CHARGER TECH — init tickets tech en bas
-// ════════════════════════════════════════════════════════════════
-var _origChargerTechFn = typeof chargerTech === 'function' ? chargerTech : null;
-if (_origChargerTechFn) {
-  chargerTech = async function() {
-    await _origChargerTechFn();
-    setTimeout(function() {
-      _tkInitFilters('tech-tk-filters', 'tech-tk-', function(v){ _techTkFilter2 = v; _tkLoadList('tech-tk-list', v, ''); });
-      _tkLoadList('tech-tk-list', '', '');
-    }, 400);
-  };
+// CHARGER TECH — init tickets tech en bas (appelé après chargerTech natif)
+function _techInitTicketsSafe() {
+  setTimeout(function() {
+    _tkInitFilters('tech-tk-filters', 'tech-tk-', function(v){ _techTkFilter2 = v; _tkLoadList('tech-tk-list', v, ''); });
+    _tkLoadList('tech-tk-list', '', '');
+  }, 400);
 }
 </script>
 <!-- SHEET HISTORIQUE NOTIFICATIONS -->
