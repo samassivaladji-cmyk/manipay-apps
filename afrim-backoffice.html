@@ -109,6 +109,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="chargerAccueil()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
           <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
         </button>
+        <button onclick="ouvrirNotifsBO()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="18" height="18"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <div id="bo-notif-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:#fff;font-size:9px;font-weight:800;border-radius:99px;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid rgba(255,255,255,.3)"></div>
+        </button>
         <button onclick="logout()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
           <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
@@ -157,7 +161,31 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px" id="u-chips"></div>
   </div>
-  <div style="padding:12px 16px 100px"><div id="u-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div></div>
+  <div style="padding:12px 16px 100px">
+    <div id="u-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div>
+    <!-- Section Notifications -->
+    <div id="notifs-admin-section" style="margin-top:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em">🔔 Notifications système</div>
+        <div style="display:flex;gap:6px">
+          <select id="notif-filter-type" onchange="chargerNotifsAdmin()" style="font-size:11px;padding:4px 8px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;color:#374151">
+            <option value="">Tous types</option>
+            <option value="transaction">Transactions</option>
+            <option value="systeme">Système</option>
+            <option value="kyc">KYC</option>
+            <option value="securite">Sécurité</option>
+          </select>
+          <select id="notif-filter-lu" onchange="chargerNotifsAdmin()" style="font-size:11px;padding:4px 8px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;color:#374151">
+            <option value="">Tous</option>
+            <option value="false">Non lues</option>
+            <option value="true">Lues</option>
+          </select>
+        </div>
+      </div>
+      <div id="notifs-admin-list"><div style="padding:20px;text-align:center"><div class="spin"></div></div></div>
+      <button onclick="chargerPlusNotifsAdmin()" id="btn-plus-notifs" style="display:none;width:100%;padding:10px;background:#f3f4f6;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#6b7280;margin-top:8px">Charger plus</button>
+    </div>
+  </div>
   <nav class="bnav" id="bnav-users"></nav>
 </div>
 
@@ -779,7 +807,7 @@ function buildNavs(activeTab){
 function setTab(t){
   buildNavs(t);
   if(t==='home'){showScr('s-home');chargerAccueil();}
-  else if(t==='users'){showScr('s-users');chargerUsers();}
+  else if(t==='users'){showScr('s-users');chargerUsers();chargerNotifsAdmin();}
   else if(t==='txns'){showScr('s-txns');chargerTxns();}
   else if(t==='monitoring'){showScr('s-monitoring');chargerMonitoring();}
   else if(t==='support'){showScr('s-support');chargerSupport();}
@@ -829,6 +857,8 @@ function enterApp(){
   buildNavGrid();
   buildNavs(firstTab[u.role]||'home');
   setTab(firstTab[u.role]||'home');
+  chargerBadgeNotifsBO();
+  setInterval(chargerBadgeNotifsBO, 60000);
   setTimeout(function(){
     var msgs={
       admin:'Admin - Acces complet',
@@ -1926,7 +1956,7 @@ function buildNavGrid(){
 function setTab(t){
   buildNavs(t);
   if(t==='home'){showScr('s-home');chargerAccueil();}
-  else if(t==='users'){showScr('s-users');chargerUsers();}
+  else if(t==='users'){showScr('s-users');chargerUsers();chargerNotifsAdmin();}
   else if(t==='txns'){showScr('s-txns');chargerTxns();}
   else if(t==='monitoring'){showScr('s-monitoring');chargerMonitoring();}
   else if(t==='support'){showScr('s-support');chargerSupport();}
@@ -3253,6 +3283,241 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
   if(G.token&&G.user){var ok=['admin','superviseur','support_client','support_tech'];if(ok.indexOf(G.user.role)>=0){enterApp();return;}}
   showScr('s-login');
 })();
+
+
+// ── NOTIFICATIONS BACKOFFICE ──
+var _boNotifCount = 0;
+var _boNotifOffset = 0;
+
+async function chargerBadgeNotifsBO() {
+  if (!G.token || !G.user) return;
+  try {
+    var tel = G.user && G.user.telephone ? '&tel=' + encodeURIComponent(G.user.telephone) : '';
+    var r = await callAPI('/notifications?limit=1' + tel);
+    _boNotifCount = Number((r.data && r.data.nonLues != null ? r.data.nonLues : r.nonLues) || 0);
+    var badge = document.getElementById('bo-notif-badge');
+    if (badge) {
+      if (_boNotifCount > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = _boNotifCount > 99 ? '99+' : (_boNotifCount > 9 ? '9+' : String(_boNotifCount));
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch(e) {}
+}
+
+function ouvrirNotifsBO() {
+  var existing = document.getElementById('bo-notif-panel');
+  if (existing) { existing.remove(); return; }
+  var panel = document.createElement('div');
+  panel.id = 'bo-notif-panel';
+  panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden';
+  sheet.innerHTML = '<div style="padding:14px 20px 10px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="font-size:15px;font-weight:800;color:#111827">&#x1F514; Mes notifications</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button id="bo-tout-lire-btn" style="font-size:11px;font-weight:700;color:#059669;background:#ecfdf5;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit">Tout lire</button>'
+    + '<button id="bo-close-panel-btn" style="background:#f3f4f6;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px">&#x2715;</button>'
+    + '</div></div>'
+    + '<div id="bo-notif-list" style="flex:1;overflow-y:auto;padding:12px 16px 20px"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div>';
+  panel.appendChild(sheet);
+  document.body.appendChild(panel);
+  panel.addEventListener('click', function(e) { if (e.target === panel) panel.remove(); });
+  document.getElementById('bo-tout-lire-btn').onclick = function() { boToutLire(); };
+  var closePanelBtn = document.getElementById('bo-close-panel-btn');
+  if (closePanelBtn) closePanelBtn.onclick = function() { var p = document.getElementById('bo-notif-panel'); if(p) p.remove(); };
+  chargerNotifsPanel();
+}
+
+async function chargerNotifsPanel() {
+  var el = document.getElementById('bo-notif-list');
+  if (!el) return;
+  try {
+    var tel = G.user && G.user.telephone ? '&tel=' + encodeURIComponent(G.user.telephone) : '';
+    var r = await callAPI('/notifications?limit=50' + tel);
+    var list = (r.data && r.data.notifications) || r.notifications || [];
+    _boNotifCount = Number((r.data && r.data.nonLues != null ? r.data.nonLues : r.nonLues) || 0);
+    chargerBadgeNotifsBO();
+    if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">&#x1F514; Aucune notification</div>'; return; }
+    var icons = {transaction:'&#x1F4B3;', kyc:'&#x1F4CB;', securite:'&#x1F510;', systeme:'&#x1F4E2;', parrainage:'&#x1F91D;'};
+    var cols = {transaction:'#3b82f6', kyc:'#22c55e', securite:'#f59e0b', systeme:'#8b5cf6', parrainage:'#f97316'};
+    var nonLues = list.filter(function(n){return !n.lu;});
+    var lues = list.filter(function(n){return n.lu;});
+    var html = '';
+    function renderN(n) {
+      var col = cols[n.type] || '#6b7280';
+      var d = new Date(n.created_at || Date.now());
+      var ds = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      return '<div onclick="boLireNotif(this)" data-nid="' + n.id + '" data-lu="' + (n.lu?'1':'0') + '" style="background:' + (n.lu?'#f9fafb':'#fff') + ';border-radius:12px;padding:12px 14px;margin-bottom:7px;display:flex;gap:10px;cursor:pointer;border-left:3px solid ' + (n.lu?'transparent':col) + ';box-shadow:0 1px 3px rgba(0,0,0,' + (n.lu?'.03':'.08') + ')">'
+        + '<div style="width:36px;height:36px;border-radius:10px;background:' + col + '18;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;opacity:' + (n.lu?'.5':'1') + '">' + (icons[n.type]||'&#x1F514;') + '</div>'
+        + '<div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><div style="font-size:12px;font-weight:' + (n.lu?'500':'700') + ';color:' + (n.lu?'#9ca3af':'#111827') + '">' + n.titre + '</div>'
+        + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:#9ca3af;white-space:nowrap">' + ds + '</span>' + (n.lu?'':'<div style="width:7px;height:7px;background:#ef4444;border-radius:50%"></div>') + '</div></div>'
+        + '<div style="font-size:11px;color:' + (n.lu?'#9ca3af':'#6b7280') + ';margin-top:2px">' + n.message + '</div></div></div>';
+    }
+    if (nonLues.length) html += '<div style="font-size:10px;font-weight:700;color:#374151;text-transform:uppercase;padding:0 2px 6px">Non lues (' + nonLues.length + ')</div>' + nonLues.map(renderN).join('');
+    if (lues.length) html += '<div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;padding:' + (nonLues.length?'12px':'0') + ' 2px 6px">Lues</div>' + lues.map(renderN).join('');
+    el.innerHTML = html;
+  } catch(e) { if(el) el.innerHTML = '<div style="color:var(--r);font-size:12px;padding:10px">' + e.message + '</div>'; }
+}
+
+async function boLireNotif(el) {
+  if (el.dataset.lu === '1') return;
+  el.dataset.lu = '1';
+  el.style.background = '#f9fafb';
+  el.style.borderLeft = '3px solid transparent';
+  var dot = el.querySelector('[style*="background:#ef4444"]');
+  if (dot) dot.remove();
+  var titre = el.querySelector('[style*="font-weight"]');
+  if (titre) { titre.style.fontWeight = '500'; titre.style.color = '#9ca3af'; }
+  _boNotifCount = Math.max(0, _boNotifCount - 1);
+  chargerBadgeNotifsBO();
+  try { await callAPI('/notifications/' + el.dataset.nid + '/lu', {method:'PATCH', body:JSON.stringify({})}); } catch(e) {}
+}
+
+async function boToutLire() {
+  try {
+    var tel = G.user && G.user.telephone ? '?tel=' + encodeURIComponent(G.user.telephone) : '';
+    await callAPI('/notifications/tout-lire' + tel, {method:'PATCH', body:JSON.stringify({})});
+    _boNotifCount = 0;
+    chargerBadgeNotifsBO();
+    chargerNotifsPanel();
+  } catch(e) { toast('Erreur: ' + e.message, true); }
+}
+
+// ── NOTIFICATIONS ADMIN (onglet Comptes) ──
+var _adminNotifOffset = 0;
+
+async function chargerNotifsAdmin() {
+  _adminNotifOffset = 0;
+  var el = document.getElementById('notifs-admin-list');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
+  var type = document.getElementById('notif-filter-type') ? document.getElementById('notif-filter-type').value : '';
+  var lu = document.getElementById('notif-filter-lu') ? document.getElementById('notif-filter-lu').value : '';
+  var q = '/notifications/all?limit=30';
+  if (type) q += '&type=' + type;
+  if (lu !== '') q += '&lu=' + lu;
+  try {
+    var r = await callAPI(q);
+    var list = (r.data && r.data.notifications) || [];
+    var total = (r.data && r.data.total) || 0;
+    afficherNotifsAdmin(list, false);
+    var btnPlus = document.getElementById('btn-plus-notifs');
+    if (btnPlus) btnPlus.style.display = list.length < total ? 'block' : 'none';
+  } catch(e) { if(el) el.innerHTML = '<div style="color:var(--r);font-size:12px;padding:10px">' + e.message + '</div>'; }
+}
+
+async function chargerPlusNotifsAdmin() {
+  _adminNotifOffset += 30;
+  var type = document.getElementById('notif-filter-type') ? document.getElementById('notif-filter-type').value : '';
+  var lu = document.getElementById('notif-filter-lu') ? document.getElementById('notif-filter-lu').value : '';
+  var q = '/notifications/all?limit=30&offset=' + _adminNotifOffset;
+  if (type) q += '&type=' + type;
+  if (lu !== '') q += '&lu=' + lu;
+  try {
+    var r = await callAPI(q);
+    var list = (r.data && r.data.notifications) || [];
+    var total = (r.data && r.data.total) || 0;
+    afficherNotifsAdmin(list, true);
+    var btnPlus = document.getElementById('btn-plus-notifs');
+    if (btnPlus) btnPlus.style.display = (_adminNotifOffset + 30) < total ? 'block' : 'none';
+  } catch(e) {}
+}
+
+function afficherNotifsAdmin(list, append) {
+  var el = document.getElementById('notifs-admin-list');
+  if (!el) return;
+  if (!list.length && !append) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">Aucune notification</div>'; return; }
+  var cols = {transaction:'#3b82f6', kyc:'#22c55e', securite:'#f59e0b', systeme:'#8b5cf6', parrainage:'#f97316'};
+  var html = list.map(function(n) {
+    var col = cols[n.type] || '#6b7280';
+    var d = new Date(n.created_at || Date.now());
+    var ds = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    var user = (n.prenom||'') + ' ' + (n.nom||'') + (n.telephone?' ('+n.telephone+')':'') + (n.role?' · '+n.role:'');
+    return '<div style="background:#fff;border-radius:11px;padding:11px 13px;margin-bottom:7px;border:1px solid #f3f4f6;display:flex;align-items:flex-start;gap:10px">'
+      + '<div style="width:8px;height:8px;border-radius:50%;background:' + (n.lu?'#d1d5db':col) + ';margin-top:5px;flex-shrink:0"></div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'
+      + '<div style="font-size:12px;font-weight:700;color:#111827">' + n.titre + '</div>'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<span style="font-size:10px;color:#9ca3af;white-space:nowrap">' + ds + '</span>'
+      + '<button data-notif-id="' + n.id + '" onclick="supprimerNotifAdmin(this.dataset.notifId,this)" style="background:#fef2f2;border:none;border-radius:6px;padding:2px 7px;font-size:10px;color:#ef4444;cursor:pointer;font-family:inherit">&#x2715;</button>'
+      + '</div></div>'
+      + '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + n.message + '</div>'
+      + '<div style="font-size:10px;color:#9ca3af;margin-top:3px">' + user.trim() + ' · <span style="color:' + col + '">' + (n.type||'') + '</span></div>'
+      + '</div></div>';
+  }).join('');
+  if (append) el.innerHTML += html;
+  else el.innerHTML = html;
+}
+
+async function supprimerNotifAdmin(id, btn) {
+  if (!confirm('Supprimer cette notification ?')) return;
+  try {
+    await callAPI('/notifications/' + id, {method:'DELETE'});
+    var row = btn.closest('[style*="border-radius:11px"]');
+    if (row) { row.style.opacity='0'; row.style.transition='opacity .3s'; setTimeout(function(){row.remove();},300); }
+    toast('Notification supprimée');
+  } catch(e) { toast('Erreur: ' + e.message, true); }
+}
+
+
+// ── LOCK SCREEN BACKOFFICE ──
+var _boLockTimer = null;
+var _boLocked = false;
+var BO_LOCK_TIMEOUT = 60000; // 60 secondes
+
+function resetBoLockTimer() {
+  if (_boLocked) return;
+  clearTimeout(_boLockTimer);
+  _boLockTimer = setTimeout(boLockApp, BO_LOCK_TIMEOUT);
+}
+
+function boLockApp() {
+  if (!G.token || !G.user) return;
+  _boLocked = true;
+  var el = document.getElementById('bo-lock-screen');
+  if (el) { el.style.display = 'flex'; }
+  var pin = document.getElementById('bo-lock-pin');
+  if (pin) { pin.value = ''; pin.focus(); }
+}
+
+async function boUnlock() {
+  var pin = document.getElementById('bo-lock-pin');
+  var err = document.getElementById('bo-lock-err');
+  if (!pin || pin.value.length < 4) return;
+  try {
+    var r = await callAPI('/auth/verify-pin', {method:'POST', body:JSON.stringify({pin:pin.value})});
+    if (r && r.success !== false) {
+      _boLocked = false;
+      var el = document.getElementById('bo-lock-screen');
+      if (el) el.style.display = 'none';
+      pin.value = '';
+      if (err) err.style.display = 'none';
+      resetBoLockTimer();
+    } else {
+      if (err) { err.textContent = 'PIN incorrect'; err.style.display = 'block'; }
+      pin.value = '';
+    }
+  } catch(e) {
+    if (err) { err.textContent = 'PIN incorrect'; err.style.display = 'block'; }
+    pin.value = '';
+  }
+}
+
+function boLockLogout() {
+  _boLocked = false;
+  var el = document.getElementById('bo-lock-screen');
+  if (el) el.style.display = 'none';
+  doLogout();
+}
+
+// Écouter activité utilisateur
+['click','keydown','mousemove','touchstart','scroll'].forEach(function(ev) {
+  document.addEventListener(ev, resetBoLockTimer, {passive:true});
+});
 </script>
 <!-- SHEET HISTORIQUE NOTIFICATIONS -->
 <div class="sh-ov" id="sh-notif-hist" onclick="if(event.target===this)closeSh('notif-hist')">
@@ -3288,5 +3553,23 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
   </div>
 </div>
 
+
+<!-- LOCK SCREEN BACKOFFICE -->
+<div id="bo-lock-screen" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;display:none;align-items:center;justify-content:center;padding:40px 24px">
+  <div style="width:100%;max-width:300px;text-align:center">
+    <div style="width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 20px;border:2px solid var(--y3)">
+      <img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:100%;height:100%;object-fit:contain" alt="AFRIM PAY"/>
+    </div>
+    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:6px">Session verrouillée</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:24px">Entrez votre PIN pour reprendre</div>
+    <div id="bo-lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px;border-radius:10px;font-size:12px;margin-bottom:12px"></div>
+    <input id="bo-lock-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
+      style="width:100%;padding:16px;font-size:28px;letter-spacing:14px;text-align:center;border:2px solid var(--y);border-radius:14px;color:#111827;outline:none;box-sizing:border-box;margin-bottom:20px;font-family:inherit"
+      oninput="if(this.value.length===4)boUnlock();"/>
+    <button onclick="boLockLogout()" style="width:100%;padding:13px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:13px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+      Se déconnecter
+    </button>
+  </div>
+</div>
 </body>
 </html>
