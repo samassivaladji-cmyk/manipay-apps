@@ -213,15 +213,31 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       </div>
       <input class="inp" id="camp-titre" placeholder="Titre de la notification" style="margin-bottom:8px"/>
       <textarea class="inp" id="camp-msg" rows="2" placeholder="Message..." style="resize:none;margin-bottom:8px"></textarea>
-      <select class="inp" id="camp-dest" style="margin-bottom:10px">
-        <option value="all">🌍 Tous les utilisateurs</option>
-        <option value="client">👤 Clients</option>
-        <option value="agent">🏪 Agents</option>
-        <option value="business">🏢 Business</option>
-        <option value="mini_master">🔵 Mini-Masters</option>
-        <option value="master">🟤 Masters</option>
-        <option value="superviseur">🟠 Superviseurs</option>
+      <select class="inp" id="camp-dest" onchange="campDestChange()" style="margin-bottom:8px">
+        <optgroup label="── Envoi groupé ──">
+          <option value="all">🌍 Tous les utilisateurs</option>
+          <option value="all_clients">👥 Tous les clients + agents + business</option>
+          <option value="all_staff">🏢 Tout le staff interne</option>
+        </optgroup>
+        <optgroup label="── Rôle précis ──">
+          <option value="client">👤 Clients</option>
+          <option value="agent">🏪 Agents</option>
+          <option value="business">🏬 Business / Marchands</option>
+          <option value="mini_master">🔵 Mini-Masters</option>
+          <option value="master">🟤 Masters</option>
+          <option value="superviseur">🟠 Superviseurs</option>
+          <option value="support_client">🎧 Support Client</option>
+          <option value="support_tech">🛠️ Support Technique</option>
+          <option value="admin">👑 Administrateurs</option>
+        </optgroup>
+        <optgroup label="── Individuel ──">
+          <option value="individuel">📱 Par numéro de téléphone</option>
+        </optgroup>
       </select>
+      <div id="camp-tel-box" style="display:none;margin-bottom:8px">
+        <input class="inp" id="camp-tel" placeholder="Ex: 0707000000, 0606000000 (séparés par virgule)" style="font-size:12px"/>
+        <div style="font-size:11px;color:#9ca3af;margin-top:4px;padding:0 2px">Entrez un ou plusieurs numéros séparés par des virgules</div>
+      </div>
       <button onclick="envoyerCampagne()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📢 Envoyer →</button>
     </div>
     <div class="card" style="margin-bottom:14px">
@@ -3158,33 +3174,72 @@ async function resetPinClient(userId,nom){
   }catch(e){toast('Erreur: '+e.message,true);}
 }
 
+function campDestChange(){
+  var dest=document.getElementById('camp-dest').value;
+  document.getElementById('camp-tel-box').style.display=dest==='individuel'?'block':'none';
+}
+
 async function envoyerCampagne(){
   var titre=document.getElementById('camp-titre').value.trim();
   var msg=document.getElementById('camp-msg').value.trim();
   var dest=document.getElementById('camp-dest').value;
   if(!titre||!msg){toast('Titre et message requis',true);return;}
   var btns=document.querySelectorAll('[onclick="envoyerCampagne()"]');
-  btns.forEach(function(b){b.disabled=true;b.textContent='Envoi en cours...';});
+  btns.forEach(function(b){b.disabled=true;b.textContent='⏳ Envoi en cours...';});
   try{
-    var roles=dest==='all'
-      ?['client','agent','business','mini_master','master','superviseur']
-      :[dest];
-    var r=await apiPost('/notifications/masse',{titre:titre,message:msg,type:'systeme',roles:roles});
-    if(!r){toast('Erreur: session expirée - reconnectez-vous',true);btns.forEach(function(b){b.disabled=false;b.textContent='📢 Envoyer →';});return;}
-    var total=r.data?r.data.total:r.total||0;
-    var debugInfo=r.data&&r.data.debug?r.data.debug.join(' | '):'';
-    if(total===0){
-      toast('0 envoyé. '+debugInfo,true);
+    var r=null;
+    if(dest==='individuel'){
+      // Envoi par numéros de téléphone
+      var telRaw=document.getElementById('camp-tel').value.trim();
+      if(!telRaw){toast('Entrez au moins un numéro',true);btns.forEach(function(b){b.disabled=false;b.textContent='📢 Envoyer →';});return;}
+      var tels=telRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
+      r=await apiPost('/notifications/multi',{telephones:tels,titre:titre,message:msg,type:'systeme'});
     } else {
-      toast('✓ '+total+' notification(s) envoyée(s)');
+      var rolesMap={
+        'all':['client','agent','business','mini_master','master','superviseur','support_client','support_tech','admin'],
+        'all_clients':['client','agent','business'],
+        'all_staff':['support_client','support_tech','superviseur','master','mini_master','admin']
+      };
+      var roles=rolesMap[dest]||[dest];
+      r=await apiPost('/notifications/masse',{titre:titre,message:msg,type:'systeme',roles:roles});
+    }
+    if(!r){toast('Erreur: session expirée',true);btns.forEach(function(b){b.disabled=false;b.textContent='📢 Envoyer →';});return;}
+    var total=(r.data&&r.data.total!=null)?r.data.total:(r.total||0);
+    if(total===0){
+      toast('Aucun destinataire trouvé',true);
+    } else {
+      toast('✓ '+total+' notification(s) envoyée(s) 🎉');
       document.getElementById('camp-titre').value='';
       document.getElementById('camp-msg').value='';
+      document.getElementById('camp-tel').value='';
     }
   }catch(e){toast('Erreur: '+e.message,true);}
   btns.forEach(function(b){b.disabled=false;b.textContent='📢 Envoyer →';});
 }
 
 function logout(){
+  var existing=document.getElementById('logout-confirm-ov');if(existing)existing.remove();
+  var ov=document.createElement('div');
+  ov.id='logout-confirm-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center';
+  box.innerHTML='<div style="font-size:36px;margin-bottom:12px">&#x1F6AA;</div>'
+    +'<div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px">D&#233;connexion</div>'
+    +'<div style="font-size:13px;color:#6b7280;margin-bottom:24px">Voulez-vous vraiment vous d&#233;connecter ?</div>'
+    +'<div style="display:flex;gap:10px">'
+    +'<button id="bo-cancel-btn" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid #e5e7eb;background:#f9fafb;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#374151">Annuler</button>'
+    +'<button id="bo-confirm-btn" style="flex:1;padding:13px;border-radius:12px;border:none;background:#ef4444;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer</button>'
+    +'</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  document.getElementById('bo-cancel-btn').onclick=function(){ov.remove();};
+  document.getElementById('bo-confirm-btn').onclick=function(){doLogout();};
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+function doLogout(){
+  var ov=document.getElementById('logout-confirm-ov');if(ov)ov.remove();
   try{apiPost('/auth/logout',{refreshToken:G.refresh});}catch(e){}
   G.token=G.refresh=G.user=null;G.pin='';
   try{localStorage.removeItem('afrim_token');localStorage.removeItem('afrim_refresh');localStorage.removeItem('afrim_user');}catch(e){}
