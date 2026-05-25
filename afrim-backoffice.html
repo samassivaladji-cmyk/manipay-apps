@@ -218,72 +218,152 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 
 <!-- SUPPORT -->
 <div class="scr" id="s-support">
-  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
-    <div style="display:flex;align-items:center;justify-content:space-between">
+  <div style="background:#fff;padding:52px 20px 0;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div>
-        <div style="font-size:22px;font-weight:800">Service Client</div>
-        <div style="color:var(--m);font-size:13px;margin-top:3px" id="sup-zone-label">Tickets et reclamations</div>
+        <div style="font-size:20px;font-weight:800">Service Client</div>
+        <div style="color:var(--m);font-size:12px;margin-top:2px" id="sup-zone-label">Gestion tickets &amp; notifications</div>
       </div>
-      <button onclick="logout()" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--r);font-family:inherit">Quitter</button>
+      <button onclick="logout()" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--r);font-family:inherit">Quitter</button>
+    </div>
+    <!-- ONGLETS MODULE SUPPORT -->
+    <div style="display:flex;gap:0;overflow-x:auto;padding-bottom:0;margin:0 -20px;padding:0 16px">
+      <button id="sup-tab-notif" onclick="setSupTab('notif')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--y2);border-bottom:2px solid var(--y);white-space:nowrap">📢 Notif</button>
+      <button id="sup-tab-search" onclick="setSupTab('search')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🔍 Client</button>
+      <button id="sup-tab-newticket" onclick="setSupTab('newticket')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">➕ Ticket</button>
+      <button id="sup-tab-tickets" onclick="setSupTab('tickets')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📋 Suivi</button>
     </div>
   </div>
+
   <!-- KYC EN ATTENTE -->
   <div id="kyc-pending-section" style="display:none;padding:12px 16px 0">
     <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Demandes KYC à valider</div>
     <div id="kyc-pending-list"></div>
   </div>
-  <div style="padding:16px 16px 0">
-    <!-- NOTIFICATIONS / CAMPAGNES -->
-    <div class="card" style="margin-bottom:14px;border:1.5px solid var(--y)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:18px">📢</span>
-        <div style="font-size:14px;font-weight:800">Envoyer une notification</div>
+
+  <div style="padding:14px 16px 0">
+
+    <!-- PANNEAU 1 : NOTIFICATIONS -->
+    <div id="sup-panel-notif">
+      <div class="card" style="border:1.5px solid var(--y)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:18px">📢</span>
+          <div style="font-size:14px;font-weight:800">Envoyer une notification</div>
+        </div>
+        <input class="inp" id="camp-titre" placeholder="Titre de la notification" style="margin-bottom:8px"/>
+        <textarea class="inp" id="camp-msg" rows="2" placeholder="Message..." style="resize:none;margin-bottom:8px"></textarea>
+        <select class="inp" id="camp-dest" onchange="campDestChange()" style="margin-bottom:8px">
+          <optgroup label="── Envoi groupé ──">
+            <option value="all">🌍 Tous les utilisateurs</option>
+            <option value="all_clients">👥 Clients + Agents + Business</option>
+            <option value="all_staff">🏢 Tout le staff interne</option>
+          </optgroup>
+          <optgroup label="── Rôle précis ──">
+            <option value="client">👤 Clients</option>
+            <option value="agent">🏪 Agents</option>
+            <option value="business">🏬 Business / Marchands</option>
+            <option value="mini_master">🔵 Mini-Masters</option>
+            <option value="master">🟤 Masters</option>
+            <option value="superviseur">🟠 Superviseurs</option>
+            <option value="support_client">🎧 Support Client</option>
+            <option value="support_tech">🛠️ Support Tech</option>
+            <option value="admin">👑 Admins</option>
+          </optgroup>
+          <optgroup label="── Individuel ──">
+            <option value="individuel">📱 Par numéro de téléphone</option>
+          </optgroup>
+        </select>
+        <div id="camp-tel-box" style="display:none;margin-bottom:8px">
+          <input class="inp" id="camp-tel" placeholder="Ex: 0707000000, 0606000000" style="font-size:12px"/>
+        </div>
+        <button onclick="envoyerCampagne()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📢 Envoyer →</button>
       </div>
-      <input class="inp" id="camp-titre" placeholder="Titre de la notification" style="margin-bottom:8px"/>
-      <textarea class="inp" id="camp-msg" rows="2" placeholder="Message..." style="resize:none;margin-bottom:8px"></textarea>
-      <select class="inp" id="camp-dest" onchange="campDestChange()" style="margin-bottom:8px">
-        <optgroup label="── Envoi groupé ──">
-          <option value="all">🌍 Tous les utilisateurs</option>
-          <option value="all_clients">👥 Tous les clients + agents + business</option>
-          <option value="all_staff">🏢 Tout le staff interne</option>
-        </optgroup>
-        <optgroup label="── Rôle précis ──">
-          <option value="client">👤 Clients</option>
-          <option value="agent">🏪 Agents</option>
-          <option value="business">🏬 Business / Marchands</option>
-          <option value="mini_master">🔵 Mini-Masters</option>
-          <option value="master">🟤 Masters</option>
-          <option value="superviseur">🟠 Superviseurs</option>
-          <option value="support_client">🎧 Support Client</option>
-          <option value="support_tech">🛠️ Support Technique</option>
-          <option value="admin">👑 Administrateurs</option>
-        </optgroup>
-        <optgroup label="── Individuel ──">
-          <option value="individuel">📱 Par numéro de téléphone</option>
-        </optgroup>
-      </select>
-      <div id="camp-tel-box" style="display:none;margin-bottom:8px">
-        <input class="inp" id="camp-tel" placeholder="Ex: 0707000000, 0606000000 (séparés par virgule)" style="font-size:12px"/>
-        <div style="font-size:11px;color:#9ca3af;margin-top:4px;padding:0 2px">Entrez un ou plusieurs numéros séparés par des virgules</div>
-      </div>
-      <button onclick="envoyerCampagne()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📢 Envoyer →</button>
     </div>
-    <div class="card" style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase">Rechercher un client</div>
-        <button id="btn-nouvelle-recherche" onclick="nouvelleRecherche()" style="display:none;background:#f3f4f6;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--m);cursor:pointer;font-family:inherit">↩ Nouvelle recherche</button>
+
+    <!-- PANNEAU 2 : RECHERCHE CLIENT -->
+    <div id="sup-panel-search" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:800">🔍 Rechercher un client</div>
+          <button id="btn-nouvelle-recherche" onclick="nouvelleRecherche()" style="display:none;background:#f3f4f6;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--m);cursor:pointer;font-family:inherit">↩ Nouvelle recherche</button>
+        </div>
+        <div id="sup-search-zone" style="display:flex;gap:8px">
+          <input class="inp" id="sup-tel" type="tel" placeholder="Numéro téléphone" inputmode="numeric" style="flex:1;padding:12px 14px;font-size:14px" onkeydown="if(event.key==='Enter')rechercherClient()"/>
+          <button onclick="rechercherClient()" style="padding:0 16px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Chercher</button>
+        </div>
+        <div id="sup-result" style="display:none;margin-top:12px"></div>
       </div>
-      <div id="sup-search-zone" style="display:flex;gap:8px">
-        <input class="inp" id="sup-tel" type="tel" placeholder="Numéro téléphone" inputmode="numeric" style="flex:1;padding:12px 14px;font-size:14px" onkeydown="if(event.key==='Enter')rechercherClient()"/>
-        <button onclick="rechercherClient()" style="padding:0 16px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Chercher</button>
-      </div>
-      <div id="sup-result" style="display:none;margin-top:12px"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px"><div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase">Tickets</div><div id="tickets-compteurs"></div></div>
-    <div id="sup-tickets"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
-    <button onclick="openSh('new-ticket')" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">+ Nouveau ticket</button>
+
+    <!-- PANNEAU 3 : NOUVEAU TICKET -->
+    <div id="sup-panel-newticket" style="display:none">
+      <div class="card" style="border:1.5px solid #fde68a">
+        <div style="font-size:14px;font-weight:800;margin-bottom:14px">➕ Nouveau ticket / Réclamation</div>
+        <div style="margin-bottom:10px">
+          <div class="lbl">Client concerné *</div>
+          <div style="display:flex;gap:8px">
+            <input class="inp" id="tk-client-tel" type="tel" placeholder="Numéro du client" inputmode="numeric" style="flex:1" onkeydown="if(event.key==='Enter')chercherClientTicket()"/>
+            <button onclick="chercherClientTicket()" style="padding:0 14px;background:var(--y);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:12px">Chercher</button>
+          </div>
+          <div id="tk-client-info" style="display:none;margin-top:8px;background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:10px;font-size:12px"></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="lbl">Motif *</div>
+          <select class="inp" id="tk-motif">
+            <option value="">-- Sélectionner --</option>
+            <option value="Problème de transaction">Problème de transaction</option>
+            <option value="Compte bloqué">Compte bloqué</option>
+            <option value="KYC refusé">KYC refusé</option>
+            <option value="Transfert non reçu">Transfert non reçu</option>
+            <option value="Remboursement demandé">Remboursement demandé</option>
+            <option value="Problème technique">Problème technique</option>
+            <option value="Réclamation générale">Réclamation générale</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="lbl">Description *</div>
+          <textarea class="inp" id="tk-desc" rows="3" placeholder="Décrivez le problème du client..." style="resize:none"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <div class="lbl">Destinataire</div>
+            <select class="inp" id="tk-dest">
+              <option value="support_client">🎧 Support Client</option>
+              <option value="support_tech">🛠️ Support Tech</option>
+              <option value="admin">👑 Admin</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div class="lbl">Priorité</div>
+            <select class="inp" id="tk-priorite">
+              <option value="normale">Normale</option>
+              <option value="haute">Haute</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+        </div>
+        <div id="tk-err" style="display:none;color:var(--r);font-size:12px;margin-bottom:8px;padding:8px;background:#fef2f2;border-radius:8px"></div>
+        <button onclick="creerTicketSupport()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✅ Créer le ticket</button>
+      </div>
+    </div>
+
+    <!-- PANNEAU 4 : SUIVI TICKETS -->
+    <div id="sup-panel-tickets" style="display:none">
+      <!-- Filtres statut -->
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px">
+        <button id="tkf-all" onclick="filtrerTicketsSupport('')" style="padding:6px 14px;border-radius:99px;border:1.5px solid var(--y);background:var(--y);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Tous</button>
+        <button id="tkf-ouvert" onclick="filtrerTicketsSupport('ouvert')" style="padding:6px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏳ En attente</button>
+        <button id="tkf-en_cours" onclick="filtrerTicketsSupport('en_cours')" style="padding:6px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🔄 En cours</button>
+        <button id="tkf-resolu" onclick="filtrerTicketsSupport('resolu')" style="padding:6px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">✅ Résolus</button>
+        <button id="tkf-rejete" onclick="filtrerTicketsSupport('rejete')" style="padding:6px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">❌ Rejetés</button>
+        <button id="tkf-ferme" onclick="filtrerTicketsSupport('ferme')" style="padding:6px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🔒 Clôturés</button>
+      </div>
+      <div id="sup-tickets"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+    </div>
+
   </div>
-  <div style="height:80px"></div>
+  <div style="height:100px"></div>
   <nav class="bnav" id="bnav-support"></nav>
 </div>
 
@@ -1236,7 +1316,8 @@ async function chargerMonitoring(){
   }catch(e){document.getElementById('m-tickets').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
 }
 async function cloturerA(id){try{await apiPatch('/alerts/'+id,{statut:'resolue',actionPrise:'Cloturee par admin'});toast('Alerte cloturee');chargerMonitoring();}catch(e){toast(e.message,true);}}
-async function cloturerT(id){try{await apiPatch('/tickets/'+id+'/status',{statut:'ferme'});toast('Ticket resolu');chargerMonitoring();}catch(e){toast(e.message,true);}}
+async function cloturerT(id){try{await apiPatch('/tickets/'+id+'/status',{statut:'ferme'});toast('Ticket résolu');chargerMonitoring();}catch(e){toast(e.message,true);}}
+async function cloturerTicket(id,statut){try{await apiPatch('/tickets/'+id+'/status',{statut:statut});toast('Statut mis à jour');chargerSupport();}catch(e){toast(e.message,true);}}
 
 // ── SUPPORT ──
 
@@ -1350,68 +1431,184 @@ async function validerKyc(clientId,ticketId,niveau){
   }catch(e){toast('Validation: '+e.message,true);}
 }
 
+// ── MODULE SUPPORT : ONGLETS ──
+var _supTabActif = 'notif';
+var _supTicketFilter = '';
+
+function setSupTab(tab) {
+  _supTabActif = tab;
+  var tabs = ['notif','search','newticket','tickets'];
+  tabs.forEach(function(t) {
+    var btn = document.getElementById('sup-tab-'+t);
+    var panel = document.getElementById('sup-panel-'+t);
+    var isActive = t === tab;
+    if (btn) {
+      btn.style.color = isActive ? 'var(--y2)' : '#6b7280';
+      btn.style.borderBottom = isActive ? '2px solid var(--y)' : '2px solid transparent';
+    }
+    if (panel) panel.style.display = isActive ? 'block' : 'none';
+  });
+  if (tab === 'tickets') chargerTicketsSupport(_supTicketFilter);
+}
+
+function filtrerTicketsSupport(statut) {
+  _supTicketFilter = statut;
+  // Mettre à jour les boutons filtres
+  var filtres = ['','ouvert','en_cours','resolu','rejete','ferme'];
+  var ids = ['all','ouvert','en_cours','resolu','rejete','ferme'];
+  filtres.forEach(function(f, i) {
+    var btn = document.getElementById('tkf-' + ids[i]);
+    if (!btn) return;
+    var isActive = f === statut;
+    btn.style.background = isActive ? 'var(--y)' : '#fff';
+    btn.style.color = isActive ? '#fff' : '#6b7280';
+    btn.style.borderColor = isActive ? 'var(--y)' : '#e5e7eb';
+  });
+  chargerTicketsSupport(statut);
+}
+
 async function chargerSupport(){
   var u=G.user;if(!u)return;
-  var lbl=document.getElementById('sup-zone-label');
-  if(lbl)lbl.textContent=u.role==='superviseur'?'Zone: '+(u.zone||'Nationale'):'Tickets et réclamations';
   chargerKycPending();
+  setSupTab(_supTabActif || 'notif');
+}
+
+async function chargerTicketsSupport(statut) {
   var el=document.getElementById('sup-tickets');if(!el)return;
   el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
   try{
-    var r=await apiGet('/tickets?statut=ouvert&limit=50');
+    var q='/tickets?limit=50'+(statut?'&statut='+statut:'');
+    var r=await apiGet(q);
     var list=r.data||[];
     el.innerHTML='';
     if(!list.length){
-      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:16px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">✓ Aucun ticket ouvert</div>';
+      var empty=statut?'Aucun ticket '+statut:'Aucun ticket';
+      el.innerHTML='<div style="background:#f9fafb;border:1px solid #f3f4f6;border-radius:14px;padding:20px;text-align:center;color:#9ca3af;font-size:13px">'+empty+'</div>';
       return;
     }
-    var statutColors={'ouvert':'#f59e0b','en_cours':'#3b82f6','transfere_tech':'#7c3aed','resolu':'#22c55e','ferme':'#9ca3af'};
-    var statutLabels={'ouvert':'Ouvert','en_cours':'En cours','transfere_tech':'🛠 Transféré tech','resolu':'Résolu','ferme':'Fermé'};
+    var statCols={'ouvert':'#f59e0b','en_cours':'#3b82f6','transfere_tech':'#7c3aed','resolu':'#22c55e','ferme':'#9ca3af','rejete':'#ef4444'};
+    var statLbls={'ouvert':'⏳ En attente','en_cours':'🔄 En cours','transfere_tech':'🛠 Tech','resolu':'✅ Résolu','ferme':'🔒 Clôturé','rejete':'❌ Rejeté'};
     list.forEach(function(t){
       var div=document.createElement('div');
-      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05)';
-      var statCol=statutColors[t.statut]||'#9ca3af';
-      var statLbl=statutLabels[t.statut]||t.statut;
+      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:13px 15px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05)';
+      var sc=statCols[t.statut]||'#9ca3af';
+      var sl=statLbls[t.statut]||t.statut;
       var d=new Date(t.dateCreation||t.created_at||Date.now());
-      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-      div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})
+        +' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var client=t.client;
+      var clientInfo=client?(client.prenom||'')+ ' '+(client.nom||'')+' · '+(client.telephone||''):'';
+      div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
         +'<div style="font-size:13px;font-weight:700;flex:1;line-height:1.3">'+t.sujet+'</div>'
-        +'<span style="background:'+statCol+'18;color:'+statCol+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-left:8px;flex-shrink:0">'+statLbl+'</span>'
+        +'<span style="background:'+sc+'18;color:'+sc+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-left:8px;flex-shrink:0">'+sl+'</span>'
         +'</div>'
-        +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px;line-height:1.4">'+t.description+'</div>'
-        +'<div style="font-size:10px;color:#9ca3af">'+ds+(t.reference?' · '+t.reference:'')+'</div>';
+        +(clientInfo?'<div style="font-size:11px;color:#3b82f6;margin-bottom:4px;font-weight:600">👤 '+clientInfo.trim()+'</div>':'')
+        +'<div style="font-size:12px;color:#6b7280;margin-bottom:6px;line-height:1.4">'+t.description+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="font-size:10px;color:#9ca3af">'+ds+'</div>'
+        +(t.reference?'<div style="font-size:10px;color:#9ca3af">'+t.reference+'</div>':'')
+        +'</div>';
       var btns=document.createElement('div');
-      btns.style.cssText='display:flex;gap:8px;margin-top:10px;flex-wrap:wrap';
+      btns.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap';
       if(t.statut==='ouvert'){
-        var btnP=document.createElement('button');
-        btnP.textContent='⏳ Prendre en charge';
-        btnP.style.cssText='padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnP.addEventListener('click',function(){cloturerTicket(tid,'en_cours');});})(t.id);
-        btns.appendChild(btnP);
+        var b1=document.createElement('button');
+        b1.textContent='🔄 Prendre en charge';
+        b1.style.cssText='padding:6px 11px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b1.onclick=function(){changerStatutTicket(tid,'en_cours');};})(t.id);
+        btns.appendChild(b1);
+        var b2=document.createElement('button');
+        b2.textContent='🛠 → Tech';
+        b2.style.cssText='padding:6px 11px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:8px;color:#7c3aed;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b2.onclick=function(){changerStatutTicket(tid,'transfere_tech');};})(t.id);
+        btns.appendChild(b2);
+      }
+      if(t.statut==='ouvert'||t.statut==='en_cours'||t.statut==='transfere_tech'){
+        var b3=document.createElement('button');
+        b3.textContent='✅ Résolu';
+        b3.style.cssText='padding:6px 11px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b3.onclick=function(){changerStatutTicket(tid,'resolu');};})(t.id);
+        btns.appendChild(b3);
+        var b4=document.createElement('button');
+        b4.textContent='❌ Rejeter';
+        b4.style.cssText='padding:6px 11px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#ef4444;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b4.onclick=function(){changerStatutTicket(tid,'rejete');};})(t.id);
+        btns.appendChild(b4);
       }
       if(t.statut==='ouvert'||t.statut==='en_cours'){
-        var btnT=document.createElement('button');
-        btnT.textContent='🛠 Tech';
-        btnT.style.cssText='padding:7px 12px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:8px;color:#7c3aed;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnT.addEventListener('click',function(){cloturerTicket(tid,'transfere_tech');});})(t.id);
-        btns.appendChild(btnT);
-        var btnR=document.createElement('button');
-        btnR.textContent='✓ Résolu';
-        btnR.style.cssText='padding:7px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnR.addEventListener('click',function(){cloturerTicket(tid,'resolu');});})(t.id);
-        btns.appendChild(btnR);
+        var b5=document.createElement('button');
+        b5.textContent='🔒 Clôturer';
+        b5.style.cssText='padding:6px 11px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;color:#6b7280;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b5.onclick=function(){changerStatutTicket(tid,'ferme');};})(t.id);
+        btns.appendChild(b5);
       }
-      if(t.statut==='transfere_tech'){
-        var btnRt=document.createElement('button');
-        btnRt.textContent='✓ Marquer résolu';
-        btnRt.style.cssText='padding:7px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnRt.addEventListener('click',function(){cloturerTicket(tid,'resolu');});})(t.id);
-        btns.appendChild(btnRt);
+      if(t.statut==='resolu'||t.statut==='ferme'){
+        var b6=document.createElement('button');
+        b6.textContent='🔄 Relancer';
+        b6.style.cssText='padding:6px 11px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
+        (function(tid){b6.onclick=function(){changerStatutTicket(tid,'ouvert');};})(t.id);
+        btns.appendChild(b6);
       }
       div.appendChild(btns);
       el.appendChild(div);
     });
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+}
+
+async function changerStatutTicket(id, statut) {
+  try {
+    await apiPatch('/tickets/'+id+'/status', {statut:statut});
+    toast(statut==='resolu'?'✅ Ticket résolu':statut==='ferme'?'🔒 Ticket clôturé':statut==='rejete'?'❌ Ticket rejeté':'Statut mis à jour');
+    chargerTicketsSupport(_supTicketFilter);
+  } catch(e) { toast(e.message, true); }
+}
+
+async function chercherClientTicket() {
+  var tel = document.getElementById('tk-client-tel').value.trim();
+  if (!tel) { toast('Entrez un numéro', true); return; }
+  var infoEl = document.getElementById('tk-client-info');
+  infoEl.style.display = '';
+  infoEl.innerHTML = '<div class="spin" style="width:16px;height:16px;border-width:2px;margin:0 auto"></div>';
+  try {
+    var r = await apiGet('/users?search='+encodeURIComponent(tel)+'&limit=1');
+    var list = r.data||[];
+    var u = list[0];
+    if (!u) { infoEl.innerHTML = '<span style="color:var(--r)">Client introuvable</span>'; return; }
+    infoEl.dataset.clientId = u.id;
+    infoEl.innerHTML = '<div style="font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</div>'
+      +'<div style="color:#6b7280">'+u.telephone+' · '+(u.role||'client')+' · KYC'+(u.kycNiveau||0)+'</div>'
+      +'<div style="color:'+(u.statut==='actif'?'#059669':'#ef4444')+';font-weight:600">'+u.statut+'</div>';
+  } catch(e) { infoEl.innerHTML = '<span style="color:var(--r)">'+e.message+'</span>'; }
+}
+
+async function creerTicketSupport() {
+  var tel = document.getElementById('tk-client-tel').value.trim();
+  var motif = document.getElementById('tk-motif').value;
+  var desc = document.getElementById('tk-desc').value.trim();
+  var dest = document.getElementById('tk-dest').value;
+  var prio = document.getElementById('tk-priorite').value;
+  var errEl = document.getElementById('tk-err');
+  if (!tel || !motif || !desc) {
+    errEl.textContent = 'Client, motif et description sont requis';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  try {
+    await apiPost('/tickets', {
+      sujet: motif,
+      description: desc,
+      telephone: tel,
+      destinataire: dest,
+      priorite: prio
+    });
+    toast('✅ Ticket créé avec succès');
+    document.getElementById('tk-client-tel').value = '';
+    document.getElementById('tk-motif').value = '';
+    document.getElementById('tk-desc').value = '';
+    document.getElementById('tk-client-info').style.display = 'none';
+    setSupTab('tickets');
+    filtrerTicketsSupport('ouvert');
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = ''; }
 }
 async function rechercherClient(){
   var tel=document.getElementById('sup-tel').value.trim();
@@ -2384,69 +2581,8 @@ async function cloturerA(id){try{await apiPatch('/alerts/'+id,{statut:'resolue',
 async function cloturerT(id){try{await apiPatch('/tickets/'+id+'/status',{statut:'ferme'});toast('Ticket resolu');chargerMonitoring();}catch(e){toast(e.message,true);}}
 
 // ── SUPPORT ──
-async function chargerSupport(){
-  var u=G.user;if(!u)return;
-  var lbl=document.getElementById('sup-zone-label');
-  if(lbl)lbl.textContent=u.role==='superviseur'?'Zone: '+(u.zone||'Nationale'):'Tickets et réclamations';
-  chargerKycPending();
-  var el=document.getElementById('sup-tickets');if(!el)return;
-  el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
-  try{
-    var r=await apiGet('/tickets?statut=ouvert&limit=50');
-    var list=r.data||[];
-    el.innerHTML='';
-    if(!list.length){
-      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:16px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">✓ Aucun ticket ouvert</div>';
-      return;
-    }
-    var statutColors={'ouvert':'#f59e0b','en_cours':'#3b82f6','transfere_tech':'#7c3aed','resolu':'#22c55e','ferme':'#9ca3af'};
-    var statutLabels={'ouvert':'Ouvert','en_cours':'En cours','transfere_tech':'🛠 Transféré tech','resolu':'Résolu','ferme':'Fermé'};
-    list.forEach(function(t){
-      var div=document.createElement('div');
-      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05)';
-      var statCol=statutColors[t.statut]||'#9ca3af';
-      var statLbl=statutLabels[t.statut]||t.statut;
-      var d=new Date(t.dateCreation||t.created_at||Date.now());
-      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-      div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
-        +'<div style="font-size:13px;font-weight:700;flex:1;line-height:1.3">'+t.sujet+'</div>'
-        +'<span style="background:'+statCol+'18;color:'+statCol+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-left:8px;flex-shrink:0">'+statLbl+'</span>'
-        +'</div>'
-        +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px;line-height:1.4">'+t.description+'</div>'
-        +'<div style="font-size:10px;color:#9ca3af">'+ds+(t.reference?' · '+t.reference:'')+'</div>';
-      var btns=document.createElement('div');
-      btns.style.cssText='display:flex;gap:8px;margin-top:10px;flex-wrap:wrap';
-      if(t.statut==='ouvert'){
-        var btnP=document.createElement('button');
-        btnP.textContent='⏳ Prendre en charge';
-        btnP.style.cssText='padding:7px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnP.addEventListener('click',function(){cloturerTicket(tid,'en_cours');});})(t.id);
-        btns.appendChild(btnP);
-      }
-      if(t.statut==='ouvert'||t.statut==='en_cours'){
-        var btnT=document.createElement('button');
-        btnT.textContent='🛠 Tech';
-        btnT.style.cssText='padding:7px 12px;background:#faf5ff;border:1px solid #d8b4fe;border-radius:8px;color:#7c3aed;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnT.addEventListener('click',function(){cloturerTicket(tid,'transfere_tech');});})(t.id);
-        btns.appendChild(btnT);
-        var btnR=document.createElement('button');
-        btnR.textContent='✓ Résolu';
-        btnR.style.cssText='padding:7px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnR.addEventListener('click',function(){cloturerTicket(tid,'resolu');});})(t.id);
-        btns.appendChild(btnR);
-      }
-      if(t.statut==='transfere_tech'){
-        var btnRt=document.createElement('button');
-        btnRt.textContent='✓ Marquer résolu';
-        btnRt.style.cssText='padding:7px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        (function(tid){btnRt.addEventListener('click',function(){cloturerTicket(tid,'resolu');});})(t.id);
-        btns.appendChild(btnRt);
-      }
-      div.appendChild(btns);
-      el.appendChild(div);
-    });
-  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
-}
+async function chargerSupport2_deprecated(){} // Remplacé par chargerSupport dans le module support
+
 async function rechercherClient(){
   var tel=document.getElementById('sup-tel').value.trim();
   if(!tel){toast('Entrez un numero de telephone',true);return;}

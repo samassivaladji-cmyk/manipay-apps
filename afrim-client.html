@@ -419,20 +419,36 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 
 
 <!-- ÉCRAN VERROUILLAGE -->
-<div class="scr" id="s-lock" style="background:#fff;justify-content:center;align-items:center;min-height:100vh;padding:40px 24px;">
-  <div style="width:100%;max-width:300px;text-align:center;display:flex;flex-direction:column;align-items:center;">
-    <div style="width:72px;height:72px;border-radius:18px;overflow:hidden;margin:0 auto 8px;border:2px solid #d1fae5;">
+<div class="scr" id="s-lock" style="background:#fff;justify-content:center;align-items:center;min-height:100vh;padding:32px 24px;">
+  <div style="width:100%;max-width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;">
+    <div style="width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 12px;border:2px solid #d1fae5;">
       <img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:100%;height:100%;object-fit:contain" alt="AFRIM PAY"/>
     </div>
-    <div style="font-size:18px;font-weight:800;color:#059669;margin-bottom:4px">Session verrouillée</div>
-    <div style="font-size:13px;color:#6b7280;margin-bottom:24px;letter-spacing:.01em;">Entrez votre PIN pour continuer</div>
-    <div id="lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:12px;font-size:13px;margin-bottom:12px;width:100%;box-sizing:border-box"></div>
-    <input id="lock-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
-      style="width:100%;padding:16px;font-size:30px;letter-spacing:16px;text-align:center;background:#f0fdf4;border:2px solid #059669;border-radius:16px;color:#059669;outline:none;box-sizing:border-box;margin-bottom:20px;"
-      oninput="if(this.value.length===4)deverrouillerApp();"/>
-    <button onclick="logoutFromLock()" style="width:100%;padding:15px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
-      Se déconnecter
-    </button>
+    <div style="font-size:17px;font-weight:800;color:#059669;margin-bottom:4px">Session verrouillée</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:24px">Entrez votre code secret pour continuer</div>
+    <div id="lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:8px 12px;border-radius:10px;font-size:12px;margin-bottom:12px;width:100%;box-sizing:border-box"></div>
+    <!-- Points PIN -->
+    <div style="display:flex;gap:18px;justify-content:center;margin-bottom:32px">
+      <div id="lk0" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="lk1" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="lk2" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="lk3" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+    </div>
+    <!-- Clavier numérique -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:260px;margin:0 auto 24px">
+      <button class="pin-key" onclick="lockPIN(1)">1</button>
+      <button class="pin-key" onclick="lockPIN(2)">2</button>
+      <button class="pin-key" onclick="lockPIN(3)">3</button>
+      <button class="pin-key" onclick="lockPIN(4)">4</button>
+      <button class="pin-key" onclick="lockPIN(5)">5</button>
+      <button class="pin-key" onclick="lockPIN(6)">6</button>
+      <button class="pin-key" onclick="lockPIN(7)">7</button>
+      <button class="pin-key" onclick="lockPIN(8)">8</button>
+      <button class="pin-key" onclick="lockPIN(9)">9</button>
+      <button class="pin-key empty" onclick="logoutFromLock()" style="font-size:10px;color:#ef4444">Quitter</button>
+      <button class="pin-key" onclick="lockPIN(0)">0</button>
+      <button class="pin-key" onclick="lockDEL()">⌫</button>
+    </div>
   </div>
 </div>
 
@@ -1729,34 +1745,60 @@ function verrouillerApp(){
   var lockScr=document.getElementById('s-lock');
   if(lockScr){
     lockScr.classList.add('on');
-    var pinEl=document.getElementById('lock-pin');
-    if(pinEl){pinEl.value='';pinEl.style.borderColor='rgba(255,255,255,.3)';setTimeout(function(){pinEl.focus();},300);}
+    _lockPin='';
+    for(var _li=0;_li<4;_li++){var _ld=document.getElementById('lk'+_li);if(_ld){_ld.style.background='';_ld.style.borderColor='#d1d5db';}}
     var errEl=document.getElementById('lock-err');
     if(errEl)errEl.style.display='none';
   }
 }
 
+var _lockPin = '';
+function lockPIN(n) {
+  if (_lockPin.length >= 4) return;
+  _lockPin += String(n);
+  for (var i = 0; i < 4; i++) {
+    var d = document.getElementById('lk'+i);
+    if (d) {
+      d.style.background = i < _lockPin.length ? '#059669' : '';
+      d.style.borderColor = i < _lockPin.length ? '#059669' : '#d1d5db';
+    }
+  }
+  if (_lockPin.length === 4) { setTimeout(deverrouillerApp, 100); }
+}
+function lockDEL() {
+  if (_lockPin.length === 0) return;
+  _lockPin = _lockPin.slice(0, -1);
+  for (var i = 0; i < 4; i++) {
+    var d = document.getElementById('lk'+i);
+    if (d) {
+      d.style.background = i < _lockPin.length ? '#059669' : '';
+      d.style.borderColor = i < _lockPin.length ? '#059669' : '#d1d5db';
+    }
+  }
+}
 async function deverrouillerApp(){
-  var pinEl=document.getElementById('lock-pin');
   var errEl=document.getElementById('lock-err');
-  if(!pinEl||!errEl)return;
-  var pin=pinEl.value.trim();
-  if(pin.length!==4){pinEl.value='';return;}
+  var pin=_lockPin;
+  if(pin.length!==4){return;}
+  function resetDots(){
+    _lockPin='';
+    for(var i=0;i<4;i++){var d=document.getElementById('lk'+i);if(d){d.style.background='';d.style.borderColor='#d1d5db';}}
+  }
   try{
     var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin});
     if(r.data&&r.data.accessToken){G.token=r.data.accessToken;LS.set('afrim_token',G.token);}
-    errEl.style.display='none';
-    pinEl.value='';
+    resetDots();
+    if(errEl)errEl.style.display='none';
     G.locked=false;
     document.getElementById('s-lock').classList.remove('on');
     setTab(G.tab||'home');
     resetIdleTimer();
   }catch(e){
-    errEl.textContent='Code incorrect';
-    errEl.style.display='';
-    pinEl.value='';
-    pinEl.style.borderColor='rgba(239,68,68,.6)';
-    setTimeout(function(){pinEl.focus();},100);
+    if(errEl){errEl.textContent='Code incorrect';errEl.style.display='';}
+    // Shake des points
+    var dots=document.querySelectorAll('[id^="lk"]');
+    dots.forEach(function(d){d.style.borderColor='#ef4444';d.style.background='#fecaca';});
+    setTimeout(resetDots,600);
   }
 }
 
