@@ -427,27 +427,27 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
     <div style="font-size:17px;font-weight:800;color:#059669;margin-bottom:4px">Session verrouillée</div>
     <div style="font-size:12px;color:#9ca3af;margin-bottom:24px">Entrez votre code secret pour continuer</div>
     <div id="lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:8px 12px;border-radius:10px;font-size:12px;margin-bottom:12px;width:100%;box-sizing:border-box"></div>
-    <!-- Points PIN -->
-    <div style="display:flex;gap:18px;justify-content:center;margin-bottom:32px">
-      <div id="lk0" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
-      <div id="lk1" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
-      <div id="lk2" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
-      <div id="lk3" style="width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+    <!-- Points PIN style Wave -->
+    <div style="display:flex;gap:22px;justify-content:center;margin-bottom:36px">
+      <div id="lk0" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #d1d5db;transition:.15s;background:transparent"></div>
+      <div id="lk1" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #d1d5db;transition:.15s;background:transparent"></div>
+      <div id="lk2" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #d1d5db;transition:.15s;background:transparent"></div>
+      <div id="lk3" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #d1d5db;transition:.15s;background:transparent"></div>
     </div>
-    <!-- Clavier numérique -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:260px;margin:0 auto 24px">
-      <button class="pin-key" onclick="lockPIN(1)">1</button>
-      <button class="pin-key" onclick="lockPIN(2)">2</button>
-      <button class="pin-key" onclick="lockPIN(3)">3</button>
-      <button class="pin-key" onclick="lockPIN(4)">4</button>
-      <button class="pin-key" onclick="lockPIN(5)">5</button>
-      <button class="pin-key" onclick="lockPIN(6)">6</button>
-      <button class="pin-key" onclick="lockPIN(7)">7</button>
-      <button class="pin-key" onclick="lockPIN(8)">8</button>
-      <button class="pin-key" onclick="lockPIN(9)">9</button>
-      <button class="pin-key empty" onclick="logoutFromLock()" style="font-size:10px;color:#ef4444">Quitter</button>
-      <button class="pin-key" onclick="lockPIN(0)">0</button>
-      <button class="pin-key" onclick="lockDEL()">⌫</button>
+    <!-- Clavier numérique style Wave -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px;margin:0 auto 24px">
+      <button onclick="lockPIN(1)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">1</button>
+      <button onclick="lockPIN(2)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">2</button>
+      <button onclick="lockPIN(3)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">3</button>
+      <button onclick="lockPIN(4)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">4</button>
+      <button onclick="lockPIN(5)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">5</button>
+      <button onclick="lockPIN(6)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">6</button>
+      <button onclick="lockPIN(7)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">7</button>
+      <button onclick="lockPIN(8)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">8</button>
+      <button onclick="lockPIN(9)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">9</button>
+      <button onclick="logoutFromLock()" style="height:58px;border-radius:50%;border:none;background:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;color:#ef4444">Quitter</button>
+      <button onclick="lockPIN(0)" style="height:58px;border-radius:50%;border:none;background:#f3f4f6;font-size:24px;font-weight:500;cursor:pointer;font-family:inherit;color:#111827" ontouchstart="this.style.background='#e5e7eb'" ontouchend="this.style.background='#f3f4f6'">0</button>
+      <button onclick="lockDEL()" style="height:58px;border-radius:50%;border:none;background:none;font-size:22px;cursor:pointer;color:#374151">&#x232B;</button>
     </div>
   </div>
 </div>

@@ -3467,35 +3467,236 @@ function ouvrirNotifsBO() {
   chargerNotifsPanel();
 }
 
+var _boHistFilter = '';
+var _boHistOffset = 0;
+
 async function chargerNotifsPanel() {
   var el = document.getElementById('bo-notif-list');
   if (!el) return;
+  el.innerHTML = '';
+
+  // ── Barre d'onglets Mes notifs / Historique ──
+  var tabBar = document.createElement('div');
+  tabBar.style.cssText = 'display:flex;border-bottom:1px solid #f3f4f6;margin-bottom:10px';
+  
+  var tMes = document.createElement('button');
+  tMes.id = 'bn-tab-mes';
+  tMes.textContent = 'Mes notifs';
+  tMes.style.cssText = 'flex:1;padding:9px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--y2);border-bottom:2px solid var(--y)';
+  tMes.onclick = function() { _boPanelTab('mes'); };
+  
+  var tHist = document.createElement('button');
+  tHist.id = 'bn-tab-hist';
+  tHist.textContent = 'Historique';
+  tHist.style.cssText = 'flex:1;padding:9px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent';
+  tHist.onclick = function() { _boPanelTab('hist'); };
+  
+  tabBar.appendChild(tMes);
+  tabBar.appendChild(tHist);
+  el.appendChild(tabBar);
+
+  // ── Panel Mes notifs ──
+  var pMes = document.createElement('div');
+  pMes.id = 'bn-panel-mes';
+  el.appendChild(pMes);
+
+  // ── Panel Historique ──
+  var pHist = document.createElement('div');
+  pHist.id = 'bn-panel-hist';
+  pHist.style.display = 'none';
+
+  // Filtres rôles
+  var fBar = document.createElement('div');
+  fBar.style.cssText = 'display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px';
+  var fDefs = [
+    ['all','Tous',''],
+    ['client','Clients','client'],
+    ['agent','Agents','agent'],
+    ['business','Business','business'],
+    ['master','Masters','master'],
+    ['mini_master','Mini-M.','mini_master'],
+    ['superviseur','Sup.','superviseur'],
+    ['support','Support','support']
+  ];
+  fDefs.forEach(function(fd) {
+    var fb = document.createElement('button');
+    fb.id = 'bnh-' + fd[0];
+    fb.textContent = fd[1];
+    var isAll = fd[0] === 'all';
+    fb.style.cssText = 'padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;border:1.5px solid ' + (isAll ? 'var(--y)' : '#e5e7eb') + ';background:' + (isAll ? 'var(--y)' : '#fff') + ';color:' + (isAll ? '#fff' : '#6b7280');
+    (function(role) { fb.onclick = function() { _boHistFilter = role; _boHistOffset = 0; _boUpdateFiltres(); _boLoadHist(false); }; })(fd[2]);
+    fBar.appendChild(fb);
+  });
+  pHist.appendChild(fBar);
+
+  var histList = document.createElement('div');
+  histList.id = 'bnh-list';
+  pHist.appendChild(histList);
+
+  var btnPlus = document.createElement('button');
+  btnPlus.id = 'bnh-plus-btn';
+  btnPlus.textContent = 'Charger plus';
+  btnPlus.style.cssText = 'display:none;width:100%;padding:8px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;color:#6b7280;margin-top:6px';
+  btnPlus.onclick = function() { _boHistOffset += 20; _boLoadHist(true); };
+  pHist.appendChild(btnPlus);
+  el.appendChild(pHist);
+
+  _boLoadMesNotifs();
+}
+
+function _boPanelTab(tab) {
+  var tMes = document.getElementById('bn-tab-mes');
+  var tHist = document.getElementById('bn-tab-hist');
+  var pMes = document.getElementById('bn-panel-mes');
+  var pHist = document.getElementById('bn-panel-hist');
+  if (!tMes || !pMes) return;
+  var isMes = tab === 'mes';
+  tMes.style.color = isMes ? 'var(--y2)' : '#6b7280';
+  tMes.style.borderBottom = isMes ? '2px solid var(--y)' : '2px solid transparent';
+  tHist.style.color = !isMes ? 'var(--y2)' : '#6b7280';
+  tHist.style.borderBottom = !isMes ? '2px solid var(--y)' : '2px solid transparent';
+  pMes.style.display = isMes ? 'block' : 'none';
+  pHist.style.display = !isMes ? 'block' : 'none';
+  if (!isMes && !document.getElementById('bnh-list').children.length) { _boHistOffset = 0; _boLoadHist(false); }
+}
+
+function _boUpdateFiltres() {
+  var fDefs = [['all',''],['client','client'],['agent','agent'],['business','business'],['master','master'],['mini_master','mini_master'],['superviseur','superviseur'],['support','support']];
+  fDefs.forEach(function(fd) {
+    var btn = document.getElementById('bnh-' + fd[0]);
+    if (!btn) return;
+    var active = fd[1] === _boHistFilter;
+    btn.style.background = active ? 'var(--y)' : '#fff';
+    btn.style.color = active ? '#fff' : '#6b7280';
+    btn.style.borderColor = active ? 'var(--y)' : '#e5e7eb';
+  });
+}
+
+async function _boLoadMesNotifs() {
+  var el = document.getElementById('bn-panel-mes');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px"><div class="spin"></div></div>';
   try {
     var tel = G.user && G.user.telephone ? '&tel=' + encodeURIComponent(G.user.telephone) : '';
     var r = await callAPI('/notifications?limit=50' + tel);
     var list = (r.data && r.data.notifications) || r.notifications || [];
     _boNotifCount = Number((r.data && r.data.nonLues != null ? r.data.nonLues : r.nonLues) || 0);
     chargerBadgeNotifsBO();
-    if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">&#x1F514; Aucune notification</div>'; return; }
-    var icons = {transaction:'&#x1F4B3;', kyc:'&#x1F4CB;', securite:'&#x1F510;', systeme:'&#x1F4E2;', parrainage:'&#x1F91D;'};
-    var cols = {transaction:'#3b82f6', kyc:'#22c55e', securite:'#f59e0b', systeme:'#8b5cf6', parrainage:'#f97316'};
+    if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:#9ca3af;font-size:12px">Aucune notification</div>'; return; }
+    var icons = {transaction:'&#x1F4B3;',kyc:'&#x1F4CB;',securite:'&#x1F510;',systeme:'&#x1F4E2;',parrainage:'&#x1F91D;'};
+    var cols = {transaction:'#3b82f6',kyc:'#22c55e',securite:'#f59e0b',systeme:'#8b5cf6',parrainage:'#f97316'};
     var nonLues = list.filter(function(n){return !n.lu;});
     var lues = list.filter(function(n){return n.lu;});
-    var html = '';
-    function renderN(n) {
+    var frag = document.createDocumentFragment();
+    function makeNotif(n) {
       var col = cols[n.type] || '#6b7280';
       var d = new Date(n.created_at || Date.now());
       var ds = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-      return '<div onclick="boLireNotif(this)" data-nid="' + n.id + '" data-lu="' + (n.lu?'1':'0') + '" style="background:' + (n.lu?'#f9fafb':'#fff') + ';border-radius:12px;padding:12px 14px;margin-bottom:7px;display:flex;gap:10px;cursor:pointer;border-left:3px solid ' + (n.lu?'transparent':col) + ';box-shadow:0 1px 3px rgba(0,0,0,' + (n.lu?'.03':'.08') + ')">'
-        + '<div style="width:36px;height:36px;border-radius:10px;background:' + col + '18;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;opacity:' + (n.lu?'.5':'1') + '">' + (icons[n.type]||'&#x1F514;') + '</div>'
-        + '<div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><div style="font-size:12px;font-weight:' + (n.lu?'500':'700') + ';color:' + (n.lu?'#9ca3af':'#111827') + '">' + n.titre + '</div>'
-        + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:#9ca3af;white-space:nowrap">' + ds + '</span>' + (n.lu?'':'<div style="width:7px;height:7px;background:#ef4444;border-radius:50%"></div>') + '</div></div>'
-        + '<div style="font-size:11px;color:' + (n.lu?'#9ca3af':'#6b7280') + ';margin-top:2px">' + n.message + '</div></div></div>';
+      var row = document.createElement('div');
+      row.dataset.nid = n.id;
+      row.dataset.lu = n.lu ? '1' : '0';
+      row.style.cssText = 'background:' + (n.lu?'#f9fafb':'#fff') + ';border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;cursor:pointer;border-left:3px solid ' + (n.lu?'transparent':col);
+      row.onclick = function() { boLireNotif(this); };
+      var icon = document.createElement('div');
+      icon.style.cssText = 'width:32px;height:32px;border-radius:8px;background:' + col + '18;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;opacity:' + (n.lu?'.5':'1');
+      icon.innerHTML = icons[n.type] || '&#x1F514;';
+      var body = document.createElement('div');
+      body.style.cssText = 'flex:1;min-width:0';
+      var head = document.createElement('div');
+      head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:4px';
+      var titre = document.createElement('div');
+      titre.style.cssText = 'font-size:11px;font-weight:' + (n.lu?'500':'700') + ';color:' + (n.lu?'#9ca3af':'#111827');
+      titre.textContent = n.titre;
+      var meta = document.createElement('div');
+      meta.style.cssText = 'display:flex;align-items:center;gap:4px';
+      var ts = document.createElement('span');
+      ts.style.cssText = 'font-size:9px;color:#9ca3af;white-space:nowrap';
+      ts.textContent = ds;
+      meta.appendChild(ts);
+      if (!n.lu) { var dot = document.createElement('div'); dot.style.cssText = 'width:7px;height:7px;background:#ef4444;border-radius:50%'; meta.appendChild(dot); }
+      head.appendChild(titre); head.appendChild(meta);
+      var msg = document.createElement('div');
+      msg.style.cssText = 'font-size:11px;color:' + (n.lu?'#9ca3af':'#6b7280') + ';margin-top:1px';
+      msg.textContent = n.message;
+      body.appendChild(head); body.appendChild(msg);
+      row.appendChild(icon); row.appendChild(body);
+      return row;
     }
-    if (nonLues.length) html += '<div style="font-size:10px;font-weight:700;color:#374151;text-transform:uppercase;padding:0 2px 6px">Non lues (' + nonLues.length + ')</div>' + nonLues.map(renderN).join('');
-    if (lues.length) html += '<div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;padding:' + (nonLues.length?'12px':'0') + ' 2px 6px">Lues</div>' + lues.map(renderN).join('');
-    el.innerHTML = html;
-  } catch(e) { if(el) el.innerHTML = '<div style="color:var(--r);font-size:12px;padding:10px">' + e.message + '</div>'; }
+    function addLabel(txt) {
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;padding:0 2px 5px;margin-top:8px';
+      lbl.textContent = txt;
+      frag.appendChild(lbl);
+    }
+    if (nonLues.length) { addLabel('Non lues (' + nonLues.length + ')'); nonLues.forEach(function(n){ frag.appendChild(makeNotif(n)); }); }
+    if (lues.length) { addLabel('Lues'); lues.forEach(function(n){ frag.appendChild(makeNotif(n)); }); }
+    el.innerHTML = '';
+    el.appendChild(frag);
+  } catch(e) { el.innerHTML = '<div style="color:var(--r);font-size:11px;padding:8px">' + e.message + '</div>'; }
+}
+
+async function _boLoadHist(append) {
+  var el = document.getElementById('bnh-list');
+  if (!el) return;
+  if (!append) el.innerHTML = '<div style="text-align:center;padding:16px"><div class="spin"></div></div>';
+  var q = '/notifications/all?limit=20&offset=' + _boHistOffset;
+  if (_boHistFilter === 'support') q += '&role=support';
+  else if (_boHistFilter) q += '&role=' + _boHistFilter;
+  try {
+    var r = await callAPI(q);
+    var list = (r.data && r.data.notifications) || [];
+    var total = (r.data && r.data.total) || 0;
+    var cols = {transaction:'#3b82f6',kyc:'#22c55e',securite:'#f59e0b',systeme:'#8b5cf6',parrainage:'#f97316'};
+    var frag = document.createDocumentFragment();
+    list.forEach(function(n) {
+      var col = cols[n.type] || '#6b7280';
+      var d = new Date(n.created_at || Date.now());
+      var ds = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var user = ((n.prenom||'') + (n.nom ? ' '+n.nom : '')).trim() || (n.telephone||'');
+      var row = document.createElement('div');
+      row.style.cssText = 'background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:6px;border:1px solid #f3f4f6';
+      var head = document.createElement('div');
+      head.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:2px';
+      var titreEl = document.createElement('div');
+      titreEl.style.cssText = 'font-size:11px;font-weight:700;color:#111827;flex:1';
+      titreEl.textContent = n.titre;
+      var metaDiv = document.createElement('div');
+      metaDiv.style.cssText = 'display:flex;align-items:center;gap:5px;flex-shrink:0';
+      var tsEl = document.createElement('span');
+      tsEl.style.cssText = 'font-size:9px;color:#9ca3af;white-space:nowrap';
+      tsEl.textContent = ds;
+      var delBtn = document.createElement('button');
+      delBtn.dataset.notifId = n.id;
+      delBtn.innerHTML = '&#x2715;';
+      delBtn.style.cssText = 'background:#fef2f2;border:none;border-radius:5px;padding:1px 6px;font-size:10px;color:#ef4444;cursor:pointer;font-family:inherit';
+      delBtn.onclick = function() { _boDeleteNotif(this.dataset.notifId, this); };
+      metaDiv.appendChild(tsEl); metaDiv.appendChild(delBtn);
+      head.appendChild(titreEl); head.appendChild(metaDiv);
+      var msgEl = document.createElement('div');
+      msgEl.style.cssText = 'font-size:11px;color:#6b7280;margin-bottom:2px';
+      msgEl.textContent = n.message;
+      var infoEl = document.createElement('div');
+      infoEl.style.cssText = 'font-size:9px;color:#9ca3af';
+      infoEl.innerHTML = user + (n.role ? ' &middot; ' + n.role : '') + ' <span style="color:' + col + '">&middot; ' + (n.type||'') + '</span>';
+      row.appendChild(head); row.appendChild(msgEl); row.appendChild(infoEl);
+      frag.appendChild(row);
+    });
+    if (!append) el.innerHTML = '';
+    if (!list.length && !append) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">Aucune notification</div>'; }
+    else el.appendChild(frag);
+    var btnPlus = document.getElementById('bnh-plus-btn');
+    if (btnPlus) btnPlus.style.display = list.length >= 20 && (_boHistOffset + list.length) < total ? 'block' : 'none';
+  } catch(e) { if (!append && el) el.innerHTML = '<div style="color:var(--r);font-size:11px">' + e.message + '</div>'; }
+}
+
+async function _boDeleteNotif(id, btn) {
+  if (!confirm('Supprimer cette notification ?')) return;
+  try {
+    await callAPI('/notifications/' + id, {method:'DELETE'});
+    var row = btn.closest('[style*="border-radius:10px"]');
+    if (row) { row.style.opacity = '0'; row.style.transition = 'opacity .3s'; setTimeout(function(){row.remove();}, 300); }
+    toast('Notification supprimée');
+  } catch(e) { toast('Erreur: ' + e.message, true); }
 }
 
 async function boLireNotif(el) {
@@ -3614,32 +3815,92 @@ function resetBoLockTimer() {
 function boLockApp() {
   if (!G.token || !G.user) return;
   _boLocked = true;
+  _boBuildKeypad();
+  _boResetDots();
+  var err = document.getElementById('bo-lock-err');
+  if (err) err.style.display = 'none';
   var el = document.getElementById('bo-lock-screen');
-  if (el) { el.style.display = 'flex'; }
-  var pin = document.getElementById('bo-lock-pin');
-  if (pin) { pin.value = ''; pin.focus(); }
+  if (el) el.style.display = 'flex';
+}
+
+var _boLockPin = '';
+
+function _boUpdateDots() {
+  for (var i = 0; i < 4; i++) {
+    var d = document.getElementById('bol' + i);
+    if (!d) return;
+    d.style.background = i < _boLockPin.length ? 'var(--y2)' : '';
+    d.style.borderColor = i < _boLockPin.length ? 'var(--y2)' : '#d1d5db';
+  }
+}
+
+function _boResetDots(col) {
+  _boLockPin = '';
+  for (var i = 0; i < 4; i++) {
+    var d = document.getElementById('bol' + i);
+    if (!d) continue;
+    d.style.background = col || '';
+    d.style.borderColor = col || '#d1d5db';
+  }
+}
+
+function _boBuildKeypad() {
+  var kp = document.getElementById('bo-lock-keypad');
+  if (!kp || kp.childElementCount > 0) return;
+  var keys = [1,2,3,4,5,6,7,8,9,'Q',0,'D'];
+  keys.forEach(function(k) {
+    var btn = document.createElement('button');
+    btn.style.cssText = 'height:54px;border-radius:50%;border:none;font-size:22px;font-weight:500;cursor:pointer;font-family:inherit;transition:.1s;' + (k==='Q'?'background:none;color:#ef4444;font-size:10px;font-weight:700' : k==='D'?'background:none;color:#374151;font-size:20px':'background:#f3f4f6;color:#111827');
+    if (k === 'Q') {
+      btn.textContent = 'Quitter';
+      btn.onclick = boLockLogout;
+    } else if (k === 'D') {
+      btn.innerHTML = '&#x232B;';
+      btn.onclick = boLockDel;
+    } else {
+      btn.textContent = String(k);
+      (function(n){ btn.onclick = function(){ boLockKey(n); }; })(k);
+    }
+    kp.appendChild(btn);
+  });
+}
+
+function boLockKey(n) {
+  if (_boLockPin.length >= 4) return;
+  _boLockPin += String(n);
+  _boUpdateDots();
+  if (_boLockPin.length === 4) setTimeout(boUnlock, 120);
+}
+
+function boLockDel() {
+  _boLockPin = _boLockPin.slice(0, -1);
+  _boUpdateDots();
 }
 
 async function boUnlock() {
-  var pin = document.getElementById('bo-lock-pin');
   var err = document.getElementById('bo-lock-err');
-  if (!pin || pin.value.length < 4) return;
+  var pin = _boLockPin;
+  if (pin.length < 4) return;
   try {
-    var r = await callAPI('/auth/verify-pin', {method:'POST', body:JSON.stringify({pin:pin.value})});
-    if (r && r.success !== false) {
-      _boLocked = false;
-      var el = document.getElementById('bo-lock-screen');
-      if (el) el.style.display = 'none';
-      pin.value = '';
-      if (err) err.style.display = 'none';
-      resetBoLockTimer();
-    } else {
-      if (err) { err.textContent = 'PIN incorrect'; err.style.display = 'block'; }
-      pin.value = '';
+    var r = await callAPI('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({telephone: G.user.telephone, pin: pin})
+    });
+    if (r && r.data && r.data.accessToken) {
+      G.token = r.data.accessToken;
+      if (r.data.refreshToken) G.refresh = r.data.refreshToken;
+      try { localStorage.setItem('afrim_token', G.token); } catch(e2) {}
     }
+    _boResetDots();
+    if (err) err.style.display = 'none';
+    _boLocked = false;
+    var el = document.getElementById('bo-lock-screen');
+    if (el) el.style.display = 'none';
+    resetBoLockTimer();
   } catch(e) {
-    if (err) { err.textContent = 'PIN incorrect'; err.style.display = 'block'; }
-    pin.value = '';
+    if (err) { err.textContent = 'Code incorrect'; err.style.display = 'block'; }
+    _boResetDots('#fecaca');
+    setTimeout(function() { _boResetDots(); if(err) err.style.display = 'none'; }, 800);
   }
 }
 
@@ -3691,20 +3952,21 @@ function boLockLogout() {
 
 
 <!-- LOCK SCREEN BACKOFFICE -->
-<div id="bo-lock-screen" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;display:none;align-items:center;justify-content:center;padding:40px 24px">
+<div id="bo-lock-screen" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;padding:32px 24px">
   <div style="width:100%;max-width:300px;text-align:center">
-    <div style="width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 20px;border:2px solid var(--y3)">
+    <div style="width:60px;height:60px;border-radius:14px;overflow:hidden;margin:0 auto 12px;border:2px solid var(--y3)">
       <img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:100%;height:100%;object-fit:contain" alt="AFRIM PAY"/>
     </div>
-    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:6px">Session verrouillée</div>
-    <div style="font-size:13px;color:#6b7280;margin-bottom:24px">Entrez votre PIN pour reprendre</div>
-    <div id="bo-lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px;border-radius:10px;font-size:12px;margin-bottom:12px"></div>
-    <input id="bo-lock-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
-      style="width:100%;padding:16px;font-size:28px;letter-spacing:14px;text-align:center;border:2px solid var(--y);border-radius:14px;color:#111827;outline:none;box-sizing:border-box;margin-bottom:20px;font-family:inherit"
-      oninput="if(this.value.length===4)boUnlock();"/>
-    <button onclick="boLockLogout()" style="width:100%;padding:13px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:13px;color:#ef4444;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-      Se déconnecter
-    </button>
+    <div style="font-size:16px;font-weight:800;color:#111827;margin-bottom:4px">Session verrouillée</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:20px">Entrez votre code secret</div>
+    <div id="bo-lock-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:8px;border-radius:10px;font-size:12px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:20px;justify-content:center;margin-bottom:28px">
+      <div id="bol0" style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="bol1" style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="bol2" style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+      <div id="bol3" style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;transition:.15s"></div>
+    </div>
+    <div id="bo-lock-keypad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto 20px"></div>
   </div>
 </div>
 </body>
