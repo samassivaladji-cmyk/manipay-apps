@@ -1109,7 +1109,7 @@ function renderU(list){
   el.innerHTML='';
   list.forEach(function(u){
     var c=ROLE_C[u.role]||'#888';
-    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
     var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
     var div=document.createElement('div');
     div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
@@ -1125,7 +1125,7 @@ function renderU(list){
 function voirU(id){
   var u=usersData.find(function(x){return x.id===id;});if(!u)return;
   var c=ROLE_C[u.role]||'#888';
-  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
   document.getElementById('sh-u-name').textContent=(u.prenom||'')+' '+(u.nom||'');
   document.getElementById('sh-u-sub').textContent=u.role+' - '+u.telephone;
   var body=document.getElementById('sh-u-body');
@@ -2406,7 +2406,7 @@ function renderU(list){
   el.innerHTML='';
   list.forEach(function(u){
     var c=ROLE_C[u.role]||'#888';
-    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
     var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
     var div=document.createElement('div');
     div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
@@ -2422,7 +2422,7 @@ function renderU(list){
 function voirU(id){
   var u=usersData.find(function(x){return x.id===id;});if(!u)return;
   var c=ROLE_C[u.role]||'#888';
-  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):0;
+  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
   document.getElementById('sh-u-name').textContent=(u.prenom||'')+' '+(u.nom||'');
   document.getElementById('sh-u-sub').textContent=u.role+' - '+u.telephone;
   var body=document.getElementById('sh-u-body');
@@ -3335,7 +3335,7 @@ async function chargerStats(){
     var cumM={depot:{n:0,m:0,comm:0},retrait:{n:0,m:0,comm:0},transfert:{n:0,m:0},paiement:{n:0,m:0}};
     list.forEach(function(tx){
       var m=Number(tx.montant||0);var f=Number(tx.frais||0);
-      var d=new Date(tx.dateCreation||tx.date_creation);
+      var d=new Date(tx.dateCreation||tx.date_creation||tx.created_at);
       var isMois=d>=debut;
       function add(obj,type){obj[type].n++;obj[type].m+=m;if(type==='depot')obj[type].comm+=Math.round(m*0.002);if(type==='retrait')obj[type].comm+=Math.round(f*0.35);}
       if(tx.type==='depot'){add(cumT,'depot');if(isMois)add(cumM,'depot');}
@@ -4357,7 +4357,7 @@ async function _tkLoadList(listId, statut, destinataire) {
   el.innerHTML = '<div style="text-align:center;padding:14px"><div class="spin"></div></div>';
   var q = '/tickets?limit=40';
   if (statut) q += '&statut=' + encodeURIComponent(statut);
-  if (destinataire) q += '&destinataire=' + encodeURIComponent(destinataire);
+  if (destinataire) q += '&service=' + encodeURIComponent(destinataire);
   try {
     var r = await callAPI(q);
     var list = r.data || [];
@@ -4379,9 +4379,9 @@ function _tkRender(el, list) {
   list.forEach(function(tk) {
     var sc = statCols[tk.statut] || '#9ca3af';
     var sl = statLbls[tk.statut] || tk.statut;
-    var d = new Date(tk.dateCreation || Date.now());
+    var d = new Date(tk.dateCreation || tk.date_creation || Date.now());
     var ds = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    var client = tk.client || {};
+    var client = tk.client || {prenom:tk.prenom,nom:tk.nom,telephone:tk.telephone};
     var cInfo = ((client.prenom||'') + ' ' + (client.nom||'')).trim() + (client.telephone ? ' · '+client.telephone : '');
 
     var card = document.createElement('div');
