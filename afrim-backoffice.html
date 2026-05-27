@@ -949,7 +949,7 @@ function buildNavs(activeTab){
   var u=G.user;if(!u)return;
   var p=PERMS[u.role]||{};
   var visible=NAV_DEFS.filter(function(n){
-    if(n.id==='stats')return isSuperAdmin();
+    if(n.id==="stats")return !!perm("stats");
     return p[n.id];
   });
   var navIds=['home','users','txns','monitoring','stats','support','tech'];
@@ -1109,7 +1109,7 @@ function renderU(list){
   el.innerHTML='';
   list.forEach(function(u){
     var c=ROLE_C[u.role]||'#888';
-    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined&&u.solde!==null?Number(u.solde):0);
     var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
     var div=document.createElement('div');
     div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
@@ -1125,7 +1125,7 @@ function renderU(list){
 function voirU(id){
   var u=usersData.find(function(x){return x.id===id;});if(!u)return;
   var c=ROLE_C[u.role]||'#888';
-  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
+  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined&&u.solde!==null?Number(u.solde):0);
   document.getElementById('sh-u-name').textContent=(u.prenom||'')+' '+(u.nom||'');
   document.getElementById('sh-u-sub').textContent=u.role+' - '+u.telephone;
   var body=document.getElementById('sh-u-body');
@@ -2223,7 +2223,7 @@ function buildNavs(activeTab){
   var u=G.user;if(!u)return;
   var p=PERMS[u.role]||{};
   var visible=NAV_DEFS.filter(function(n){
-    if(n.id==='stats')return isSuperAdmin();
+    if(n.id==="stats")return !!perm("stats");
     return p[n.id];
   });
   var navIds=['home','users','txns','monitoring','stats','support','tech'];
@@ -2254,7 +2254,7 @@ function buildNavGrid(){
   grid.innerHTML='';
   allItems.forEach(function(it){
     // Stats et suppression réservées au Super Admin
-    if(it.need==='stats'&&!isSuperAdmin())return;
+    if(it.need==="stats"&&!perm("stats"))return;
     if(it.need&&!p[it.need])return;
     var btn=document.createElement('button');
     btn.onclick=new Function(it.fn);
@@ -2406,7 +2406,7 @@ function renderU(list){
   el.innerHTML='';
   list.forEach(function(u){
     var c=ROLE_C[u.role]||'#888';
-    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined&&u.solde!==null?Number(u.solde):0);
     var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
     var div=document.createElement('div');
     div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
@@ -2422,7 +2422,7 @@ function renderU(list){
 function voirU(id){
   var u=usersData.find(function(x){return x.id===id;});if(!u)return;
   var c=ROLE_C[u.role]||'#888';
-  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde?Number(u.solde):0);
+  var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined&&u.solde!==null?Number(u.solde):0);
   document.getElementById('sh-u-name').textContent=(u.prenom||'')+' '+(u.nom||'');
   document.getElementById('sh-u-sub').textContent=u.role+' - '+u.telephone;
   var body=document.getElementById('sh-u-body');
@@ -3097,7 +3097,7 @@ async function chargerTech(){
   // Alertes systeme (tickets escalades pour support_tech)
   try{
     var u=G.user;
-    var alertUrl=u&&u.role==='support_tech'?'/tickets?statut=escalade&limit=20':'/alerts?type=systeme&limit=10';
+    var alertUrl=u&&u.role==='support_tech'?'/tickets?statut=escalade&limit=20':'/alerts?limit=20';
     var ar=await apiGet(alertUrl);
     var alist=ar.data||[];
     var el2=document.getElementById('tech-logs');el2.innerHTML='';
