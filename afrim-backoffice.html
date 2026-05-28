@@ -438,13 +438,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       </div>
     </div>
 
-    <!-- ── Historique notifications (sous onglet Notif) ── -->
-    <div id="sup-notif-hist-zone" style="display:none;margin-top:18px">
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">&#x1F4CB; Historique notifications</div>
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px" id="sup-nh-filters"></div>
-      <div id="sup-nh-list"></div>
-      <button id="sup-nh-plus" onclick="supNhPlus()" style="display:none;width:100%;padding:8px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;color:#6b7280;margin-top:6px">Charger plus &#x25BC;</button>
-    </div>
     <!-- ── Tickets Support Client (sous onglet Suivi) ── -->
     <div id="sup-tk-zone" style="display:none;margin-top:18px">
       <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">&#x1F3AB; Tickets Support Client</div>
@@ -1569,10 +1562,8 @@ function setSupTab(tab) {
     if (panel) panel.style.display = isActive ? 'block' : 'none';
   });
   if (tab === 'notif') setTimeout(function(){ if(typeof chargerCampagnes==='function') chargerCampagnes(); }, 100);
-  // Sections additionnelles
-  var zoneNH = document.getElementById('sup-notif-hist-zone');
+  // Section tickets additionnelle
   var zoneTK = document.getElementById('sup-tk-zone');
-  if (zoneNH) zoneNH.style.display = tab === 'notif' ? 'block' : 'none';
   if (zoneTK) zoneTK.style.display = tab === 'tickets' ? 'block' : 'none';
   if (tab === 'tickets') {
     chargerTicketsSupport(_supTicketFilter||'');
@@ -1580,8 +1571,7 @@ function setSupTab(tab) {
     _tkLoadList('sup-tk-list', '', '');
   }
   if (tab === 'notif') {
-    // Charger historique notifs sous l'onglet Notif
-    _initSupNotifHist();
+    // L'historique individuel est remplacé par chargerCampagnes (appelé dans setSupTab)
   }
 }
 
