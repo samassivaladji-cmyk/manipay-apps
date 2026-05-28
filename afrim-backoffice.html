@@ -337,6 +337,15 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         </div>
         <button onclick="envoyerCampagne()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--y2),var(--y));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📢 Envoyer →</button>
       </div>
+
+      <!-- HISTORIQUE CENTRALISÉ DES CAMPAGNES -->
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.04em">📋 Historique des envois</div>
+          <button onclick="chargerCampagnes()" style="background:#f3f4f6;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#6b7280;cursor:pointer;font-family:inherit">↻ Actualiser</button>
+        </div>
+        <div id="campagnes-list"><div style="padding:16px;text-align:center"><div class="spin"></div></div></div>
+      </div>
     </div>
 
     <!-- PANNEAU 2 : RECHERCHE CLIENT -->
@@ -1559,6 +1568,7 @@ function setSupTab(tab) {
     }
     if (panel) panel.style.display = isActive ? 'block' : 'none';
   });
+  if (tab === 'notif') setTimeout(function(){ if(typeof chargerCampagnes==='function') chargerCampagnes(); }, 100);
   // Sections additionnelles
   var zoneNH = document.getElementById('sup-notif-hist-zone');
   var zoneTK = document.getElementById('sup-tk-zone');
@@ -3642,6 +3652,58 @@ function campDestChange(){
   document.getElementById('camp-tel-box').style.display=dest==='individuel'?'block':'none';
 }
 
+// ── HISTORIQUE CAMPAGNES NOTIFICATIONS ──
+async function chargerCampagnes(){
+  var el=document.getElementById('campagnes-list');
+  if(!el)return;
+  el.innerHTML='<div style="padding:16px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/notif-campagnes?limit=50');
+    var list=r.campagnes||[];
+    if(!list.length){
+      el.innerHTML='<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Aucun envoi enregistré</div>';
+      return;
+    }
+    var cibleIcons={'client':'👤','agent':'🏪','business':'🏬','mini_master':'🔵','master':'🟤','superviseur':'🟠','support_client':'🎧','support_tech':'🛠️','admin':'👑','tous':'🌍','all':'🌍','all_clients':'👥','all_staff':'🏢'};
+    var frag=document.createDocumentFragment();
+    list.forEach(function(c){
+      var d=new Date(c.created_at);
+      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var cibles=c.cible.split(',').map(function(s){s=s.trim();return (cibleIcons[s]||'📢')+' '+s;}).join(', ');
+      var card=document.createElement('div');
+      card.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:12px 14px;margin-bottom:8px';
+      card.innerHTML=
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
+          +'<div style="flex:1;min-width:0">'
+            +'<div style="font-size:13px;font-weight:800;color:#111827;margin-bottom:2px">'+c.titre+'</div>'
+            +'<div style="font-size:11px;color:#6b7280;margin-bottom:6px">'+c.message+'</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'
+              +'<span style="background:#fef3c7;color:var(--y2);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700">'+cibles+'</span>'
+              +(c.nb_destinataires?'<span style="background:#ecfdf5;color:#059669;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700">'+c.nb_destinataires+' destinataire(s)</span>':'')
+              +'<span style="font-size:10px;color:#9ca3af">'+ds+'</span>'
+              +(c.envoye_par?'<span style="font-size:10px;color:#9ca3af">· par '+c.envoye_par+'</span>':'')
+            +'</div>'
+          +'</div>'
+          +(isSuperAdmin()?'<button data-cid="'+c.id+'" onclick="supprimerCampagne(this.dataset.cid)" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap">🗑 Supprimer</button>':'')
+        +'</div>';
+      frag.appendChild(card);
+    });
+    el.innerHTML='';el.appendChild(frag);
+  }catch(e){
+    el.innerHTML='<div style="color:var(--r);padding:12px;font-size:12px">'+e.message+'</div>';
+  }
+}
+
+async function supprimerCampagne(id){
+  if(!confirm('Supprimer cette notification chez TOUS ses destinataires ?')) return;
+  try{
+    var r=await callAPI('/notif-campagnes/'+id,{method:'DELETE'});
+    var data=r.data||r;
+    toast('✓ Supprimée ('+(data.notifs_supprimees||0)+' notifs)');
+    chargerCampagnes();
+  }catch(e){toast('Erreur: '+e.message,true);}
+}
+
 async function envoyerCampagne(){
   var titre=document.getElementById('camp-titre').value.trim();
   var msg=document.getElementById('camp-msg').value.trim();
@@ -3675,6 +3737,7 @@ async function envoyerCampagne(){
       document.getElementById('camp-titre').value='';
       document.getElementById('camp-msg').value='';
       document.getElementById('camp-tel').value='';
+      setTimeout(chargerCampagnes, 800);
     }
   }catch(e){toast('Erreur: '+e.message,true);}
   btns.forEach(function(b){b.disabled=false;b.textContent='📢 Envoyer →';});
