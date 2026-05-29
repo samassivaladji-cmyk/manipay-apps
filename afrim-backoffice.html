@@ -3283,9 +3283,9 @@ async function chargerTech(){
   // Alertes systeme (tickets escalades pour support_tech)
   try{
     var u=G.user;
-    var alertUrl=u&&u.role==='support_tech'?'/tickets?statut=escalade&limit=20':'/alerts?limit=20';
+    var alertUrl='/alerts?limit=10&statut=ouverte';
     var ar=await apiGet(alertUrl);
-    var alist=ar.data||[];
+    var alist=(ar.data&&ar.data.alertes)||[];
     var el2=document.getElementById('tech-logs');el2.innerHTML='';
     if(!alist.length){
       el2.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune alerte systeme</div>';
@@ -5648,7 +5648,12 @@ async function chargerAlertesCentralisees() {
     });
     el.appendChild(frag);
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:12px">'+e.message+'</div>';
+    // Fallback si la table alertes n'existe pas encore
+    if (e.message && e.message && e.message.indexOf("titre") !== -1) {
+      el.innerHTML = '<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:14px;text-align:center;color:var(--y2);font-size:12px"><div style="font-weight:700;margin-bottom:4px">🔄 Systeme d\'alertes en cours d\'activation</div><div style="font-size:11px">Uploader le server.js pour activer cette fonctionnalité</div></div>';
+    } else {
+      el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:12px">'+e.message+'</div>';
+    }
   }
 }
 
