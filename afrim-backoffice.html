@@ -5701,12 +5701,7 @@ async function chargerAlertesCentralisees() {
     });
     el.appendChild(frag);
   } catch(e) {
-    // Fallback si la table alertes n'existe pas encore
-    if (e.message && e.message && e.message.indexOf("titre") !== -1) {
-      el.innerHTML = '<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:14px;text-align:center;color:var(--y2);font-size:12px"><div style="font-weight:700;margin-bottom:4px">🔄 Systeme d\'alertes en cours d\'activation</div><div style="font-size:11px">Uploader le server.js pour activer cette fonctionnalité</div></div>';
-    } else {
-      el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:12px">'+e.message+'</div>';
-    }
+    el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:12px">Erreur alertes: '+e.message+'</div>';
   }
 }
 
