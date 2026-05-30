@@ -109,10 +109,24 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="chargerAccueil()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
           <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
         </button>
-        <button onclick="ouvrirNotifsBO()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative" title="Notifications">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="18" height="18"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <div id="bo-notif-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:#fff;font-size:9px;font-weight:800;border-radius:99px;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid rgba(255,255,255,.3)"></div>
-        </button>
+        <!-- Compteurs 3-en-1 -->
+        <div style="display:flex;gap:5px">
+          <!-- Notifications -->
+          <button onclick="ouvrirNotifsBO()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;padding:6px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <div id="home-notif-count" style="color:#fff;font-size:9px;font-weight:800;min-width:14px;text-align:center;background:rgba(255,255,255,.25);border-radius:99px;padding:0 4px;line-height:14px">0</div>
+          </button>
+          <!-- Alertes -->
+          <button onclick="setTab('monitoring')" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;padding:6px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px" title="Alertes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div id="home-alerte-count" style="color:#fff;font-size:9px;font-weight:800;min-width:14px;text-align:center;background:rgba(255,255,255,.25);border-radius:99px;padding:0 4px;line-height:14px">0</div>
+          </button>
+          <!-- Tickets -->
+          <button onclick="setTab('monitoring')" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;padding:6px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px" title="Tickets">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 7h6M9 11h4"/></svg>
+            <div id="home-ticket-count" style="color:#fff;font-size:9px;font-weight:800;min-width:14px;text-align:center;background:rgba(255,255,255,.25);border-radius:99px;padding:0 4px;line-height:14px">0</div>
+          </button>
+        </div>
         <button onclick="logout()" style="background:rgba(255,255,255,.18);border:none;border-radius:12px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center">
           <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
@@ -1162,6 +1176,59 @@ function enterApp(){
 }
 
 // ── ACCUEIL ──
+
+// ══════════════════════════════════════════════
+// COMPTEURS ACCUEIL : Notifs / Alertes / Tickets
+// ══════════════════════════════════════════════
+async function chargerCompteurs() {
+  var role = G.user ? G.user.role : '';
+  var svcMap = {
+    admin: null, // all
+    superviseur: 'superviseur',
+    support_client: 'support_client',
+    support_tech: 'support_tech',
+  };
+
+  // 1. Notifications non lues
+  try {
+    var rn = await apiGet('/notifications/unread-count');
+    var nc = (rn.data && rn.data.count) || rn.count || 0;
+    _setBadge('home-notif-count', nc, '#fbbf24');
+    _setBadge('bo-notif-badge', nc, '#ef4444');
+  } catch(e) {}
+
+  // 2. Alertes actives (ouvertes + en cours)
+  try {
+    var ra = await apiGet('/alerts/counts');
+    var counts = (ra.data && ra.data.counts) || ra.counts || {};
+    var total = Object.values(counts).reduce(function(s,v){return s+v;},0);
+    _setBadge('home-alerte-count', total, '#ef4444');
+  } catch(e) {}
+
+  // 3. Tickets à traiter
+  try {
+    var svc = svcMap[role] !== undefined ? svcMap[role] : null;
+    var q = '/tickets?statut=ouvert&limit=1' + (svc ? '&service='+svc : '');
+    var rt = await apiGet(q);
+    // count from meta or list length
+    var tc = (rt.meta && rt.meta.total) || (rt.data ? rt.data.length : 0);
+    _setBadge('home-ticket-count', tc, '#3b82f6');
+  } catch(e) {}
+}
+
+function _setBadge(id, count, urgentColor) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = count > 99 ? '99+' : String(count);
+  if (count > 0) {
+    el.style.background = urgentColor || 'rgba(255,255,255,.25)';
+    el.style.display = 'block';
+  } else {
+    el.style.background = 'rgba(255,255,255,.25)';
+    el.style.display = (id === 'bo-notif-badge') ? 'none' : 'block';
+  }
+}
+
 async function chargerAccueil(){
   var u=G.user;if(!u)return;
   var roleLabel={admin:'ADMINISTRATION',superviseur:'SUPERVISEUR',support_client:'SUPPORT CLIENT',support_tech:'SUPPORT TECH'};
@@ -2539,9 +2606,63 @@ function enterApp(){
 }
 
 // ── ACCUEIL ──
+
+// ══════════════════════════════════════════════
+// COMPTEURS ACCUEIL : Notifs / Alertes / Tickets
+// ══════════════════════════════════════════════
+async function chargerCompteurs() {
+  var role = G.user ? G.user.role : '';
+  var svcMap = {
+    admin: null, // all
+    superviseur: 'superviseur',
+    support_client: 'support_client',
+    support_tech: 'support_tech',
+  };
+
+  // 1. Notifications non lues
+  try {
+    var rn = await apiGet('/notifications/unread-count');
+    var nc = (rn.data && rn.data.count) || rn.count || 0;
+    _setBadge('home-notif-count', nc, '#fbbf24');
+    _setBadge('bo-notif-badge', nc, '#ef4444');
+  } catch(e) {}
+
+  // 2. Alertes actives (ouvertes + en cours)
+  try {
+    var ra = await apiGet('/alerts/counts');
+    var counts = (ra.data && ra.data.counts) || ra.counts || {};
+    var total = Object.values(counts).reduce(function(s,v){return s+v;},0);
+    _setBadge('home-alerte-count', total, '#ef4444');
+  } catch(e) {}
+
+  // 3. Tickets à traiter
+  try {
+    var svc = svcMap[role] !== undefined ? svcMap[role] : null;
+    var q = '/tickets?statut=ouvert&limit=1' + (svc ? '&service='+svc : '');
+    var rt = await apiGet(q);
+    // count from meta or list length
+    var tc = (rt.meta && rt.meta.total) || (rt.data ? rt.data.length : 0);
+    _setBadge('home-ticket-count', tc, '#3b82f6');
+  } catch(e) {}
+}
+
+function _setBadge(id, count, urgentColor) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = count > 99 ? '99+' : String(count);
+  if (count > 0) {
+    el.style.background = urgentColor || 'rgba(255,255,255,.25)';
+    el.style.display = 'block';
+  } else {
+    el.style.background = 'rgba(255,255,255,.25)';
+    el.style.display = (id === 'bo-notif-badge') ? 'none' : 'block';
+  }
+}
+
 async function chargerAccueil(){
   var u=G.user;if(!u)return;
   var roleLabel={admin:'ADMINISTRATION',superviseur:'SUPERVISEUR',support_client:'SUPPORT CLIENT',support_tech:'SUPPORT TECH'};
+  chargerCompteurs();
   document.getElementById('h-name').textContent=(u.prenom||'')+' - '+(roleLabel[u.role]||u.role.toUpperCase());
   try{
     var r;
@@ -5688,6 +5809,15 @@ async function chargerAlertesCentralisees() {
         bFermer.style.cssText = 'padding:5px 9px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;color:#6b7280;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit';
         (function(aid){bFermer.onclick=function(){changerStatutAlerte(aid,'fermee');};})(a.id);
         btnRow.appendChild(bFermer);
+        // Bouton créer ticket depuis alerte (pour les alertes élevées/critiques)
+        if (a.gravite === 'elevee' || a.gravite === 'critique') {
+          var bTicket = document.createElement('button');
+          bTicket.textContent = '🎫 Ticket';
+          bTicket.title = 'Créer un ticket lié à cette alerte';
+          bTicket.style.cssText = 'padding:5px 9px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;color:#1d4ed8;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit';
+          (function(al){bTicket.onclick=function(){ creerTicketDepuisAlerte(al); };})(a);
+          btnRow.appendChild(bTicket);
+        }
         if (isSuperAdmin()) {
           var bSuppr = document.createElement('button');
           bSuppr.textContent = '🗑';
@@ -5705,12 +5835,33 @@ async function chargerAlertesCentralisees() {
   }
 }
 
+
+async function creerTicketDepuisAlerte(alerte) {
+  if (!confirm('Créer un ticket lié à cette alerte : "'+alerte.titre+'" ?')) return;
+  try {
+    var svcMap = {support_client:'support_client', support_tech:'support_tech', superviseur:'superviseur', backoffice:'backoffice', admin:'admin'};
+    var svc = svcMap[alerte.service] || 'admin';
+    await callAPI('/tickets', {method:'POST', body:JSON.stringify({
+      sujet: '[ALERTE] '+alerte.titre,
+      description: alerte.description + '\n\n[Alerte liée: '+alerte.gravite+' - '+alerte.service+']',
+      service: svc,
+      priorite: alerte.gravite==='critique'?'critique':'urgente'
+    })});
+    // Marquer l'alerte comme en cours
+    await callAPI('/alerts/'+alerte.id, {method:'PATCH', body:JSON.stringify({statut:'en_cours'})});
+    toast('🎫 Ticket cree depuis alerte');
+    chargerAlertesCentralisees();
+    chargerCompteurs();
+  } catch(e) { toast('Erreur: '+e.message, true); }
+}
+
 async function changerStatutAlerte(id, statut) {
   try {
     var traite_par = G.user ? (G.user.prenom||G.user.telephone||G.user.role) : 'admin';
     await callAPI('/alerts/'+id, {method:'PATCH', body:JSON.stringify({statut:statut, traite_par:traite_par})});
     toast('✓ Alerte mise à jour');
     chargerAlertesCentralisees();
+    chargerCompteurs();
   } catch(e) { toast('Erreur: '+e.message, true); }
 }
 
