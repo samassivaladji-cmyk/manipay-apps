@@ -1824,7 +1824,7 @@ async function _chargerSupClientAlertes(gravite, statut) {
   if (!el) return;
   el.innerHTML = '<div style="padding:16px;text-align:center"><div class="spin"></div></div>';
   try {
-    var q = '/alerts?limit=30&service=support_client';
+    var q = '/alerts?limit=50'; // Backend filtre par role=support_client automatiquement
     if (gravite) q += '&gravite='+gravite;
     if (statut) q += '&statut='+statut;
     var r = await apiGet(q);
@@ -1910,6 +1910,20 @@ function setSupTab(tab) {
             _chargerSupClientAlertes(this.dataset.g,'');
           });
           sgBar.appendChild(b);
+        });
+      }
+      // Init filtres statut
+      var ssBar = document.getElementById('sup-alerte-stat-filters');
+      if (ssBar && ssBar.childElementCount === 0) {
+        [['Toutes',''],['🔴 Ouvertes','ouverte'],['🟠 En cours','en_cours'],['✅ Résolues','resolue'],['🔒 Fermées','fermee']].forEach(function(s){
+          var b=document.createElement('button');b.textContent=s[0];b.dataset.s=s[1];
+          var act=s[1]==='';
+          b.style.cssText='padding:4px 10px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;'+(act?'background:#374151;color:#fff;border:1.5px solid #374151':'background:#fff;color:#374151;border:1.5px solid #e5e7eb');
+          b.addEventListener('click',function(){
+            ssBar.querySelectorAll('button').forEach(function(b2){var a2=b2.dataset.s===this.dataset.s;b2.style.background=a2?'#374151':'#fff';b2.style.color=a2?'#fff':'#374151';b2.style.borderColor=a2?'#374151':'#e5e7eb';},this);
+            _chargerSupClientAlertes('',this.dataset.s);
+          });
+          ssBar.appendChild(b);
         });
       }
       _chargerSupClientAlertes('','');
