@@ -187,43 +187,32 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   <div style="background:#fff;padding:52px 20px 0;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
     <div style="font-size:22px;font-weight:800">Flux financiers</div>
     <div style="color:var(--m);font-size:13px;margin-top:3px">Cumuls et transactions</div>
-    <!-- Onglets -->
     <div style="display:flex;gap:0;overflow-x:auto;margin-top:10px">
       <button id="flux-tab-list" onclick="setFluxTab('list')" style="padding:9px 16px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--y2);border-bottom:2px solid var(--y);white-space:nowrap">📋 Transactions</button>
       <button id="flux-tab-analytics" onclick="setFluxTab('analytics')" style="padding:9px 16px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Analytics</button>
     </div>
   </div>
-  <!-- Panel Transactions -->
   <div id="flux-panel-list" style="padding:12px 16px 100px">
     <div id="t-list"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
   </div>
-  <!-- Panel Analytics -->
   <div id="flux-panel-analytics" style="display:none;padding:12px 16px 100px">
-    <!-- Filtres période -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px" id="flux-period-filters"></div>
-    <!-- Filtre statut -->
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="flux-statut-filters"></div>
-    <!-- Courbe principale -->
     <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Évolution des flux</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="flux-chart-cat-btns"></div>
       <canvas id="flux-main-chart" height="160"></canvas>
     </div>
-    <!-- Tableau synthèse transferts -->
     <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">↔️ Transferts par catégorie</div>
     <div id="flux-transfer-table" style="margin-bottom:18px"></div>
-    <!-- Dépôts globaux -->
     <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">💰 Dépôts globaux</div>
-    <!-- Courbe dépôts -->
     <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px">
       <div style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Courbe — Évolution des dépôts</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="flux-depot-chart-btns"></div>
       <canvas id="flux-depot-chart" height="140"></canvas>
     </div>
     <div id="flux-depots-section" style="margin-bottom:18px"></div>
-    <!-- Retraits globaux -->
     <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">💸 Retraits globaux</div>
-    <!-- Courbe retraits -->
     <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px">
       <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Courbe — Évolution des retraits</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="flux-retrait-chart-btns"></div>
@@ -376,32 +365,41 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     </div>
 
     <div id="mon-panel-global" style="display:none">
-      <div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">&#x1F30D; Suivi global par entité</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.06em">&#x1F30D; Suivi global par entité</div>
+        <button id="btn-global-selall" onclick="_tkGlobalSelAll()" style="display:none;background:#fff;border:1.5px solid #ef4444;border-radius:8px;padding:4px 11px;font-size:10px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit">☐ Tout</button>
+      </div>
+      <!-- Toolbar globale suppression -->
+      <div id="mon-global-all-tb" style="display:none;align-items:center;gap:6px;padding:7px 10px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:#ef4444;flex:1" id="mon-global-all-tb-count">0 sélectionné(s)</span>
+        <button onclick="_tkGlobalSelAll()" style="background:#fff;border:1px solid #fecaca;border-radius:7px;padding:3px 9px;font-size:10px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit">☐ Tout</button>
+        <button onclick="_tkGlobalSupprimerTout()" style="background:#ef4444;border:none;border-radius:7px;padding:3px 9px;font-size:10px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">🗑 Supprimer tout</button>
+      </div>
       <!-- Filtre statut global -->
       <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px" id="mon-global-filters"></div>
       <!-- Back-Office -->
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px">&#x1F4BB; Back-Office</div>
+        <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:8px">&#x1F4BB; Back-Office</div>
         <div id="mon-global-bo"><div style="padding:10px;text-align:center"><div class="spin"></div></div></div>
       </div>
       <!-- Support Client -->
       <div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:12px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#065f46;margin-bottom:10px">&#x1F3A7; Support Client</div>
+        <div style="font-size:11px;font-weight:800;color:#065f46;margin-bottom:8px">&#x1F3A7; Support Client</div>
         <div id="mon-global-sup"><div style="padding:10px;text-align:center"><div class="spin"></div></div></div>
       </div>
       <!-- Support Tech -->
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:10px">&#x1F527; Support Technique</div>
+        <div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:8px">&#x1F527; Support Technique</div>
         <div id="mon-global-tech"><div style="padding:10px;text-align:center"><div class="spin"></div></div></div>
       </div>
       <!-- Superviseur -->
       <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#c2410c;margin-bottom:10px">&#x1F7E0; Superviseur</div>
+        <div style="font-size:11px;font-weight:800;color:#c2410c;margin-bottom:8px">&#x1F7E0; Superviseur</div>
         <div id="mon-global-superviseur"><div style="padding:10px;text-align:center"><div class="spin"></div></div></div>
       </div>
       <!-- Admin -->
       <div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#ca8a04;margin-bottom:10px">&#x1F451; Admin</div>
+        <div style="font-size:11px;font-weight:800;color:#ca8a04;margin-bottom:8px">&#x1F451; Admin</div>
         <div id="mon-global-admin"><div style="padding:10px;text-align:center"><div class="spin"></div></div></div>
       </div>
     </div>
@@ -3221,22 +3219,23 @@ async function chargerTxns(){
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
 
+
 // ════════════════════════════════════════════════════════════
-// FLUX ANALYTICS — module complet
+// FLUX ANALYTICS
 // ════════════════════════════════════════════════════════════
-var _fluxActiveTab='list',_fluxPeriod='month',_fluxStatut='complete',_fluxData=null,_fluxChartInst=null,_fluxChartCat='client\u2194client';
-var _fluxDepotChartInst=null,_fluxRetraitChartInst=null;
-var _fluxDepotCat='master',_fluxRetraitCat='master';
+var _fluxActiveTab='list',_fluxPeriod='month',_fluxStatut='complete',_fluxData=null;
+var _fluxChartInst=null,_fluxDepotChartInst=null,_fluxRetraitChartInst=null;
+var _fluxChartCat='client↔client',_fluxDepotCat='master',_fluxRetraitCat='master';
 var FLUX_TRANSFER_CATS=[
-  {id:'client\u2194client',          label:'Clients \u2194 Clients',           col:'#059669'},
-  {id:'agent\u2194agent',            label:'Agents \u2194 Agents',             col:'#d97706'},
-  {id:'mini_master\u2194mini_master',label:'Mini-Masters \u2194 Mini-Masters', col:'#2563eb'},
-  {id:'master\u2194master',          label:'Masters \u2194 Masters',           col:'#92400e'},
-  {id:'agent\u2194mini_master',      label:'Mini-Masters \u2194 Agents',       col:'#7c3aed'},
-  {id:'agent\u2194master',           label:'Masters \u2194 Agents',            col:'#be185d'},
-  {id:'mini_master\u2194master',     label:'Masters \u2194 Mini-Masters',      col:'#0e7490'},
-  {id:'agent\u2194business',         label:'Business \u2194 Agents',           col:'#4f46e5'},
-  {id:'business\u2194business',      label:'Business \u2194 Business',         col:'#b45309'},
+  {id:'client↔client',          label:'Clients ↔ Clients',           col:'#059669'},
+  {id:'agent↔agent',            label:'Agents ↔ Agents',             col:'#d97706'},
+  {id:'mini_master↔mini_master',label:'Mini-Masters ↔ Mini-Masters', col:'#2563eb'},
+  {id:'master↔master',          label:'Masters ↔ Masters',           col:'#92400e'},
+  {id:'agent↔mini_master',      label:'Mini-Masters ↔ Agents',       col:'#7c3aed'},
+  {id:'agent↔master',           label:'Masters ↔ Agents',            col:'#be185d'},
+  {id:'mini_master↔master',     label:'Masters ↔ Mini-Masters',      col:'#0e7490'},
+  {id:'agent↔business',         label:'Business ↔ Agents',           col:'#4f46e5'},
+  {id:'business↔business',      label:'Business ↔ Business',         col:'#b45309'},
 ];
 
 function setFluxTab(tab){
@@ -3252,76 +3251,51 @@ function setFluxTab(tab){
 function _fluxAnalyticsInit(){
   var pBar=document.getElementById('flux-period-filters');
   if(pBar&&pBar.childElementCount===0){
-    [["Aujourd'hui",'today'],['Semaine','week'],['Ce mois','month'],['Ann\xe9e','year']].forEach(function(p){
+    [["Aujourd'hui",'today'],['Semaine','week'],['Ce mois','month'],['Année','year']].forEach(function(p){
       var btn=document.createElement('button');btn.textContent=p[0];btn.dataset.p=p[1];
       var a=p[1]===_fluxPeriod;
       btn.style.cssText='padding:5px 13px;border-radius:99px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?'var(--y)':'#e5e7eb')+';background:'+(a?'var(--y)':'#fff')+';color:'+(a?'#fff':'#374151');
-      btn.addEventListener('click',function(){
-        _fluxPeriod=this.dataset.p;
-        pBar.querySelectorAll('button').forEach(function(b){var ia=b.dataset.p===_fluxPeriod;b.style.background=ia?'var(--y)':'#fff';b.style.color=ia?'#fff':'#374151';b.style.borderColor=ia?'var(--y)':'#e5e7eb';});
-        _fluxAnalyticsLoad();
-      });
+      btn.addEventListener('click',function(){_fluxPeriod=this.dataset.p;pBar.querySelectorAll('button').forEach(function(b){var ia=b.dataset.p===_fluxPeriod;b.style.background=ia?'var(--y)':'#fff';b.style.color=ia?'#fff':'#374151';b.style.borderColor=ia?'var(--y)':'#e5e7eb';});_fluxAnalyticsLoad();});
       pBar.appendChild(btn);
     });
   }
   var sBar=document.getElementById('flux-statut-filters');
   if(sBar&&sBar.childElementCount===0){
-    [['Compl\xe8tes','complete'],['En cours','en_cours'],['Toutes','all']].forEach(function(s){
+    [['Complètes','complete'],['En cours','en_cours'],['Toutes','all']].forEach(function(s){
       var btn=document.createElement('button');btn.textContent=s[0];btn.dataset.s=s[1];
       var a=s[1]===_fluxStatut;
       btn.style.cssText='padding:4px 11px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?'#3b82f6':'#e5e7eb')+';background:'+(a?'#eff6ff':'#fff')+';color:'+(a?'#1d4ed8':'#6b7280');
-      btn.addEventListener('click',function(){
-        _fluxStatut=this.dataset.s;
-        sBar.querySelectorAll('button').forEach(function(b){var ia=b.dataset.s===_fluxStatut;b.style.background=ia?'#eff6ff':'#fff';b.style.color=ia?'#1d4ed8':'#6b7280';b.style.borderColor=ia?'#3b82f6':'#e5e7eb';});
-        _fluxAnalyticsLoad();
-      });
+      btn.addEventListener('click',function(){_fluxStatut=this.dataset.s;sBar.querySelectorAll('button').forEach(function(b){var ia=b.dataset.s===_fluxStatut;b.style.background=ia?'#eff6ff':'#fff';b.style.color=ia?'#1d4ed8':'#6b7280';b.style.borderColor=ia?'#3b82f6':'#e5e7eb';});_fluxAnalyticsLoad();});
       sBar.appendChild(btn);
     });
   }
-  // Boutons catégorie courbe principale (transferts)
   var cBar=document.getElementById('flux-chart-cat-btns');
   if(cBar&&cBar.childElementCount===0){
     FLUX_TRANSFER_CATS.forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.c=cat.id;
       var a=cat.id===_fluxChartCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){
-        _fluxChartCat=this.dataset.c;
-        cBar.querySelectorAll('button').forEach(function(b2){var bc=FLUX_TRANSFER_CATS.find(function(x){return x.id===b2.dataset.c;})||{col:'#888'};var ia=b2.dataset.c===_fluxChartCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});
-        _fluxRenderChart();
-      });
+      btn.addEventListener('click',function(){_fluxChartCat=this.dataset.c;cBar.querySelectorAll('button').forEach(function(b2){var bc=FLUX_TRANSFER_CATS.find(function(x){return x.id===b2.dataset.c;})||{col:'#888'};var ia=b2.dataset.c===_fluxChartCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderChart();});
       cBar.appendChild(btn);
     });
   }
-  // Boutons catégorie courbe dépôts
   var dBar=document.getElementById('flux-depot-chart-btns');
   if(dBar&&dBar.childElementCount===0){
-    var dCats=[{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'},{id:'autre',label:'Autres',col:'#9ca3af'}];
-    dCats.forEach(function(cat){
+    [{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'},{id:'autre',label:'Autres',col:'#9ca3af'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.dc=cat.id;
       var a=cat.id===_fluxDepotCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){
-        _fluxDepotCat=this.dataset.dc;
-        dBar.querySelectorAll('button').forEach(function(b2){var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});
-        _fluxRenderDepotChart();
-      });
+      btn.addEventListener('click',function(){_fluxDepotCat=this.dataset.dc;dBar.querySelectorAll('button').forEach(function(b2){var dCats=[{id:'master',col:'#92400e'},{id:'mini_master',col:'#2563eb'},{id:'agent',col:'#d97706'},{id:'autre',col:'#9ca3af'}];var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderDepotChart();});
       dBar.appendChild(btn);
     });
   }
-  // Boutons catégorie courbe retraits
   var rBar=document.getElementById('flux-retrait-chart-btns');
   if(rBar&&rBar.childElementCount===0){
-    var rCats=[{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'},{id:'autre',label:'Autres',col:'#9ca3af'}];
-    rCats.forEach(function(cat){
+    [{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'},{id:'autre',label:'Autres',col:'#9ca3af'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.rc=cat.id;
       var a=cat.id===_fluxRetraitCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){
-        _fluxRetraitCat=this.dataset.rc;
-        rBar.querySelectorAll('button').forEach(function(b2){var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});
-        _fluxRenderRetraitChart();
-      });
+      btn.addEventListener('click',function(){_fluxRetraitCat=this.dataset.rc;rBar.querySelectorAll('button').forEach(function(b2){var rCats=[{id:'master',col:'#b91c1c'},{id:'mini_master',col:'#c2410c'},{id:'agent',col:'#ea580c'},{id:'autre',col:'#9ca3af'}];var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderRetraitChart();});
       rBar.appendChild(btn);
     });
   }
@@ -3332,66 +3306,49 @@ async function _fluxAnalyticsLoad(){
   try{
     var r=await apiGet('/flux/analytics?period='+_fluxPeriod+'&statut='+_fluxStatut);
     _fluxData=r.data||r;
-    _fluxRenderChart();
-    _fluxRenderTransferTable();
-    _fluxRenderDepotChart();
-    _fluxRenderRetraitChart();
-    _fluxRenderFlowSection('depots', _fluxData.depots, ['master','mini_master','agent','autre'],['Masters','Mini-Masters','Agents','Autres'],['#92400e','#2563eb','#d97706','#9ca3af']);
+    _fluxRenderChart();_fluxRenderTransferTable();_fluxRenderDepotChart();_fluxRenderRetraitChart();
+    _fluxRenderFlowSection('depots',_fluxData.depots,['master','mini_master','agent','autre'],['Masters','Mini-Masters','Agents','Autres'],['#92400e','#2563eb','#d97706','#9ca3af']);
     _fluxRenderFlowSection('retraits',_fluxData.retraits,['master','mini_master','agent','autre'],['Masters','Mini-Masters','Agents','Autres'],['#b91c1c','#c2410c','#ea580c','#9ca3af']);
   }catch(e){
-    var msg='<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:14px;text-align:center;font-size:11px;color:#92400e">'+e.message+' <button onclick="_fluxAnalyticsLoad()" style="margin-left:8px;background:var(--y);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit">\u21bb</button></div>';
+    var msg='<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:14px;text-align:center;font-size:11px;color:#92400e">'+e.message+' <button onclick="_fluxAnalyticsLoad()" style="margin-left:8px;background:var(--y);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit">↻</button></div>';
     ['flux-transfer-table','flux-depots-section','flux-retraits-section'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML=msg;});
   }
-}
-
-function _fluxRenderChart(){
-  var canvas=document.getElementById('flux-main-chart');
-  if(!canvas||typeof Chart==='undefined'||!_fluxData)return;
-  var catDef=FLUX_TRANSFER_CATS.find(function(c){return c.id===_fluxChartCat;})||FLUX_TRANSFER_CATS[0];
-  var courbe=_fluxData.courbe||[],now=new Date(),labels=[];
-  if(_fluxPeriod==='today'){for(var h=0;h<24;h++)labels.push(h+'h');}
-  else if(_fluxPeriod==='week'){for(var d=6;d>=0;d--){var dy=new Date(now);dy.setDate(dy.getDate()-d);labels.push(dy.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'}));}}
-  else if(_fluxPeriod==='year'){labels=['Jan','F\xe9v','Mar','Avr','Mai','Jun','Jul','Ao\xfb','Sep','Oct','Nov','D\xe9c'];}
-  else{var dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();for(var i=1;i<=dim;i++)labels.push(i.toString());}
-  var cm={};courbe.forEach(function(c){cm[c.label]=c;});
-  var data=labels.map(function(l){return Math.round((cm[l]&&cm[l][catDef.id])||0);});
-  if(_fluxChartInst){try{_fluxChartInst.destroy();}catch(e){}}
-  _fluxChartInst=new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:catDef.col,backgroundColor:catDef.col+'22',borderWidth:2.5,pointRadius:data.map(function(v){return v>0?4:0;}),pointBackgroundColor:catDef.col,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var v=ctx.parsed.y;return ' '+(v>=1000?(v/1000).toFixed(1)+'k':v)+' FCFA';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#9ca3af',maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:8},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000)+'k':v;}},beginAtZero:true}}}});
 }
 
 function _fluxBuildLabels(){
   var now=new Date(),labels=[];
   if(_fluxPeriod==='today'){for(var h=0;h<24;h++)labels.push(h+'h');}
   else if(_fluxPeriod==='week'){for(var d=6;d>=0;d--){var dy=new Date(now);dy.setDate(dy.getDate()-d);labels.push(dy.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'}));}}
-  else if(_fluxPeriod==='year'){labels=['Jan','F\xe9v','Mar','Avr','Mai','Jun','Jul','Ao\xfb','Sep','Oct','Nov','D\xe9c'];}
+  else if(_fluxPeriod==='year'){labels=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];}
   else{var dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();for(var i=1;i<=dim;i++)labels.push(i.toString());}
   return labels;
 }
 
-function _fluxRenderDepotChart(){
-  var canvas=document.getElementById('flux-depot-chart');
-  if(!canvas||typeof Chart==='undefined'||!_fluxData)return;
-  var cat=_fluxDepotCat;
-  var colMap={master:'#92400e',mini_master:'#2563eb',agent:'#d97706',autre:'#9ca3af'};
-  var col=colMap[cat]||'#15803d';
+function _fluxMakeChart(canvasId,catKey,col,instVar){
+  var canvas=document.getElementById(canvasId);
+  if(!canvas||typeof Chart==='undefined'||!_fluxData)return null;
   var courbe=_fluxData.courbe||[],labels=_fluxBuildLabels();
   var cm={};courbe.forEach(function(c){cm[c.label]=c;});
-  var data=labels.map(function(l){return Math.round((cm[l]&&cm[l]['depot_'+cat])||0);});
+  var data=labels.map(function(l){return Math.round((cm[l]&&cm[l][catKey])||0);});
+  return new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:col,backgroundColor:col+'22',borderWidth:2.5,pointRadius:data.map(function(v){return v>0?4:0;}),pointBackgroundColor:col,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var v=ctx.parsed.y;return ' '+(v>=1000?(v/1000).toFixed(1)+'k':v)+' FCFA';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#9ca3af',maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:8},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000)+'k':v;}},beginAtZero:true}}}});
+}
+
+function _fluxRenderChart(){
+  if(_fluxChartInst){try{_fluxChartInst.destroy();}catch(e){}}
+  var catDef=FLUX_TRANSFER_CATS.find(function(c){return c.id===_fluxChartCat;})||FLUX_TRANSFER_CATS[0];
+  _fluxChartInst=_fluxMakeChart('flux-main-chart',catDef.id,catDef.col);
+}
+
+function _fluxRenderDepotChart(){
   if(_fluxDepotChartInst){try{_fluxDepotChartInst.destroy();}catch(e){}}
-  _fluxDepotChartInst=new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:col,backgroundColor:col+'22',borderWidth:2.5,pointRadius:data.map(function(v){return v>0?4:0;}),pointBackgroundColor:col,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var v=ctx.parsed.y;return ' '+(v>=1000?(v/1000).toFixed(1)+'k':v)+' FCFA';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#9ca3af',maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:8},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000)+'k':v;}},beginAtZero:true}}}});
+  var colMap={master:'#92400e',mini_master:'#2563eb',agent:'#d97706',autre:'#9ca3af'};
+  _fluxDepotChartInst=_fluxMakeChart('flux-depot-chart','depot_'+_fluxDepotCat,colMap[_fluxDepotCat]||'#15803d');
 }
 
 function _fluxRenderRetraitChart(){
-  var canvas=document.getElementById('flux-retrait-chart');
-  if(!canvas||typeof Chart==='undefined'||!_fluxData)return;
-  var cat=_fluxRetraitCat;
-  var colMap={master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c',autre:'#9ca3af'};
-  var col=colMap[cat]||'#dc2626';
-  var courbe=_fluxData.courbe||[],labels=_fluxBuildLabels();
-  var cm={};courbe.forEach(function(c){cm[c.label]=c;});
-  var data=labels.map(function(l){return Math.round((cm[l]&&cm[l]['retrait_'+cat])||0);});
   if(_fluxRetraitChartInst){try{_fluxRetraitChartInst.destroy();}catch(e){}}
-  _fluxRetraitChartInst=new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:col,backgroundColor:col+'22',borderWidth:2.5,pointRadius:data.map(function(v){return v>0?4:0;}),pointBackgroundColor:col,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var v=ctx.parsed.y;return ' '+(v>=1000?(v/1000).toFixed(1)+'k':v)+' FCFA';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#9ca3af',maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:8},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000)+'k':v;}},beginAtZero:true}}}});
+  var colMap={master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c',autre:'#9ca3af'};
+  _fluxRetraitChartInst=_fluxMakeChart('flux-retrait-chart','retrait_'+_fluxRetraitCat,colMap[_fluxRetraitCat]||'#dc2626');
 }
 
 function _fluxRenderTransferTable(){
@@ -3399,11 +3356,11 @@ function _fluxRenderTransferTable(){
   var list=_fluxData.transferts||[];el.innerHTML='';
   var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
   var hdr=document.createElement('div');hdr.style.cssText='display:grid;grid-template-columns:1fr 50px 80px 65px 48px;gap:4px;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #f3f4f6';
-  hdr.innerHTML='<span style="font-size:9px;font-weight:700;color:#9ca3af">TYPE</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">NB</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">VOLUME</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">MOY.</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">\xc9VOL</span>';
+  hdr.innerHTML='<span style="font-size:9px;font-weight:700;color:#9ca3af">TYPE</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">NB</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">VOLUME</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">MOY.</span><span style="font-size:9px;font-weight:700;color:#9ca3af;text-align:right">ÉVOL</span>';
   tbl.appendChild(hdr);
   list.forEach(function(row){
     var catDef=FLUX_TRANSFER_CATS.find(function(c){return c.id===row.id;})||{col:'#888'};
-    var evolCol=row.evol_vol>=0?'#16a34a':'#ef4444',evolPfx=row.evol_vol>=0?'\u25b2':'\u25bc';
+    var evolCol=row.evol_vol>=0?'#16a34a':'#ef4444',evolPfx=row.evol_vol>=0?'▲':'▼';
     var r=document.createElement('div');r.style.cssText='display:grid;grid-template-columns:1fr 50px 80px 65px 48px;gap:4px;padding:9px 12px;border-bottom:1px solid #f9fafb;align-items:center';
     r.innerHTML='<div style="display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:'+catDef.col+';flex-shrink:0"></div><span style="font-size:10px;font-weight:600;color:#374151">'+row.label+'</span></div>'
       +'<span style="font-size:10px;font-weight:700;color:#374151;text-align:right">'+row.n+'</span>'
@@ -3423,9 +3380,9 @@ function _fluxRenderFlowSection(sId,data,keys,labels,colors){
     var d=data[k]||{n:0,vol:0,avg:0,evol_vol:0},pct=total>0?Math.round(d.vol/total*100):0;
     var evolCol=d.evol_vol>=0?'#16a34a':'#ef4444';
     var card=document.createElement('div');card.style.cssText='background:#fff;border:1px solid #f3f4f6;border-left:3px solid '+colors[i]+';border-radius:12px;padding:10px 13px;margin-bottom:7px';
-    card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#374151">'+labels[i]+'</div><div style="text-align:right"><div style="font-size:13px;font-weight:900;color:'+colors[i]+'">'+F(d.vol)+'</div><div style="font-size:9px;color:#9ca3af">'+d.n+' op. \xb7 moy. '+F(d.avg)+'</div></div></div>'
+    card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#374151">'+labels[i]+'</div><div style="text-align:right"><div style="font-size:13px;font-weight:900;color:'+colors[i]+'">'+F(d.vol)+'</div><div style="font-size:9px;color:#9ca3af">'+d.n+' op. · moy. '+F(d.avg)+'</div></div></div>'
       +'<div style="background:#f3f4f6;border-radius:99px;height:5px;overflow:hidden;margin-bottom:5px"><div style="background:'+colors[i]+';height:100%;width:'+pct+'%;border-radius:99px"></div></div>'
-      +'<div style="display:flex;justify-content:space-between"><span style="font-size:9px;color:#9ca3af">'+pct+'% du total</span><span style="font-size:9px;font-weight:700;color:'+evolCol+'">'+(d.evol_vol>=0?'\u25b2':'\u25bc')+Math.abs(d.evol_vol)+'% vs p\xe9r. pr\xe9c.</span></div>';
+      +'<div style="display:flex;justify-content:space-between"><span style="font-size:9px;color:#9ca3af">'+pct+'% du total</span><span style="font-size:9px;font-weight:700;color:'+evolCol+'">'+(d.evol_vol>=0?'▲':'▼')+Math.abs(d.evol_vol)+'% vs pér. préc.</span></div>';
     el.appendChild(card);
   });
 }
@@ -5695,15 +5652,16 @@ async function _tkLoadList(listId, statut, destinataire) {
   try {
     var r = await callAPI(q);
     var list = r.data || [];
-    _tkRender(el, list);
+    _tkRender(el, list, listId);
+    _tkGlobalUpdateBtnTout();
   } catch(e) {
     el.innerHTML = '<div style="color:var(--r);font-size:12px;padding:8px">' + e.message + '</div>';
   }
 }
 
-// Rendu des tickets sous forme de cartes détaillées
 // ── SUPPRESSION TICKETS (ADMIN) ──
-var _tkSelIds = {};
+var _tkSelIds = {}; // { listId: { ticketId: true } }
+var _globalSections = ['mon-global-bo','mon-global-sup','mon-global-tech','mon-global-superviseur','mon-global-admin'];
 
 async function supprimerTicket(id) {
   if (!confirm('Supprimer définitivement ce ticket ?')) return;
@@ -5716,43 +5674,91 @@ async function supprimerTicket(id) {
 }
 
 function _tkSelAll(listId) {
-  // Toggle select all checkboxes in this list
-  var el = document.getElementById(listId);
-  if (!el) return;
+  var el = document.getElementById(listId); if (!el) return;
   var cbs = el.querySelectorAll('input[type=checkbox]');
   var allChecked = Array.from(cbs).every(function(c){ return c.checked; });
-  cbs.forEach(function(c){
-    c.checked = !allChecked;
-    c.dispatchEvent(new Event('change'));
-  });
+  cbs.forEach(function(c){ c.checked = !allChecked; c.dispatchEvent(new Event('change')); });
 }
 
 function _tkUpdateToolbar(listId) {
+  if (!_tkSelIds[listId]) _tkSelIds[listId] = {};
+  var count = Object.keys(_tkSelIds[listId]).length;
   var tb = document.getElementById(listId+'-tb');
-  var count = Object.keys(_tkSelIds).length;
   if (tb) {
     tb.style.display = count > 0 ? 'flex' : 'none';
     var cEl = document.getElementById(listId+'-tb-count');
     if (cEl) cEl.textContent = count+' sélectionné(s)';
   }
+  if (typeof _tkGlobalUpdateToolbar === 'function') _tkGlobalUpdateToolbar();
 }
 
 async function supprimerTicketsSelection(listId) {
-  var ids = Object.keys(_tkSelIds);
+  if (!_tkSelIds[listId]) return;
+  var ids = Object.keys(_tkSelIds[listId]);
   if (!ids.length) return;
   if (!confirm('Supprimer '+ids.length+' ticket(s) définitivement ?')) return;
   try {
-    for (var i=0; i<ids.length; i++) {
-      await callAPI('/tickets/'+ids[i], {method:'DELETE'});
-    }
+    for (var i=0; i<ids.length; i++) { await callAPI('/tickets/'+ids[i], {method:'DELETE'}); }
     toast('✓ '+ids.length+' ticket(s) supprimé(s)');
-    _tkSelIds = {};
+    _tkSelIds[listId] = {};
     _tkUpdateToolbar(listId);
     setTimeout(function(){ setMonTab(_monActiveTab||'bo'); }, 300);
   } catch(e) { toast('Erreur: '+e.message, true); }
 }
 
-function _tkRender(el, list) {
+function _tkGlobalUpdateBtnTout() {
+  if (!isSuperAdmin()) return;
+  var btn = document.getElementById('btn-global-selall'); if (!btn) return;
+  var hasAny = _globalSections.some(function(lid) {
+    var el = document.getElementById(lid);
+    return el && el.querySelectorAll('[id^="tkcard-"]').length > 0;
+  });
+  btn.style.display = hasAny ? '' : 'none';
+}
+
+function _tkGlobalUpdateToolbar() {
+  var total = 0;
+  _globalSections.forEach(function(lid) { if (_tkSelIds[lid]) total += Object.keys(_tkSelIds[lid]).length; });
+  var tb = document.getElementById('mon-global-all-tb');
+  var cEl = document.getElementById('mon-global-all-tb-count');
+  if (tb) tb.style.display = total > 0 ? 'flex' : 'none';
+  if (cEl) cEl.textContent = total + ' sélectionné(s)';
+}
+
+function _tkGlobalSelAll() {
+  var totalCbs = 0, totalChecked = 0;
+  _globalSections.forEach(function(lid) {
+    var el = document.getElementById(lid); if (!el) return;
+    var cbs = el.querySelectorAll('input[type=checkbox]');
+    totalCbs += cbs.length;
+    cbs.forEach(function(c){ if (c.checked) totalChecked++; });
+  });
+  var doCheck = totalChecked < totalCbs;
+  _globalSections.forEach(function(lid) {
+    var el = document.getElementById(lid); if (!el) return;
+    el.querySelectorAll('input[type=checkbox]').forEach(function(c) {
+      if (c.checked !== doCheck) { c.checked = doCheck; c.dispatchEvent(new Event('change')); }
+    });
+  });
+}
+
+async function _tkGlobalSupprimerTout() {
+  var allIds = [];
+  _globalSections.forEach(function(lid) { if (_tkSelIds[lid]) allIds = allIds.concat(Object.keys(_tkSelIds[lid])); });
+  if (!allIds.length) return;
+  if (!confirm('Supprimer définitivement ' + allIds.length + ' ticket(s) de toutes les sections ?')) return;
+  try {
+    for (var i = 0; i < allIds.length; i++) { await callAPI('/tickets/' + allIds[i], {method:'DELETE'}); }
+    toast('✓ ' + allIds.length + ' ticket(s) supprimé(s)');
+    _globalSections.forEach(function(lid) { _tkSelIds[lid] = {}; _tkUpdateToolbar(lid); });
+    _tkGlobalUpdateToolbar();
+    setTimeout(function(){ setMonTab('global'); }, 300);
+  } catch(e) { toast('Erreur: ' + e.message, true); }
+}
+
+function _tkRender(el, list, listId) {
+  if (!listId) listId = el.id || 'unknown';
+  if (!_tkSelIds[listId]) _tkSelIds[listId] = {};
   el.innerHTML = '';
   if (!list || !list.length) {
     el.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6">Aucun ticket</div>';
@@ -5777,15 +5783,15 @@ function _tkRender(el, list) {
       var cbWrap = document.createElement('label');
       cbWrap.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;cursor:pointer';
       var cb = document.createElement('input');
-      cb.type = 'checkbox'; cb.checked = !!_tkSelIds[tk.id];
+      cb.type = 'checkbox'; cb.checked = !!(_tkSelIds[listId]&&_tkSelIds[listId][tk.id]);
       cb.style.cssText = 'width:15px;height:15px;accent-color:#ef4444;cursor:pointer';
-      (function(id){ cb.onchange = function(){
-        if(this.checked) _tkSelIds[id]=true; else delete _tkSelIds[id];
+      (function(id, lid){ cb.onchange = function(){
+        if (!_tkSelIds[lid]) _tkSelIds[lid] = {};
+        if(this.checked) _tkSelIds[lid][id]=true; else delete _tkSelIds[lid][id];
         card.style.borderColor = this.checked?'#fca5a5':'#f3f4f6';
         card.style.background = this.checked?'#fff5f5':'#fff';
-        // Update all toolbars
-        ['mon-bo-list','mon-sup-list','mon-tech-list'].forEach(function(lid){ _tkUpdateToolbar(lid); });
-      }; })(tk.id);
+        _tkUpdateToolbar(lid);
+      }; })(tk.id, listId);
       var cbLabel = document.createElement('span');
       cbLabel.style.cssText = 'font-size:9px;color:#9ca3af';
       cbLabel.textContent = 'Sélectionner';
