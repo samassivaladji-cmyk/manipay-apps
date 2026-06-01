@@ -341,7 +341,26 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="setTab('monitoring')" style="background:#fef3c7;border:1px solid var(--y);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--y2);cursor:pointer;font-family:inherit">↻ Rafraîchir</button>
       </div>
       <!-- Alertes actives -->
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🚨 Alertes actives</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">🚨 Alertes actives</div>
+        <button onclick="creerAlerteSupModal()" style="background:var(--y);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">+ Créer</button>
+      </div>
+      <!-- Formulaire création alerte superviseur -->
+      <div id="sup-alerte-create-form" style="display:none;background:#fef3c7;border:1.5px solid var(--y);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--y2);margin-bottom:8px">🚨 Nouvelle alerte — Superviseur</div>
+        <input class="inp" id="sup-al-titre" placeholder="Titre de l'alerte" style="margin-bottom:6px;font-size:12px">
+        <textarea class="inp" id="sup-al-desc" placeholder="Description détaillée..." rows="2" style="margin-bottom:6px;font-size:12px;resize:none"></textarea>
+        <select class="inp" id="sup-al-gravite" style="font-size:11px;margin-bottom:8px">
+          <option value="faible">🟢 Faible</option>
+          <option value="moyenne" selected>🟡 Moyenne</option>
+          <option value="elevee">🟠 Élevée</option>
+          <option value="critique">🔴 Critique</option>
+        </select>
+        <div style="display:flex;gap:6px">
+          <button onclick="envoyerAlerteSup()" style="flex:1;padding:8px;background:var(--y);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🚨 Envoyer</button>
+          <button onclick="document.getElementById('sup-alerte-create-form').style.display='none'" style="padding:8px 12px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
+        </div>
+      </div>
       <div id="sup-alertes-inline"><div style="padding:12px;text-align:center"><div class="spin"></div></div></div>
       <!-- Tickets à traiter -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:8px">
@@ -6660,6 +6679,26 @@ async function supprimerAlerte(id) {
     var card = document.getElementById('acard-'+id);
     if (card) { card.style.opacity='0'; card.style.transition='opacity .3s'; setTimeout(function(){card.remove();},300); }
     toast('✓ Alerte supprimée');
+  } catch(e) { toast('Erreur: '+e.message, true); }
+}
+
+function creerAlerteSupModal() {
+  var f = document.getElementById('sup-alerte-create-form');
+  if (f) f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+async function envoyerAlerteSup() {
+  var titre = document.getElementById('sup-al-titre').value.trim();
+  var desc  = document.getElementById('sup-al-desc').value.trim();
+  var gravite = document.getElementById('sup-al-gravite').value;
+  if (!titre || !desc) { toast('Titre et description requis', true); return; }
+  try {
+    await callAPI('/alerts', {method:'POST', body:JSON.stringify({titre:titre, description:desc, gravite:gravite, service:'superviseur'})});
+    toast('🚨 Alerte créée');
+    document.getElementById('sup-al-titre').value = '';
+    document.getElementById('sup-al-desc').value  = '';
+    document.getElementById('sup-alerte-create-form').style.display = 'none';
+    chargerZoneSuperviseur();
   } catch(e) { toast('Erreur: '+e.message, true); }
 }
 
