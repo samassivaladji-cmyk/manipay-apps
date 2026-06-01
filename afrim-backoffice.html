@@ -341,26 +341,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="setTab('monitoring')" style="background:#fef3c7;border:1px solid var(--y);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--y2);cursor:pointer;font-family:inherit">↻ Rafraîchir</button>
       </div>
       <!-- Alertes actives -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">🚨 Alertes actives</div>
-        <button onclick="creerAlerteSupModal()" style="background:var(--y);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">+ Créer</button>
-      </div>
-      <!-- Formulaire création alerte superviseur -->
-      <div id="sup-alerte-create-form" style="display:none;background:#fef3c7;border:1.5px solid var(--y);border-radius:12px;padding:12px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;color:var(--y2);margin-bottom:8px">🚨 Nouvelle alerte — Superviseur</div>
-        <input class="inp" id="sup-al-titre" placeholder="Titre de l'alerte" style="margin-bottom:6px;font-size:12px">
-        <textarea class="inp" id="sup-al-desc" placeholder="Description détaillée..." rows="2" style="margin-bottom:6px;font-size:12px;resize:none"></textarea>
-        <select class="inp" id="sup-al-gravite" style="font-size:11px;margin-bottom:8px">
-          <option value="faible">🟢 Faible</option>
-          <option value="moyenne" selected>🟡 Moyenne</option>
-          <option value="elevee">🟠 Élevée</option>
-          <option value="critique">🔴 Critique</option>
-        </select>
-        <div style="display:flex;gap:6px">
-          <button onclick="envoyerAlerteSup()" style="flex:1;padding:8px;background:var(--y);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🚨 Envoyer</button>
-          <button onclick="document.getElementById('sup-alerte-create-form').style.display='none'" style="padding:8px 12px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
-        </div>
-      </div>
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🚨 Alertes actives</div>
       <div id="sup-alertes-inline"><div style="padding:12px;text-align:center"><div class="spin"></div></div></div>
       <!-- Tickets à traiter -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:8px">
@@ -618,42 +599,168 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 
 <!-- TECH -->
 <div class="scr" id="s-tech">
-  <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
-    <div style="display:flex;align-items:center;justify-content:space-between">
+  <div style="background:#fff;padding:52px 20px 0;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px">
       <div>
         <div style="font-size:22px;font-weight:800">Support Technique</div>
-        <div style="color:var(--m);font-size:13px;margin-top:3px">Systeme, logs, transactions</div>
+        <div style="color:var(--m);font-size:13px;margin-top:2px">Système, logs, transactions</div>
       </div>
       <button onclick="logout()" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--r);font-family:inherit">Quitter</button>
     </div>
-  </div>
-  <div style="padding:16px 16px 100px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">API Backend</div><div id="sys-api" style="font-size:13px;font-weight:700;color:var(--g)">Verification...</div></div>
-      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Base donnees</div><div id="sys-db" style="font-size:13px;font-weight:700;color:var(--g)">Verification...</div></div>
-      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Expire BD</div><div style="font-size:13px;font-weight:700;color:#f59e0b">10 juin 2026</div></div>
-      <div class="card"><div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Version</div><div style="font-size:13px;font-weight:700">API v1.0</div></div>
+    <!-- Onglets internes -->
+    <div style="display:flex;gap:0;overflow-x:auto">
+      <button id="tech-tab-systeme"  onclick="setTechTab('systeme')"  style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#7c3aed;border-bottom:2px solid #7c3aed;white-space:nowrap">🖥️ Système</button>
+      <button id="tech-tab-tickets"  onclick="setTechTab('tickets')"  style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🎫 Tickets</button>
+      <button id="tech-tab-alertes"  onclick="setTechTab('alertes')"  style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🚨 Alertes</button>
+      <button id="tech-tab-stats"    onclick="setTechTab('stats')"    style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
     </div>
-    <!-- COMPTES PAR STATUT -->
+  </div>
+
+  <!-- ═══ ONGLET SYSTÈME ═══ -->
+  <div id="tech-panel-systeme" style="padding:16px 16px 100px">
+
+    <!-- État des services -->
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🟢 État des services</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">API Backend</div>
+        <div id="sys-api" style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px"><span id="sys-api-dot" style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block"></span>Vérification...</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Base de données</div>
+        <div id="sys-db" style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px"><span id="sys-db-dot" style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block"></span>Vérification...</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Notifications</div>
+        <div id="sys-notif" style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px"><span id="sys-notif-dot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0;display:inline-block"></span>--</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">SMS</div>
+        <div id="sys-sms" style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px"><span id="sys-sms-dot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0;display:inline-block"></span>--</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Email</div>
+        <div id="sys-email" style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px"><span id="sys-email-dot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0;display:inline-block"></span>--</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Stockage fichiers</div>
+        <div id="sys-storage" style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px"><span id="sys-storage-dot" style="width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0;display:inline-block"></span>--</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Expire BD</div>
+        <div style="font-size:12px;font-weight:700;color:#f59e0b">10 juin 2026</div>
+      </div>
+      <div class="card" style="padding:10px 12px">
+        <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Version API</div>
+        <div style="font-size:12px;font-weight:700">v1.0</div>
+      </div>
+    </div>
+
+    <!-- Recherche rapide -->
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🔍 Recherche rapide</div>
+    <div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:12px;margin-bottom:18px">
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="tech-search-type-btns">
+        <button onclick="setTechSearchType('user')"   id="tst-user"   style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;white-space:nowrap">👤 Utilisateur</button>
+        <button onclick="setTechSearchType('ticket')" id="tst-ticket" style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;white-space:nowrap">🎫 Ticket</button>
+        <button onclick="setTechSearchType('txn')"    id="tst-txn"    style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;white-space:nowrap">💸 Transaction</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <input class="inp" id="tech-search-input" type="text" placeholder="Téléphone, ID, référence..." style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter')techSearch()">
+        <button onclick="techSearch()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">🔍</button>
+      </div>
+      <div id="tech-search-result" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Comptes par statut -->
     <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Comptes par statut</div>
     <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px" id="tech-statut-filters">
       <button onclick="chargerClientsTech('en_attente')" id="tf-en_attente" style="padding:6px 12px;border-radius:99px;border:1.5px solid var(--y);background:var(--y3);color:var(--y2);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">En attente</button>
-      <button onclick="chargerClientsTech('actif')" id="tf-actif" style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Actifs</button>
-      <button onclick="chargerClientsTech('suspendu')" id="tf-suspendu" style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Suspendus</button>
-      <button onclick="chargerClientsTech('bloque')" id="tf-bloque" style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Bloques</button>
+      <button onclick="chargerClientsTech('actif')"      id="tf-actif"      style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Actifs</button>
+      <button onclick="chargerClientsTech('suspendu')"   id="tf-suspendu"   style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Suspendus</button>
+      <button onclick="chargerClientsTech('bloque')"     id="tf-bloque"     style="padding:6px 12px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:var(--m);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Bloqués</button>
     </div>
     <div id="tech-clients-list" style="margin-bottom:14px"></div>
-    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:10px">Transactions bloquees</div>
-    <div id="tech-txns"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
-    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;margin:16px 0 10px">Alertes systeme</div>
-    <div id="tech-logs"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
-  </div>
-    <!-- ═══ TICKETS TECH ═══ -->
-    <div style="margin-top:20px">
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">&#x1F527; Tickets techniques</div>
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px" id="tech-tk-filters"></div>
-      <div id="tech-tk-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+    <!-- Transactions bloquées -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">💸 Transactions bloquées</div>
+      <span id="tech-txns-count" style="background:#fef2f2;color:#ef4444;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">--</span>
     </div>
+    <div id="tech-txns"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+
+    <!-- Journal des erreurs -->
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px">📋 Journal des erreurs</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="tech-log-type-btns">
+      <button onclick="setTechLogType('all')"    id="tlt-all"    style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #ef4444;background:#fef2f2;color:#ef4444;white-space:nowrap">Tous</button>
+      <button onclick="setTechLogType('api')"    id="tlt-api"    style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;white-space:nowrap">API</button>
+      <button onclick="setTechLogType('notif')"  id="tlt-notif"  style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;white-space:nowrap">Notifs</button>
+      <button onclick="setTechLogType('kyc')"    id="tlt-kyc"    style="padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;white-space:nowrap">KYC/Docs</button>
+    </div>
+    <div id="tech-logs"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+
+    <!-- Historique des actions techniques -->
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px">🕑 Historique des actions</div>
+    <div id="tech-actions-history"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+  </div>
+
+  <!-- ═══ ONGLET TICKETS ═══ -->
+  <div id="tech-panel-tickets" style="display:none;padding:16px 16px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">🔧 Mes tickets techniques</div>
+      <button onclick="chargerTechTickets()" style="background:#f3f4f6;border:none;border-radius:8px;padding:4px 9px;font-size:10px;font-weight:700;color:#6b7280;cursor:pointer;font-family:inherit">↻</button>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px" id="tech-tk-filters"></div>
+    <div id="tech-tk-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- ═══ ONGLET ALERTES ═══ -->
+  <div id="tech-panel-alertes" style="display:none;padding:16px 16px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">🚨 Alertes techniques</div>
+      <button onclick="techCreerAlerteModal()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">+ Créer</button>
+    </div>
+    <!-- Formulaire création alerte -->
+    <div id="tech-alerte-create-form" style="display:none;background:#f5f3ff;border:1.5px solid #7c3aed;border-radius:12px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:8px">🚨 Nouvelle alerte — Support Tech</div>
+      <input class="inp" id="tech-al-titre" placeholder="Titre de l'alerte" style="margin-bottom:6px;font-size:12px">
+      <textarea class="inp" id="tech-al-desc" placeholder="Description détaillée..." rows="2" style="margin-bottom:6px;font-size:12px;resize:none"></textarea>
+      <select class="inp" id="tech-al-gravite" style="font-size:11px;margin-bottom:8px">
+        <option value="faible">🟢 Faible</option>
+        <option value="moyenne" selected>🟡 Moyenne</option>
+        <option value="elevee">🟠 Élevée</option>
+        <option value="critique">🔴 Critique</option>
+      </select>
+      <div style="display:flex;gap:6px">
+        <button onclick="techEnvoyerAlerte()" style="flex:1;padding:8px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🚨 Envoyer</button>
+        <button onclick="document.getElementById('tech-alerte-create-form').style.display='none'" style="padding:8px 12px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>
+      </div>
+    </div>
+    <div id="tech-alertes-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- ═══ ONGLET STATS ═══ -->
+  <div id="tech-panel-stats" style="display:none;padding:16px 16px 100px">
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">📊 Statistiques techniques</div>
+    <!-- Compteurs tickets -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:16px" id="tech-stats-grid">
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#f59e0b" id="ts-ouvert">--</div><div style="font-size:9px;color:#6b7280">⏳ En attente</div></div>
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#3b82f6" id="ts-en_cours">--</div><div style="font-size:9px;color:#6b7280">🔄 En cours</div></div>
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#22c55e" id="ts-resolu">--</div><div style="font-size:9px;color:#6b7280">✅ Résolus</div></div>
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#ef4444" id="ts-rejete">--</div><div style="font-size:9px;color:#6b7280">❌ Rejetés</div></div>
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#7c3aed" id="ts-alerte">--</div><div style="font-size:9px;color:#6b7280">🚨 Alertes</div></div>
+      <div class="card" style="text-align:center;padding:10px 6px"><div style="font-size:18px;font-weight:900;color:#d97706" id="ts-kyc">--</div><div style="font-size:9px;color:#6b7280">⏳ KYC att.</div></div>
+    </div>
+    <!-- Courbe tickets résolus -->
+    <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Tickets résolus — 30 derniers jours</div>
+      <canvas id="tech-stats-chart" height="140"></canvas>
+    </div>
+    <!-- Alertes actives par gravité -->
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Alertes actives par gravité</div>
+    <div id="tech-stats-alertes-detail" style="margin-bottom:14px"></div>
+  </div>
+
   <nav class="bnav" id="bnav-tech"></nav>
 </div>
 
@@ -807,31 +914,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 </div>
 
 <!-- SHEET CHANGER PIN -->
-<!-- SHEET MODIFIER COMPTE -->
-<div class="sh-ov" id="sh-edit-user">
-  <div class="sh">
-    <div class="sh-bar"></div>
-    <div class="sh-top">
-      <div><div class="sh-title">Modifier le compte</div><div style="color:var(--m);font-size:12px" id="edit-user-subtitle">—</div></div>
-      <button class="sh-x" onclick="closeSh('edit-user')">✕</button>
-    </div>
-    <div class="sh-body">
-      <div id="edit-user-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
-      <input type="hidden" id="edit-user-id"/>
-      <label class="lbl">Prénom *</label>
-      <input class="inp" id="edit-user-prenom" type="text" placeholder="Prénom" style="margin-bottom:12px"/>
-      <label class="lbl">Nom *</label>
-      <input class="inp" id="edit-user-nom" type="text" placeholder="Nom" style="margin-bottom:12px"/>
-      <label class="lbl">Téléphone *</label>
-      <input class="inp" id="edit-user-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:12px"/>
-      <label class="lbl">Zone</label>
-      <input class="inp" id="edit-user-zone" type="text" placeholder="Quartier / Ville" style="margin-bottom:20px"/>
-      <button class="btn btn-y" onclick="doEditUser()">Enregistrer les modifications</button>
-    </div>
-  </div>
-</div>
-
-
+<div class="sh-ov" id="sh-change-pin">
   <div class="sh">
     <div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Changer mon PIN</div></div><button class="sh-x" onclick="closeSh('change-pin');rstPin()">✕</button></div>
@@ -1086,11 +1169,11 @@ var PERMS={
   // Back-Office (Super Admin) : acces total + suppression
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
   // Superviseur : sa zone uniquement
-  superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:1,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
+  superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:0,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
   // Support Client : recherche client, remboursement, tickets
   support_client:{home:0,users:0,txns:0,monitoring:0,support:1,tech:0,creer:0,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:0,logs:0},
   // Support Tech : logs, transactions, alertes systeme
-  support_tech:  {home:0,users:0,txns:0,monitoring:1,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
+  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
   // Admin (gestionnaire) : tout voir + gérer, SANS suppression
   backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1}
 };
@@ -1562,32 +1645,6 @@ function voirU(id){
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  // Bouton Modifier (superviseur + admin)
-  if(isSuperAdmin()||(G.user&&G.user.role==='superviseur')){
-    mkBtn('\u270f\ufe0f Modifier ce compte','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px',function(){
-      document.getElementById('edit-user-id').value=u.id;
-      document.getElementById('edit-user-subtitle').textContent=(u.prenom||'')+' '+(u.nom||'')+' \u00b7 '+(u.role||'');
-      document.getElementById('edit-user-prenom').value=u.prenom||'';
-      document.getElementById('edit-user-nom').value=u.nom||'';
-      document.getElementById('edit-user-tel').value=u.telephone||'';
-      document.getElementById('edit-user-zone').value=u.zone||'';
-      document.getElementById('edit-user-err').style.display='none';
-      closeSh('user');openSh('edit-user');
-    });
-  }
-  // Bouton Modifier (superviseur + admin)
-  if(isSuperAdmin()||(G.user&&G.user.role==='superviseur')){
-    mkBtn('✏️ Modifier ce compte','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px',function(){
-      document.getElementById('edit-user-id').value=u.id;
-      document.getElementById('edit-user-subtitle').textContent=(u.prenom||'')+' '+(u.nom||'')+' · '+(u.role||'');
-      document.getElementById('edit-user-prenom').value=u.prenom||'';
-      document.getElementById('edit-user-nom').value=u.nom||'';
-      document.getElementById('edit-user-tel').value=u.telephone||'';
-      document.getElementById('edit-user-zone').value=u.zone||'';
-      document.getElementById('edit-user-err').style.display='none';
-      closeSh('user');openSh('edit-user');
-    });
-  }
   if(isSuperAdmin())mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
     document.getElementById('sh-confirm-id').value=id;
@@ -1767,24 +1824,58 @@ async function chargerTxns(){
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
 
-// ── MODIFICATION COMPTE (superviseur + admin) ──
-async function doEditUser() {
-  var id = document.getElementById('edit-user-id').value;
-  var prenom = document.getElementById('edit-user-prenom').value.trim();
-  var nom = document.getElementById('edit-user-nom').value.trim();
-  var tel = document.getElementById('edit-user-tel').value.trim();
-  var zone = document.getElementById('edit-user-zone').value.trim();
-  var errEl = document.getElementById('edit-user-err');
-  errEl.style.display = 'none';
-  if (!prenom || !nom || !tel) { errEl.textContent = 'Prénom, nom et téléphone sont requis'; errEl.style.display = ''; return; }
-  try {
-    await apiPatch('/users/'+id+'/profile', {prenom:prenom, nom:nom, telephone:tel, zone:zone||undefined});
-    toast('✅ Compte modifié avec succès');
-    closeSh('edit-user');
-    chargerUsers();
-  } catch(e) { errEl.textContent = e.message; errEl.style.display = ''; }
+// ── MONITORING ──
+async function chargerMonitoring(){
+  var role = G.user ? G.user.role : '';
+  if (role === 'superviseur') {
+    ['alertes','bo','sup','tech','superviseur','global'].forEach(function(t){var p=document.getElementById('mon-panel-'+t);if(p)p.style.display='none';});
+    var sp=document.getElementById('mon-panel-superviseur');
+    if(sp)sp.style.display='block';
+    if(typeof chargerZoneSuperviseur==='function') chargerZoneSuperviseur();
+    return;
+  }
+  var monNav=document.getElementById('mon-tab-bar');
+  if(monNav)monNav.style.display='flex';
+  var activeTab2 = _monActiveTab || 'alertes';
+  ['alertes','bo','sup','tech','superviseur','global'].forEach(function(t){
+    var p=document.getElementById('mon-panel-'+t);
+    if(p)p.style.display=(t===activeTab2)?'block':'none';
+  });
+  _monActiveTab = activeTab2;
+  ['alertes','bo','sup','tech','superviseur','global'].forEach(function(t){
+    var btn=document.getElementById('mon-tab-'+t);
+    if(btn){btn.style.color=t===activeTab2?'var(--y2)':'#6b7280';btn.style.borderBottom=t===activeTab2?'2px solid var(--y)':'2px solid transparent';}
+  });
+  if(activeTab2 !== 'alertes') return;
+  chargerAlertesCentralisees();
+  if (role === 'backoffice') { /* admin gestionnaire sees full monitoring */ }
+  if (role === 'support_tech') { setMonTab('tech'); return; }
+  if (role === 'support_client') { setMonTab('sup'); return; }
+  chargerAlertesCentralisees();
+  try{
+    var tr=await apiGet('/tickets?limit=20');var tlist=tr.data||[];
+    var el2=document.getElementById('m-tickets');el2.innerHTML='';
+    if(!tlist.length){el2.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucun ticket</div>';
+    }else{tlist.forEach(function(t){var div=document.createElement('div');div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px';div.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+t.sujet+'</div><div style="font-size:12px;color:#6b7280;margin-bottom:10px">'+t.description+'</div>';var statCols2={'ouvert':'#f59e0b','en_cours':'#3b82f6','resolu':'#22c55e','ferme':'#9ca3af','rejete':'#ef4444'};
+var statLbls2={'ouvert':'En attente','en_cours':'En cours','resolu':'Résolu','ferme':'Clôturé','rejete':'Rejeté'};
+var sc2=statCols2[t.statut]||'#9ca3af';
+var sl2=statLbls2[t.statut]||t.statut;
+var badge2=document.createElement('span');
+badge2.textContent=sl2;
+badge2.style.cssText='background:'+sc2+'18;color:'+sc2+';padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700';
+div.appendChild(badge2);
+if(t.statut==='ouvert'||t.statut==='en_cours'){
+  var bRes=document.createElement('button');bRes.textContent='✅ Résoudre';
+  bRes.style.cssText='padding:6px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;margin-right:6px;margin-top:8px';
+  (function(tid){bRes.addEventListener('click',function(){changerStatutTicketGlobal(tid,'resolu');});})(t.id);
+  div.appendChild(bRes);
+  var bClos=document.createElement('button');bClos.textContent='🔒 Clôturer';
+  bClos.style.cssText='padding:6px 12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;color:#6b7280;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;margin-top:8px';
+  (function(tid){bClos.addEventListener('click',function(){changerStatutTicketGlobal(tid,'ferme');});})(t.id);
+  div.appendChild(bClos);
+}el2.appendChild(div);});}
+  }catch(e){document.getElementById('m-tickets').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
 }
-
 async function cloturerA(id){try{await apiPatch('/alerts/'+id,{statut:'resolue',actionPrise:'Cloturee par admin'});toast('Alerte cloturee');chargerMonitoring();}catch(e){toast(e.message,true);}}
 async function cloturerT(id){try{await apiPatch('/tickets/'+id+'/status',{statut:'ferme'});toast('Ticket résolu');chargerMonitoring();}catch(e){toast(e.message,true);}}
 async function cloturerTicket(id,statut){try{await apiPatch('/tickets/'+id+'/status',{statut:statut});toast('Statut mis à jour');chargerSupport();}catch(e){toast(e.message,true);}}
@@ -2605,11 +2696,11 @@ var PERMS={
   // Back-Office (Super Admin) : acces total + suppression
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
   // Superviseur : sa zone uniquement
-  superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:1,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
+  superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:0,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
   // Support Client : recherche client, remboursement, tickets
   support_client:{home:0,users:0,txns:0,monitoring:0,support:1,tech:0,creer:0,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:0,logs:0},
   // Support Tech : logs, transactions, alertes systeme
-  support_tech:  {home:0,users:0,txns:0,monitoring:1,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
+  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
   // Admin (gestionnaire) : tout voir + gérer, SANS suppression
   backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1}
 };
@@ -3077,32 +3168,6 @@ function voirU(id){
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  // Bouton Modifier (superviseur + admin)
-  if(isSuperAdmin()||(G.user&&G.user.role==='superviseur')){
-    mkBtn('\u270f\ufe0f Modifier ce compte','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px',function(){
-      document.getElementById('edit-user-id').value=u.id;
-      document.getElementById('edit-user-subtitle').textContent=(u.prenom||'')+' '+(u.nom||'')+' \u00b7 '+(u.role||'');
-      document.getElementById('edit-user-prenom').value=u.prenom||'';
-      document.getElementById('edit-user-nom').value=u.nom||'';
-      document.getElementById('edit-user-tel').value=u.telephone||'';
-      document.getElementById('edit-user-zone').value=u.zone||'';
-      document.getElementById('edit-user-err').style.display='none';
-      closeSh('user');openSh('edit-user');
-    });
-  }
-  // Bouton Modifier (superviseur + admin)
-  if(isSuperAdmin()||(G.user&&G.user.role==='superviseur')){
-    mkBtn('✏️ Modifier ce compte','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px',function(){
-      document.getElementById('edit-user-id').value=u.id;
-      document.getElementById('edit-user-subtitle').textContent=(u.prenom||'')+' '+(u.nom||'')+' · '+(u.role||'');
-      document.getElementById('edit-user-prenom').value=u.prenom||'';
-      document.getElementById('edit-user-nom').value=u.nom||'';
-      document.getElementById('edit-user-tel').value=u.telephone||'';
-      document.getElementById('edit-user-zone').value=u.zone||'';
-      document.getElementById('edit-user-err').style.display='none';
-      closeSh('user');openSh('edit-user');
-    });
-  }
   if(isSuperAdmin())mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
     document.getElementById('sh-confirm-id').value=id;
@@ -3845,70 +3910,412 @@ function afficherDocsTech(userId,nom){
 }
 
 async function chargerTech(){
-  // Charger les tickets tech en bas
-  setTimeout(function(){ if(typeof _techChargerTickets==='function') _techChargerTickets(''); }, 300);
-  // Charger les clients en attente d'abord
+  setTechTab('systeme'); // Par défaut, onglet Système
+}
+
+function setTechTab(tab) {
+  ['systeme','tickets','alertes','stats'].forEach(function(t) {
+    var panel = document.getElementById('tech-panel-'+t);
+    var btn   = document.getElementById('tech-tab-'+t);
+    var active = t === tab;
+    if (panel) panel.style.display = active ? '' : 'none';
+    if (btn) {
+      btn.style.color = active ? '#7c3aed' : '#6b7280';
+      btn.style.borderBottomColor = active ? '#7c3aed' : 'transparent';
+    }
+  });
+  if (tab === 'systeme')  _chargerTechSysteme();
+  if (tab === 'tickets')  chargerTechTickets();
+  if (tab === 'alertes')  chargerTechAlertes();
+  if (tab === 'stats')    chargerTechStats();
+}
+
+async function _chargerTechSysteme() {
   chargerClientsTech('en_attente');
-  // Ping API
-  try{
-    var t0=Date.now();await apiGet('/health');var ms=Date.now()-t0;
-    document.getElementById('sys-api').textContent='En ligne ('+ms+'ms)';
-    document.getElementById('sys-api').style.color='#22c55e';
-    document.getElementById('sys-db').textContent='Connectee';
-    document.getElementById('sys-db').style.color='#22c55e';
-  }catch(e){
-    document.getElementById('sys-api').textContent='Hors ligne';
-    document.getElementById('sys-api').style.color='#ef4444';
-    document.getElementById('sys-db').textContent='Inconnu';
-    document.getElementById('sys-db').style.color='#f59e0b';
+  // ── État des services ──
+  var services = [
+    {id:'api',   name:'API Backend',        endpt:'/health'},
+    {id:'db',    name:'Base de données',     endpt:'/health'},
+    {id:'notif', name:'Notifications',       endpt:'/health/notifications'},
+    {id:'sms',   name:'SMS',                 endpt:'/health/sms'},
+    {id:'email', name:'Email',               endpt:'/health/email'},
+    {id:'storage',name:'Stockage fichiers',  endpt:'/health/storage'},
+  ];
+  try {
+    var t0=Date.now(); var h=await apiGet('/health'); var ms=Date.now()-t0;
+    _setSvcStatus('api',   true,  'En ligne ('+ms+'ms)');
+    _setSvcStatus('db',    h.db!==false, h.db!==false?'Connectée':'Hors ligne');
+    _setSvcStatus('notif', h.notifications!==false, h.notifications!==false?'Opérationnel':'Indisponible');
+    _setSvcStatus('sms',   h.sms!==false, h.sms!==false?'Opérationnel':'Indisponible');
+    _setSvcStatus('email', h.email!==false, h.email!==false?'Opérationnel':'Indisponible');
+    _setSvcStatus('storage',h.storage!==false, h.storage!==false?'Opérationnel':'Indisponible');
+  } catch(e) {
+    ['api','db','notif','sms','email','storage'].forEach(function(s){ _setSvcStatus(s,false,'Hors ligne'); });
   }
-  // Transactions bloquees
-  try{
+  // ── Transactions bloquées ──
+  try {
     var r=await apiGet('/transactions?statut=en_attente&limit=20');
     var list=r.data||[];
-    var el=document.getElementById('tech-txns');el.innerHTML='';
+    var countEl=document.getElementById('tech-txns-count');
+    if(countEl){ countEl.textContent=list.length; countEl.style.background=list.length>0?'#fef2f2':'#f0fdf4'; countEl.style.color=list.length>0?'#ef4444':'#15803d'; }
+    var el=document.getElementById('tech-txns'); el.innerHTML='';
     if(!list.length){
-      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune transaction bloquee</div>';
-    }else{
+      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">✓ Aucune transaction bloquée</div>';
+    } else {
       list.forEach(function(tx){
         var div=document.createElement('div');
-        div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px';
-        div.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
-          +'<div style="font-size:13px;font-weight:700;color:#f59e0b">'+tx.type+'</div>'
-          +'<div style="font-size:14px;font-weight:800">'+F(tx.montant)+'</div></div>'
-          +'<div style="font-size:10px;color:#9ca3af;font-family:monospace;margin-bottom:10px">'+tx.reference+'</div>';
-        var bf=document.createElement('button');bf.textContent='Forcer succes';
-        bf.style.cssText='padding:6px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;margin-right:8px';
-        bf.addEventListener('click',function(){forcerTx(tx.id,'completee');});div.appendChild(bf);
-        var be=document.createElement('button');be.textContent='Marquer echoue';
-        be.style.cssText='padding:6px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#ef4444;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit';
-        be.addEventListener('click',function(){forcerTx(tx.id,'echec');});div.appendChild(be);
-        el.appendChild(div);
+        div.style.cssText='background:#fff;border:1px solid #fecaca;border-left:3px solid #ef4444;border-radius:12px;padding:12px 14px;margin-bottom:8px';
+        var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
+        var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+          +'<div><div style="font-size:12px;font-weight:700;color:#374151">'+tx.type+'</div><div style="font-size:9px;color:#9ca3af;font-family:monospace">'+tx.reference+'</div></div>'
+          +'<div style="text-align:right"><div style="font-size:13px;font-weight:800">'+F(tx.montant)+'</div><div style="font-size:9px;color:#9ca3af">'+ds+'</div></div>'
+          +'</div>';
+        var btns=document.createElement('div'); btns.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+        var bf=document.createElement('button'); bf.textContent='✅ Forcer succès';
+        bf.style.cssText='padding:5px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#059669;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit';
+        (function(tid){bf.addEventListener('click',function(){forcerTx(tid,'completee');});})(tx.id);
+        var be=document.createElement('button'); be.textContent='❌ Marquer échoué';
+        be.style.cssText='padding:5px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#ef4444;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit';
+        (function(tid){be.addEventListener('click',function(){forcerTx(tid,'echec');});})(tx.id);
+        var bc=document.createElement('button'); bc.textContent='🔍 Consulter';
+        bc.style.cssText='padding:5px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;color:#1d4ed8;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit';
+        (function(tref){bc.addEventListener('click',function(){document.getElementById('tech-search-input').value=tref;setTechSearchType('txn');techSearch();});})(tx.reference);
+        btns.appendChild(bc); btns.appendChild(bf); btns.appendChild(be);
+        div.appendChild(btns); el.appendChild(div);
       });
     }
-  }catch(e){document.getElementById('tech-txns').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
-  // Alertes systeme (tickets escalades pour support_tech)
-  try{
-    var u=G.user;
-    var alertUrl='/alerts?limit=10&statut=ouverte&service=support_tech';
-    var ar=await apiGet(alertUrl);
-    var alist=(ar.data&&ar.data.alertes)||[];
-    var el2=document.getElementById('tech-logs');el2.innerHTML='';
-    if(!alist.length){
-      el2.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">Aucune alerte systeme</div>';
-    }else{
-      alist.forEach(function(a){
-        var gv={faible:'#22c55e',moyenne:'#f59e0b',elevee:'#f97316',critique:'#ef4444'};
-        var col=gv[a.gravite]||'#ef4444';
-        var div=document.createElement('div');
-        div.style.cssText='background:#fff;border:1px solid '+col+'30;border-left:3px solid '+col+';border-radius:10px;padding:10px 12px;margin-bottom:7px';
-        div.innerHTML='<div style="font-size:11px;font-weight:700;color:'+col+';margin-bottom:2px">⚠️ '+(a.titre||'Alerte')+'</div>'
-          +'<div style="font-size:10px;color:#6b7280">'+a.description+'</div>';
-        el2.appendChild(div);
-      });
-    }
-  }catch(e){document.getElementById('tech-logs').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>';}
+  } catch(e) { document.getElementById('tech-txns').innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>'; }
+  // ── Journal des erreurs ──
+  _chargerTechLogs('all');
+  // ── Historique des actions ──
+  _chargerTechHistory();
 }
+
+function _setSvcStatus(id, ok, label) {
+  var el=document.getElementById('sys-'+id);
+  var dot=document.getElementById('sys-'+id+'-dot');
+  if(!el) return;
+  var col = ok ? '#22c55e' : '#ef4444';
+  el.style.color = col;
+  el.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0;display:inline-block"></span> '+label;
+}
+
+var _techLogType = 'all';
+function setTechLogType(type) {
+  _techLogType = type;
+  var types=['all','api','notif','kyc'];
+  types.forEach(function(t){
+    var btn=document.getElementById('tlt-'+t); if(!btn)return;
+    var a=t===type;
+    btn.style.background=a?'#fef2f2':'#f9fafb';
+    btn.style.color=a?'#ef4444':'#6b7280';
+    btn.style.borderColor=a?'#ef4444':'#e5e7eb';
+  });
+  _chargerTechLogs(type);
+}
+
+async function _chargerTechLogs(type) {
+  var el=document.getElementById('tech-logs'); if(!el)return;
+  el.innerHTML='<div style="padding:12px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var r=await apiGet('/tech/logs?type='+(type||'all')+'&limit=15');
+    var list=r.data||[];
+    el.innerHTML='';
+    if(!list.length){
+      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:12px;text-align:center;color:#059669;font-size:12px;font-weight:600">✓ Aucune erreur récente</div>';
+      return;
+    }
+    var frag=document.createDocumentFragment();
+    list.forEach(function(log){
+      var d=new Date(log.created_at||log.createdAt||Date.now());
+      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var typeColors={api:'#ef4444',notif:'#f97316',kyc:'#f59e0b',system:'#7c3aed'};
+      var col=typeColors[log.type]||'#ef4444';
+      var div=document.createElement('div');
+      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-left:3px solid '+col+';border-radius:10px;padding:9px 11px;margin-bottom:6px';
+      div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<span style="font-size:10px;font-weight:700;color:'+col+';text-transform:uppercase">'+log.type+'</span>'
+        +'<span style="font-size:9px;color:#9ca3af">'+ds+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#374151;font-weight:600">'+log.message+'</div>'
+        +(log.detail?'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-family:monospace">'+log.detail+'</div>':'');
+      frag.appendChild(div);
+    });
+    el.appendChild(frag);
+  } catch(e) {
+    el.innerHTML='<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:12px;text-align:center;font-size:11px;color:#92400e">Journal non disponible — route /tech/logs à implémenter</div>';
+  }
+}
+
+async function _chargerTechHistory() {
+  var el=document.getElementById('tech-actions-history'); if(!el)return;
+  el.innerHTML='<div style="padding:12px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var r=await apiGet('/tech/history?limit=15');
+    var list=r.data||[];
+    el.innerHTML='';
+    if(!list.length){
+      el.innerHTML='<div style="background:#f9fafb;border:1px solid #f3f4f6;border-radius:12px;padding:12px;text-align:center;color:#9ca3af;font-size:12px">Aucune action récente</div>';
+      return;
+    }
+    var actionIcons={force_txn:'⚙️',resolve_ticket:'✅',create_alert:'🚨',update_status:'🔄',relance_txn:'↻'};
+    var frag=document.createDocumentFragment();
+    list.forEach(function(a){
+      var d=new Date(a.created_at||a.createdAt||Date.now());
+      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var icon=actionIcons[a.action_type]||'🔧';
+      var div=document.createElement('div');
+      div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:10px;padding:9px 11px;margin-bottom:6px;display:flex;align-items:center;gap:10px';
+      div.innerHTML='<div style="font-size:18px;flex-shrink:0">'+icon+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:11px;font-weight:700;color:#374151">'+a.description+'</div>'
+          +'<div style="font-size:10px;color:#9ca3af">par <b>'+(a.auteur||'—')+'</b> · '+ds+'</div>'
+        +'</div>';
+      frag.appendChild(div);
+    });
+    el.appendChild(frag);
+  } catch(e) {
+    el.innerHTML='<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:12px;text-align:center;font-size:11px;color:#92400e">Historique non disponible — route /tech/history à implémenter</div>';
+  }
+}
+
+// ── Recherche rapide ──
+var _techSearchType = 'user';
+function setTechSearchType(type) {
+  _techSearchType = type;
+  var types={user:'👤 Utilisateur',ticket:'🎫 Ticket',txn:'💸 Transaction'};
+  Object.keys(types).forEach(function(t){
+    var btn=document.getElementById('tst-'+t); if(!btn)return;
+    var a=t===type;
+    btn.style.background=a?'#f5f3ff':'#f9fafb';
+    btn.style.color=a?'#7c3aed':'#6b7280';
+    btn.style.borderColor=a?'#7c3aed':'#e5e7eb';
+  });
+  var inp=document.getElementById('tech-search-input');
+  if(inp) inp.placeholder=type==='user'?'Téléphone ou ID utilisateur':type==='ticket'?'Référence ticket (TKT-...)':'Référence transaction (TRF-...)';
+  document.getElementById('tech-search-result').innerHTML='';
+}
+
+async function techSearch() {
+  var q=document.getElementById('tech-search-input').value.trim();
+  var el=document.getElementById('tech-search-result');
+  if(!q){el.innerHTML='';return;}
+  el.innerHTML='<div style="padding:8px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var r, html='';
+    if(_techSearchType==='user'){
+      r=await apiGet('/users?q='+encodeURIComponent(q)+'&limit=5');
+      var list=r.data||[];
+      if(!list.length){html='<div style="color:#9ca3af;font-size:12px;padding:8px">Aucun résultat</div>';}
+      else list.forEach(function(u){
+        var sc={actif:'#22c55e',en_attente:'#f59e0b',suspendu:'#ef4444',bloque:'#9ca3af'}[u.statut]||'#9ca3af';
+        html+='<div style="background:#f9fafb;border-radius:10px;padding:9px 11px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">'
+          +'<div><div style="font-size:11px;font-weight:700">'+((u.prenom||'')+' '+(u.nom||'')).trim()+'</div>'
+          +'<div style="font-size:10px;color:#6b7280">'+u.telephone+' · '+u.role+'</div></div>'
+          +'<span style="background:'+sc+'18;color:'+sc+';border-radius:99px;padding:2px 8px;font-size:9px;font-weight:700">'+u.statut+'</span>'
+          +'</div>';
+      });
+    } else if(_techSearchType==='ticket'){
+      r=await apiGet('/tickets?q='+encodeURIComponent(q)+'&limit=5');
+      var list2=r.data||[];
+      if(!list2.length){html='<div style="color:#9ca3af;font-size:12px;padding:8px">Aucun ticket trouvé</div>';}
+      else list2.forEach(function(t){
+        html+='<div style="background:#f9fafb;border-radius:10px;padding:9px 11px;margin-bottom:6px">'
+          +'<div style="font-size:11px;font-weight:700">'+t.sujet+'</div>'
+          +'<div style="font-size:10px;color:#6b7280">'+t.reference+' · '+t.statut+'</div>'
+          +'</div>';
+      });
+    } else {
+      r=await apiGet('/transactions?q='+encodeURIComponent(q)+'&limit=5');
+      var list3=r.data||[];
+      if(!list3.length){html='<div style="color:#9ca3af;font-size:12px;padding:8px">Aucune transaction trouvée</div>';}
+      else list3.forEach(function(t){
+        html+='<div style="background:#f9fafb;border-radius:10px;padding:9px 11px;margin-bottom:6px;display:flex;justify-content:space-between">'
+          +'<div><div style="font-size:11px;font-weight:700">'+t.type+'</div>'
+          +'<div style="font-size:10px;color:#6b7280;font-family:monospace">'+t.reference+'</div></div>'
+          +'<div style="text-align:right"><div style="font-size:12px;font-weight:800">'+F(t.montant)+'</div>'
+          +'<div style="font-size:9px;color:#9ca3af">'+t.statut+'</div></div>'
+          +'</div>';
+      });
+    }
+    el.innerHTML=html;
+  } catch(e){ el.innerHTML='<div style="color:var(--r);font-size:11px;padding:8px">'+e.message+'</div>'; }
+}
+
+async function chargerTechTickets() {
+  var el = document.getElementById('tech-tk-list');
+  if (!el) return;
+  if (!document.getElementById('tech-tk-filters').childElementCount) {
+    var fBar = document.getElementById('tech-tk-filters');
+    [['Tous',''],['⏳ En attente','ouvert'],['🔄 En cours','en_cours'],['✅ Résolus','resolu'],['🔒 Clôturés','ferme']].forEach(function(f){
+      var btn=document.createElement('button'); btn.textContent=f[0]; btn.dataset.st=f[1];
+      var a=f[1]===''; btn.style.cssText='padding:5px 12px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?'var(--y)':'#e5e7eb')+';background:'+(a?'var(--y)':'#fff')+';color:'+(a?'#fff':'#374151');
+      btn.addEventListener('click',function(){
+        fBar.querySelectorAll('button').forEach(function(b){var ia=b.dataset.st===this.dataset.st;b.style.background=ia?'var(--y)':'#fff';b.style.color=ia?'#fff':'#374151';b.style.borderColor=ia?'var(--y)':'#e5e7eb';},this);
+        _chargerTechTkList(this.dataset.st);
+      });
+      fBar.appendChild(btn);
+    });
+  }
+  _chargerTechTkList('');
+}
+
+async function _chargerTechTkList(statut) {
+  var el = document.getElementById('tech-tk-list'); if(!el) return;
+  el.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var q='/tickets?service=support_tech&limit=40'+(statut?'&statut='+statut:'');
+    var r=await callAPI(q); var list=r.data||[];
+    _tkRender(el, list, 'tech-tk-list');
+  } catch(e) { el.innerHTML='<div style="color:var(--r);font-size:12px;padding:8px">'+e.message+'</div>'; }
+}
+
+function techCreerAlerteModal() {
+  var f=document.getElementById('tech-alerte-create-form');
+  if(f) f.style.display=f.style.display==='none'?'block':'none';
+}
+
+async function techEnvoyerAlerte() {
+  var titre=document.getElementById('tech-al-titre').value.trim();
+  var desc=document.getElementById('tech-al-desc').value.trim();
+  var gravite=document.getElementById('tech-al-gravite').value;
+  if(!titre||!desc){toast('Titre et description requis',true);return;}
+  try {
+    await callAPI('/alerts',{method:'POST',body:JSON.stringify({titre:titre,description:desc,gravite:gravite,service:'support_tech'})});
+    toast('🚨 Alerte créée');
+    document.getElementById('tech-al-titre').value='';
+    document.getElementById('tech-al-desc').value='';
+    document.getElementById('tech-alerte-create-form').style.display='none';
+    chargerTechAlertes();
+  } catch(e) { toast('Erreur: '+e.message,true); }
+}
+
+async function chargerTechAlertes() {
+  var el=document.getElementById('tech-alertes-list'); if(!el) return;
+  el.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var ar=await apiGet('/alerts?limit=30&service=support_tech');
+    var list=(ar.data&&ar.data.alertes)||[];
+    el.innerHTML='';
+    if(!list.length){
+      el.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px;text-align:center;color:#059669;font-size:12px;font-weight:600">✓ Aucune alerte</div>';
+      return;
+    }
+    var gv={faible:{col:'#22c55e',label:'🟢 Faible'},moyenne:{col:'#f59e0b',label:'🟡 Moyenne'},elevee:{col:'#f97316',label:'🟠 Élevée'},critique:{col:'#ef4444',label:'🔴 Critique'}};
+    var st={ouverte:{col:'#ef4444',label:'Ouverte'},en_cours:{col:'#f59e0b',label:'En cours'},resolue:{col:'#22c55e',label:'Résolue'},fermee:{col:'#9ca3af',label:'Fermée'}};
+    var frag=document.createDocumentFragment();
+    list.forEach(function(a){
+      var g=gv[a.gravite]||{col:'#f59e0b',label:'Moyenne'};
+      var s=st[a.statut]||{col:'#9ca3af',label:a.statut};
+      var d=new Date(a.created_at||a.createdAt||Date.now());
+      var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var card=document.createElement('div');
+      card.style.cssText='background:#fff;border:1px solid #f3f4f6;border-left:3px solid '+g.col+';border-radius:12px;padding:11px 13px;margin-bottom:8px';
+      card.innerHTML='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:5px">'
+        +'<div style="font-size:12px;font-weight:700;color:#111827;flex:1">'+a.titre+'</div>'
+        +'<div style="display:flex;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+g.col+'15;color:'+g.col+';border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700">'+g.label+'</span>'
+          +'<span style="background:'+s.col+'15;color:'+s.col+';border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700">'+s.label+'</span>'
+        +'</div></div>'
+        +'<div style="font-size:11px;color:#6b7280;margin-bottom:5px">'+a.description+'</div>'
+        +'<div style="font-size:9px;color:#9ca3af">'+ds+' · par '+(a.auteur||'système')+'</div>';
+      // Boutons action si alerte ouverte
+      if(a.statut==='ouverte'||a.statut==='en_cours'){
+        var btns=document.createElement('div'); btns.style.cssText='display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
+        if(a.statut==='ouverte'){var bp=document.createElement('button');bp.textContent='🔄 Prendre';bp.style.cssText='padding:4px 9px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit';(function(aid){bp.onclick=function(){_updateAlerteTech(aid,'en_cours');};})(a.id);btns.appendChild(bp);}
+        var br=document.createElement('button');br.textContent='✅ Résoudre';br.style.cssText='padding:4px 9px;background:#f0fdf4;border:1px solid #a7f3d0;color:#15803d;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit';(function(aid){br.onclick=function(){_updateAlerteTech(aid,'resolue');};})(a.id);btns.appendChild(br);
+        card.appendChild(btns);
+      }
+      frag.appendChild(card);
+    });
+    el.appendChild(frag);
+  } catch(e) { el.innerHTML='<div style="color:var(--r);font-size:12px;padding:8px">'+e.message+'</div>'; }
+}
+
+async function _updateAlerteTech(id, statut) {
+  try {
+    await callAPI('/alerts/'+id, {method:'PATCH', body:JSON.stringify({statut:statut})});
+    toast('✓ Alerte mise à jour');
+    chargerTechAlertes();
+  } catch(e) { toast('Erreur: '+e.message, true); }
+}
+
+async function chargerTechStats() {
+  try {
+    // Compteurs tickets
+    var statuts=['ouvert','en_cours','resolu','rejete'];
+    for(var i=0;i<statuts.length;i++){
+      (function(st){
+        apiGet('/tickets?service=support_tech&statut='+st+'&limit=1').then(function(r){
+          var el=document.getElementById('ts-'+st);
+          if(el) el.textContent=r.total||r.count||(r.data?r.data.length:0);
+        }).catch(function(){});
+      })(statuts[i]);
+    }
+    // Alertes actives
+    apiGet('/alerts?service=support_tech&statut=ouverte&limit=1').then(function(r){
+      var el=document.getElementById('ts-alerte');
+      if(el) el.textContent=r.data?((r.data.total||r.data.alertes&&r.data.alertes.length)||0):0;
+    }).catch(function(){});
+    // KYC en attente
+    apiGet('/users?statut=en_attente&limit=1').then(function(r){
+      var el=document.getElementById('ts-kyc');
+      if(el) el.textContent=r.total||(r.data?r.data.length:0);
+    }).catch(function(){});
+    // Courbe tickets résolus 30 jours
+    _chargerTechStatsChart();
+    // Alertes par gravité
+    _chargerTechStatsAlertes();
+  } catch(e) { console.warn('Stats tech:', e.message); }
+}
+
+async function _chargerTechStatsChart() {
+  var canvas = document.getElementById('tech-stats-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  try {
+    var r = await apiGet('/tickets?service=support_tech&statut=resolu&limit=200');
+    var list = r.data || [];
+    var now = new Date();
+    var labels=[], data=[];
+    for(var i=29;i>=0;i--){
+      var d=new Date(now); d.setDate(d.getDate()-i);
+      labels.push(d.getDate()+'/'+(d.getMonth()+1));
+      var dayStr=d.toISOString().slice(0,10);
+      var count=list.filter(function(tk){return (tk.dateCreation||tk.date_creation||'').slice(0,10)===dayStr;}).length;
+      data.push(count);
+    }
+    if(canvas._chartInst) { try{canvas._chartInst.destroy();}catch(e){} }
+    canvas._chartInst = new Chart(canvas,{
+      type:'bar',
+      data:{labels:labels,datasets:[{data:data,backgroundColor:'#7c3aed33',borderColor:'#7c3aed',borderWidth:1.5,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#9ca3af',maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:8},color:'#9ca3af',stepSize:1},beginAtZero:true}}}
+    });
+  } catch(e) { console.warn(e.message); }
+}
+
+async function _chargerTechStatsAlertes() {
+  var el = document.getElementById('tech-stats-alertes-detail'); if(!el) return;
+  try {
+    var r = await apiGet('/alerts?service=support_tech&limit=100');
+    var list = (r.data&&r.data.alertes)||[];
+    var counts = {faible:0,moyenne:0,elevee:0,critique:0};
+    list.filter(function(a){return a.statut==='ouverte'||a.statut==='en_cours';}).forEach(function(a){if(counts[a.gravite]!==undefined)counts[a.gravite]++;});
+    var defs=[{k:'critique',label:'🔴 Critique',col:'#ef4444'},{k:'elevee',label:'🟠 Élevée',col:'#f97316'},{k:'moyenne',label:'🟡 Moyenne',col:'#f59e0b'},{k:'faible',label:'🟢 Faible',col:'#22c55e'}];
+    var total=Object.values(counts).reduce(function(s,v){return s+v;},0);
+    el.innerHTML='';
+    if(!total){el.innerHTML='<div style="text-align:center;color:#9ca3af;font-size:12px;padding:10px">Aucune alerte active</div>';return;}
+    defs.forEach(function(d){
+      var pct=total>0?Math.round(counts[d.k]/total*100):0;
+      var card=document.createElement('div');card.style.cssText='background:#fff;border:1px solid #f3f4f6;border-left:3px solid '+d.col+';border-radius:10px;padding:9px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px';
+      card.innerHTML='<span style="font-size:11px;font-weight:700;color:'+d.col+';flex:1">'+d.label+'</span>'
+        +'<span style="font-size:14px;font-weight:900;color:'+d.col+'">'+counts[d.k]+'</span>'
+        +'<div style="background:#f3f4f6;border-radius:99px;height:6px;width:80px;overflow:hidden"><div style="background:'+d.col+';height:100%;width:'+pct+'%;border-radius:99px"></div></div>';
+      el.appendChild(card);
+    });
+  } catch(e) { el.innerHTML='<div style="color:var(--r);font-size:12px">'+e.message+'</div>'; }
+}
+
 
 async function forcerTx(id,statut){if(!confirm('Forcer en "'+statut+'" ?'))return;try{await apiPatch('/transactions/'+id+'/status',{statut:statut});toast('Transaction mise a jour');chargerTech();}catch(e){toast(e.message,true);}}
 
@@ -6444,31 +6851,10 @@ async function chargerAlertesCentralisees() {
   if (!el) return;
   el.innerHTML = '<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
 
-  // Show create button for all backoffice roles
+  // Show create button for admin/support
   var role = G.user ? G.user.role : '';
   var btnCreate = document.getElementById('btn-creer-alerte');
-  var allBackoffice = ['admin','backoffice','superviseur','support_client','support_tech'];
-  if (btnCreate) btnCreate.style.display = allBackoffice.includes(role) ? '' : 'none';
-
-  // Adapter le select service selon le rôle connecté
-  var selService = document.getElementById('al-service');
-  if (selService) {
-    // Définir les services accessibles par rôle
-    var roleServices = {
-      admin:          [['support_client','🎧 Support Client'],['support_tech','🛠️ Support Tech'],['superviseur','🟠 Superviseur'],['backoffice','🖥️ Back-Office'],['admin','👑 Admin']],
-      backoffice:     [['support_client','🎧 Support Client'],['support_tech','🛠️ Support Tech'],['superviseur','🟠 Superviseur'],['backoffice','🖥️ Back-Office'],['admin','👑 Admin']],
-      superviseur:    [['superviseur','🟠 Mon service (Superviseur']],
-      support_client: [['support_client','🎧 Mon service (Support Client)']],
-      support_tech:   [['support_tech','🛠️ Mon service (Support Tech)']],
-    };
-    var opts = roleServices[role] || roleServices.admin;
-    selService.innerHTML = opts.map(function(o){
-      return '<option value="'+o[0]+'">'+o[1]+'</option>';
-    }).join('');
-    // Pré-sélectionner le service du rôle
-    var myService = {superviseur:'superviseur', support_client:'support_client', support_tech:'support_tech', backoffice:'backoffice', admin:'admin'}[role];
-    if (myService) selService.value = myService;
-  }
+  if (btnCreate) btnCreate.style.display = (role==='admin'||role==='support_client'||role==='support_tech') ? '' : 'none';
 
   // Init gravité filters
   var gBar = document.getElementById('alerte-grav-filters');
@@ -6679,26 +7065,6 @@ async function supprimerAlerte(id) {
     var card = document.getElementById('acard-'+id);
     if (card) { card.style.opacity='0'; card.style.transition='opacity .3s'; setTimeout(function(){card.remove();},300); }
     toast('✓ Alerte supprimée');
-  } catch(e) { toast('Erreur: '+e.message, true); }
-}
-
-function creerAlerteSupModal() {
-  var f = document.getElementById('sup-alerte-create-form');
-  if (f) f.style.display = f.style.display==='none' ? 'block' : 'none';
-}
-
-async function envoyerAlerteSup() {
-  var titre = document.getElementById('sup-al-titre').value.trim();
-  var desc  = document.getElementById('sup-al-desc').value.trim();
-  var gravite = document.getElementById('sup-al-gravite').value;
-  if (!titre || !desc) { toast('Titre et description requis', true); return; }
-  try {
-    await callAPI('/alerts', {method:'POST', body:JSON.stringify({titre:titre, description:desc, gravite:gravite, service:'superviseur'})});
-    toast('🚨 Alerte créée');
-    document.getElementById('sup-al-titre').value = '';
-    document.getElementById('sup-al-desc').value  = '';
-    document.getElementById('sup-alerte-create-form').style.display = 'none';
-    chargerZoneSuperviseur();
   } catch(e) { toast('Erreur: '+e.message, true); }
 }
 
