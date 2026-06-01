@@ -6425,10 +6425,31 @@ async function chargerAlertesCentralisees() {
   if (!el) return;
   el.innerHTML = '<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
 
-  // Show create button for admin/support
+  // Show create button for all backoffice roles
   var role = G.user ? G.user.role : '';
   var btnCreate = document.getElementById('btn-creer-alerte');
-  if (btnCreate) btnCreate.style.display = (role==='admin'||role==='support_client'||role==='support_tech') ? '' : 'none';
+  var allBackoffice = ['admin','backoffice','superviseur','support_client','support_tech'];
+  if (btnCreate) btnCreate.style.display = allBackoffice.includes(role) ? '' : 'none';
+
+  // Adapter le select service selon le rôle connecté
+  var selService = document.getElementById('al-service');
+  if (selService) {
+    // Définir les services accessibles par rôle
+    var roleServices = {
+      admin:          [['support_client','🎧 Support Client'],['support_tech','🛠️ Support Tech'],['superviseur','🟠 Superviseur'],['backoffice','🖥️ Back-Office'],['admin','👑 Admin']],
+      backoffice:     [['support_client','🎧 Support Client'],['support_tech','🛠️ Support Tech'],['superviseur','🟠 Superviseur'],['backoffice','🖥️ Back-Office'],['admin','👑 Admin']],
+      superviseur:    [['superviseur','🟠 Mon service (Superviseur']],
+      support_client: [['support_client','🎧 Mon service (Support Client)']],
+      support_tech:   [['support_tech','🛠️ Mon service (Support Tech)']],
+    };
+    var opts = roleServices[role] || roleServices.admin;
+    selService.innerHTML = opts.map(function(o){
+      return '<option value="'+o[0]+'">'+o[1]+'</option>';
+    }).join('');
+    // Pré-sélectionner le service du rôle
+    var myService = {superviseur:'superviseur', support_client:'support_client', support_tech:'support_tech', backoffice:'backoffice', admin:'admin'}[role];
+    if (myService) selService.value = myService;
+  }
 
   // Init gravité filters
   var gBar = document.getElementById('alerte-grav-filters');
