@@ -824,8 +824,10 @@ async function ouvrirNotifications(){
   }
 }
 
-async function lireNotifUI(el, id){
+async function lireNotifUI(el){
   if(el.dataset.lu==='1') return; // déjà lue
+  var id = el.dataset.nid;
+  if(!id) return;
   el.dataset.lu='1';
   // Mise à jour visuelle immédiate
   el.style.background='#f9fafb';
@@ -841,10 +843,8 @@ async function lireNotifUI(el, id){
   _notifCount=Math.max(0,_notifCount-1);
   var badge=document.getElementById('notif-badge');
   if(badge){if(_notifCount>0){badge.style.display='flex';badge.textContent=_notifCount>9?'9+':String(_notifCount);}else{badge.style.display='none';}}
-  // Mettre à jour le header "Non lues"
-  var headers=document.querySelectorAll('#notif-list div');
-  // Appel API silencieux
-  try{await patch('/notifications/'+id+'/lu',{});}catch(e){}
+  // Appel API avec le bon id
+  try{await patch('/notifications/'+id+'/lu',{});}catch(e){console.warn('notif lu:',e.message);}
 }
 async function lireNotif(id){
   try{await patch('/notifications/'+id+'/lu',{});}catch(e){}
@@ -926,7 +926,7 @@ function chargerProfil(){
 }
 
 var sendDest=null;
-function selDest(tel){if(!tel)return;sendDest={tel};document.getElementById('send-s1').style.display='none';document.getElementById('send-s2').style.display='';document.getElementById('send-dest').innerHTML='<div style="width:44px;height:44px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;color:var(--b);font-size:16px;font-weight:800;flex-shrink:0">'+tel.slice(-2)+'</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Destinataire</div><div style="color:var(--m);font-size:12px;font-family:monospace">'+tel+'</div></div><button onclick="rstSend()" style="background:none;border:none;color:var(--g);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Changer</button>';}
+function selDest(tel){if(!tel)return;closeSh('send');ouvrirSendWave(tel,tel);}
 function setSendAmt(v){document.getElementById('send-amt').value=v;calcSend();doSend();}
 function calcSend(){var v=Number(document.getElementById('send-amt').value),ok=v>0;document.getElementById('send-recap').style.display=ok?'':'none';if(ok)document.getElementById('send-recap').innerHTML='<div class="srow"><span style="color:var(--m);font-size:13px">Montant</span><span style="font-weight:700">'+F(v)+'</span></div><div class="srow"><span style="color:var(--m);font-size:13px">Frais</span><span style="color:var(--g);font-weight:700">Gratuit ✓</span></div><div class="row" style="padding-top:10px"><span style="font-weight:700">Total débité</span><span style="color:var(--g);font-size:18px;font-weight:900">'+F(v)+'</span></div>';document.getElementById('btn-send').disabled=!ok;document.getElementById('btn-send').style.opacity=ok?'1':'.4';}
 async function doSend(){var amt=Number(document.getElementById('send-amt').value);var motif=undefined;var solde=G.compte?Number(G.compte.solde):0;if(amt>solde){document.getElementById('send-err2').textContent='Solde insuffisant ('+F(solde)+' disponible)';document.getElementById('send-err2').style.display='';return;}document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='';try{var r=await post('/transactions/transfer',{telephone:sendDest.tel,montant:amt,});document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='';document.getElementById('send-succ-txt').textContent=F(amt)+' envoyés à '+sendDest.tel;document.getElementById('send-succ-ref').textContent=r.data.reference;if(typeof fbLogTransaction==='function')fbLogTransaction('transfert',amt);rafraichir();}catch(e){document.getElementById('send-loading').style.display='none';document.getElementById('send-s2').style.display='';document.getElementById('send-err2').textContent=e.message;document.getElementById('send-err2').style.display='';}}
