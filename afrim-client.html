@@ -521,7 +521,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 </div>
 
 <!-- PAGE DÉTAIL SERVICE (vraie page, pas sheet) -->
-<div class="scr" id="s-pay-detail" style="background:#fff;display:flex;flex-direction:column;">
+<div class="scr" id="s-pay-detail" style="background:#fff;flex-direction:column;">
   <!-- Header -->
   <div style="background:#fff;padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:5;flex-shrink:0;">
     <button onclick="fermerDetailPaiement()" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
@@ -584,7 +584,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 </div>
 
 <!-- PAGE ENVOYER ARGENT STYLE WAVE -->
-<div class="scr" id="s-send-wave" style="background:#fff;display:flex;flex-direction:column;">
+<div class="scr" id="s-send-wave" style="background:#fff;flex-direction:column;">
   <div style="background:#fff;padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:5;flex-shrink:0;">
     <button onclick="setTab('home')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
       <svg width="22" height="22" fill="none" stroke="#111" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -1097,7 +1097,7 @@ function calcSW() {
   var v = Number(document.getElementById('sw-amt').value);
   var ok = v > 0;
   document.getElementById('sw-recap').style.display = ok ? '' : 'none';
-  if (ok) document.getElementById('sw-recu').textContent = F(v) + ' FCFA';
+  if (ok) document.getElementById('sw-recu').textContent = F(v);
   document.getElementById('sw-btn').disabled = !ok;
   document.getElementById('sw-btn').style.opacity = ok ? '1' : '.4';
 }
