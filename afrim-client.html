@@ -583,7 +583,53 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   </div>
 </div>
 
-<!-- SH-PAY gardé vide pour compatibilité (inutilisé) -->
+<!-- PAGE ENVOYER ARGENT STYLE WAVE -->
+<div class="scr" id="s-send-wave" style="background:#fff;display:flex;flex-direction:column;">
+  <div style="background:#fff;padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:5;flex-shrink:0;">
+    <button onclick="setTab('home')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
+      <svg width="22" height="22" fill="none" stroke="#111" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div style="font-size:18px;font-weight:800;flex:1">Envoyer de l'Argent</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px 16px 16px;">
+    <!-- Destinataire -->
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:4px">À</div>
+    <div id="sw-dest-name" style="font-size:16px;font-weight:800;color:#111;margin-bottom:2px"></div>
+    <div id="sw-dest-tel" style="font-size:14px;color:#6b7280;margin-bottom:20px;font-family:monospace"></div>
+    <div style="height:1px;background:#f3f4f6;margin-bottom:20px"></div>
+    <!-- Champ montant -->
+    <div style="font-size:13px;color:#2563eb;font-weight:600;margin-bottom:8px">Montant Envoyé</div>
+    <input id="sw-amt" type="number" inputmode="numeric" placeholder="" oninput="calcSW()"
+      style="width:100%;border:none;border-bottom:2px solid #2563eb;outline:none;font-size:28px;font-weight:700;padding:4px 0;margin-bottom:20px;font-family:'Inter',sans-serif;color:#111;background:transparent"/>
+    <!-- Recap frais -->
+    <div id="sw-recap" style="display:none">
+      <div style="font-size:13px;color:#9ca3af;margin-bottom:4px">Montant Reçu</div>
+      <div id="sw-recu" style="font-size:22px;font-weight:800;color:#111;margin-bottom:12px"></div>
+      <div style="font-size:13px;color:#059669;font-weight:600">Frais AFRIM PAY = Gratuit ✓</div>
+    </div>
+    <div id="sw-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:10px;margin-top:12px;font-size:13px;"></div>
+    <!-- Loading -->
+    <div id="sw-loading" style="display:none;text-align:center;padding:48px 0;">
+      <div class="spin"></div>
+      <p style="margin-top:14px;color:#6b7280;font-size:14px;">Envoi en cours...</p>
+    </div>
+    <!-- Succès -->
+    <div id="sw-success" style="display:none;text-align:center;padding:32px 0;">
+      <div style="width:72px;height:72px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px;">✅</div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:8px;">Envoyé !</div>
+      <div id="sw-succ-txt" style="color:#6b7280;font-size:15px;margin-bottom:4px;"></div>
+      <div id="sw-succ-ref" style="color:#9ca3af;font-size:12px;font-family:monospace;margin-bottom:28px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-g" style="flex:1" onclick="setTab('home');rafraichir()">Accueil</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="setTab('history')">Historique</button>
+      </div>
+    </div>
+  </div>
+  <!-- Bouton Envoyer sticky en bas -->
+  <div id="sw-footer" style="padding:10px 16px 28px;background:#fff;border-top:1px solid #f3f4f6;flex-shrink:0;">
+    <button class="btn btn-g" id="sw-btn" onclick="doSW()" disabled style="opacity:.4;width:100%;border-radius:99px;font-size:17px;padding:16px">Envoyer</button>
+  </div>
+</div>
 <div class="sh-ov" id="sh-pay" style="display:none!important;pointer-events:none;"></div>
 
 <!-- SHEET INSCRIPTION -->
@@ -671,6 +717,7 @@ function setTab(t){
   else if(t==='commissions'){document.getElementById('s-commissions').classList.add('on');setTimeout(chargerCommissions,50);}
   else if(t==='paiements'){document.getElementById('s-paiements').classList.add('on');}
   else if(t==='pay-detail'){document.getElementById('s-pay-detail').classList.add('on');}
+  else if(t==='send-wave'){document.getElementById('s-send-wave').classList.add('on');}
 }
 
 function chkLogin(){var v=document.getElementById('login-tel').value.trim();document.getElementById('lg-btn').disabled=!v;document.getElementById('lg-btn').style.opacity=v?'1':'.4';}
@@ -1030,39 +1077,87 @@ function rstPayDet(){
 }
 
 // Scanner direct depuis QR accueil (onglet scanner de la popup Wave)
+function ouvrirSendWave(tel, nom) {
+  document.getElementById('sw-dest-name').textContent = nom || tel;
+  document.getElementById('sw-dest-tel').textContent  = tel;
+  document.getElementById('sw-amt').value = '';
+  document.getElementById('sw-recap').style.display = 'none';
+  document.getElementById('sw-err').style.display = 'none';
+  document.getElementById('sw-loading').style.display = 'none';
+  document.getElementById('sw-success').style.display = 'none';
+  document.getElementById('sw-footer').style.display = '';
+  document.getElementById('sw-btn').disabled = true;
+  document.getElementById('sw-btn').style.opacity = '.4';
+  window._swTel = tel;
+  setTab('send-wave');
+  setTimeout(function(){ document.getElementById('sw-amt').focus(); }, 400);
+}
+
+function calcSW() {
+  var v = Number(document.getElementById('sw-amt').value);
+  var ok = v > 0;
+  document.getElementById('sw-recap').style.display = ok ? '' : 'none';
+  if (ok) document.getElementById('sw-recu').textContent = F(v) + ' FCFA';
+  document.getElementById('sw-btn').disabled = !ok;
+  document.getElementById('sw-btn').style.opacity = ok ? '1' : '.4';
+}
+
+async function doSW() {
+  var amt = Number(document.getElementById('sw-amt').value);
+  var solde = G.compte ? Number(G.compte.solde) : 0;
+  var errEl = document.getElementById('sw-err');
+  errEl.style.display = 'none';
+  if (amt > solde) {
+    errEl.textContent = 'Solde insuffisant (' + F(solde) + ' disponible)';
+    errEl.style.display = '';
+    return;
+  }
+  document.getElementById('sw-footer').style.display = 'none';
+  document.getElementById('sw-loading').style.display = '';
+  try {
+    var r = await post('/transactions/transfer', {telephone: window._swTel, montant: amt});
+    document.getElementById('sw-loading').style.display = 'none';
+    document.getElementById('sw-success').style.display = '';
+    document.getElementById('sw-succ-txt').textContent = F(amt) + ' FCFA envoyés à ' + window._swTel;
+    document.getElementById('sw-succ-ref').textContent = r.data.reference;
+    rafraichir();
+  } catch(e) {
+    document.getElementById('sw-loading').style.display = 'none';
+    document.getElementById('sw-footer').style.display = '';
+    errEl.textContent = e.message;
+    errEl.style.display = '';
+  }
+}
+
 function ouvrirScannerDirect(){
   ouvrirPopupQR(function(tel,parts){
-    // Si c'est un client → ouvrir envoi
-    if(!parts[2]||parts[2]==='client'){
-      document.getElementById('send-tel').value=parts[0];
-      openSh('send');selDest(parts[0]);
-    }
-    // Si c'est un marchand → ouvrir paiement direct
-    else if(parts[2]==='business'||parts[2]==='marchand'){
-      var s={id:'marchand2',cat:'Marchands',nom:'Payer '+parts[0],icon:'🏪',couleur:'#ecfdf5',bientot:false,ref:'Référence (optionnel)'};
-      payServiceActif=s;
-      document.getElementById('pay-det-title').textContent='Payer le marchand';
-      document.getElementById('pay-det-icon').textContent='🏪';
-      document.getElementById('pay-det-icon').style.background='#ecfdf5';
-      document.getElementById('pay-det-name').textContent=parts[0];
-      document.getElementById('pay-det-cat').textContent='Marchand AFRIM PAY';
-      document.getElementById('pay-det-ref-label').textContent='Référence (optionnel)';
-      document.getElementById('pay-det-ref').placeholder='Motif ou référence';
-      document.getElementById('pay-det-bientot').style.display='none';
-      document.getElementById('btn-pay-det').disabled=true;
-      document.getElementById('btn-pay-det').style.opacity='.4';
-      document.getElementById('pay-det-form').style.display='';
-      document.getElementById('pay-det-loading').style.display='none';
-      document.getElementById('pay-det-success').style.display='none';
-      document.getElementById('pay-det-ref').value='';
-      document.getElementById('pay-det-amt').value='';
-      setTab('pay-detail');
-    }
-    // QR inconnu → essayer envoi
-    else{
-      document.getElementById('send-tel').value=parts[0];
-      openSh('send');selDest(parts[0]);
-    }
+    setTimeout(function(){
+      var role = parts[2] || 'client';
+      if(role==='business'||role==='marchand'){
+        // Paiement marchand → page pay-detail
+        var s={id:'marchand2',cat:'Marchands',nom:'Payer '+parts[0],icon:'🏪',couleur:'#ecfdf5',bientot:false,ref:'Référence (optionnel)'};
+        payServiceActif=s;
+        document.getElementById('pay-det-title').textContent='Payer le marchand';
+        document.getElementById('pay-det-icon').textContent='🏪';
+        document.getElementById('pay-det-icon').style.background='#ecfdf5';
+        document.getElementById('pay-det-name').textContent=parts[0];
+        document.getElementById('pay-det-cat').textContent='Marchand AFRIM PAY';
+        document.getElementById('pay-det-ref-label').textContent='Référence (optionnel)';
+        document.getElementById('pay-det-ref').placeholder='Motif ou référence';
+        document.getElementById('pay-det-bientot').style.display='none';
+        document.getElementById('btn-pay-det').disabled=true;
+        document.getElementById('btn-pay-det').style.opacity='.4';
+        document.getElementById('pay-det-form').style.display='';
+        document.getElementById('pay-det-loading').style.display='none';
+        document.getElementById('pay-det-success').style.display='none';
+        document.getElementById('pay-det-ref').value='';
+        document.getElementById('pay-det-amt').value='';
+        setTab('pay-detail');
+      } else {
+        // Transfert client → page style Wave
+        ouvrirSendWave(parts[0], parts[1]||parts[0]);
+      }
+    }, 300);
   });
 }
 
