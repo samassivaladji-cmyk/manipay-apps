@@ -482,7 +482,6 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
           <button onclick="setSendAmt(50000)" style="padding:8px 12px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">50 000</button>
         </div>
         <input class="inp" id="send-amt" type="number" placeholder="Montant en FCFA" inputmode="numeric" oninput="calcSend()" onkeydown="if(event.key==='Enter'&&!document.getElementById('btn-send').disabled)doSend()" style="margin-bottom:12px"/>
-        <input class="inp" id="send-motif" type="text" placeholder="Motif (optionnel)" style="margin-bottom:12px"/>
         <div id="send-recap" style="display:none;background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:12px"></div>
       </div>
       <div id="send-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div><p style="margin-top:12px;color:var(--m);font-size:14px">Envoi en cours...</p></div>
