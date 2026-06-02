@@ -1254,10 +1254,10 @@ function _lancerCamera(){
             _arreterCamera();
             var parts=codes[0].rawValue.split('|'),tel=parts[0]||codes[0].rawValue;
             fermerPopupQR();
-            var st=document.getElementById('send-tel');
-            if(st){st.value=tel;st.dispatchEvent(new Event('input'));}
-            openSh('send');
-            if(typeof selDest==='function')selDest(tel);
+            setTimeout(function(){
+              if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
+              else{ouvrirSendWave(tel,parts[1]||tel);}
+            },300);
           }
         }).catch(function(){});
       },300);
@@ -1304,10 +1304,10 @@ function _lireQRVideo(){
     _arreterCamera();
     var parts=code.data.split('|'),tel=parts[0]||code.data;
     fermerPopupQR();
-    var st=document.getElementById('send-tel');
-    if(st){st.value=tel;st.dispatchEvent(new Event('input'));}
-    openSh('send');
-    if(typeof selDest==='function')selDest(tel);
+    setTimeout(function(){
+      if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
+      else{ouvrirSendWave(tel,parts[1]||tel);}
+    },300);
   }
 }
 function wqrTab(tab){
@@ -1445,10 +1445,10 @@ document.addEventListener('DOMContentLoaded',function(){
           if(code&&code.data){
             var parts=code.data.split('|'),tel=parts[0]||code.data;
             fermerPopupQR();
-            var st=document.getElementById('send-tel');
-            if(st){st.value=tel;st.dispatchEvent(new Event('input'));}
-            openSh('send');
-            if(typeof selDest==='function')selDest(tel);
+            setTimeout(function(){
+              if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
+              else{ouvrirSendWave(tel,parts[1]||tel);}
+            },300);
             return;
           }
         }
