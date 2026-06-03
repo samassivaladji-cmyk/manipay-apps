@@ -564,7 +564,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 <!-- PAGE DÉTAIL TRANSACTION STYLE WAVE -->
 <div class="scr" id="s-tx-detail" style="background:#f3f4f6;">
   <div style="background:#f3f4f6;padding:52px 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:5;flex-shrink:0;">
-    <button onclick="S('history')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
+    <button onclick="setTab('history')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
       <svg width="22" height="22" fill="none" stroke="#111" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
   </div>
@@ -892,24 +892,24 @@ var TX_CFG={
 function txRow(tx){
   var cfg=TX_CFG[tx.type]||TX_CFG.transfert;
   var cid=G.compte?G.compte.id:'';
-  var isIn=tx.compteDestId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
+  // Utiliser les champs directs retournés par l'API
+  var srcId=tx.compte_source_id||tx.compteSourceId||'';
+  var dstId=tx.compte_dest_id||tx.compteDestId||'';
+  var isIn=dstId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
   var sign=isIn?'+':'−';
   var col=isIn?'#16a34a':'#ef4444';
-  // Label style Wave : "À Nom Prénom 07..." ou "De Nom Prénom 07..."
   var label='', sublabel='';
   if(tx.type==='transfert'){
     if(isIn){
-      var src=tx.compteSource&&tx.compteSource.utilisateur;
-      var srcNom=src?((src.prenom||'')+' '+(src.nom||'')).trim():'';
-      var srcTel=src?src.telephone:'';
+      var srcNom=((tx.srcPrenom||'')+' '+(tx.srcNom||'')).trim();
+      var srcTel=tx.srcTel||'';
       label='De '+(srcNom||srcTel||'—');
-      sublabel=srcTel&&srcNom?srcTel:'';
+      sublabel=srcNom&&srcTel?srcTel:'';
     } else {
-      var dst=tx.compteDest&&tx.compteDest.utilisateur;
-      var dstNom=dst?((dst.prenom||'')+' '+(dst.nom||'')).trim():'';
-      var dstTel=dst?dst.telephone:'';
+      var dstNom=((tx.destPrenom||'')+' '+(tx.destNom||'')).trim();
+      var dstTel=tx.destTel||'';
       label='À '+(dstNom||dstTel||'—');
-      sublabel=dstTel&&dstNom?dstTel:'';
+      sublabel=dstNom&&dstTel?dstTel:'';
     }
   } else if(tx.type==='paiement_marchand'){
     label='Paiement '+(tx.description||'Marchand');
@@ -942,20 +942,19 @@ var _txCache = {};
 function voirDetailTx(id) {
   var tx = _txCache[id]; if(!tx) return;
   var cid=G.compte?G.compte.id:'';
-  var isIn=tx.compteDestId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
+  var srcId=tx.compte_source_id||tx.compteSourceId||'';
+  var dstId=tx.compte_dest_id||tx.compteDestId||'';
+  var isIn=dstId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
   var col=isIn?'#16a34a':'#ef4444';
   var sign=isIn?'+':'−';
-  // Nom de la contrepartie
   var contre='', contreTel='';
   if(tx.type==='transfert'){
     if(isIn){
-      var src=tx.compteSource&&tx.compteSource.utilisateur;
-      contre=src?((src.prenom||'')+' '+(src.nom||'')).trim():'';
-      contreTel=src?src.telephone:'';
+      contre=((tx.srcPrenom||'')+' '+(tx.srcNom||'')).trim();
+      contreTel=tx.srcTel||'';
     } else {
-      var dst=tx.compteDest&&tx.compteDest.utilisateur;
-      contre=dst?((dst.prenom||'')+' '+(dst.nom||'')).trim():'';
-      contreTel=dst?dst.telephone:'';
+      contre=((tx.destPrenom||'')+' '+(tx.destNom||'')).trim();
+      contreTel=tx.destTel||'';
     }
   }
   var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
@@ -977,7 +976,7 @@ function voirDetailTx(id) {
       +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px"><span style="color:#6b7280;font-size:14px">Référence</span><span style="font-weight:600;font-size:12px;font-family:monospace;color:#374151">'+(tx.reference||tx.id||'')+'</span></div>'
     +'</div>'
     +'<div style="text-align:center;color:#9ca3af;font-size:12px;padding:20px">AFRIM PAY</div>';
-  S('s-tx-detail');
+  setTab('tx-detail');
 }
 
 async function chargerTxns(){
