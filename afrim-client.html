@@ -561,6 +561,16 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   </div>
 </div>
 
+<!-- PAGE DÉTAIL TRANSACTION STYLE WAVE -->
+<div class="scr" id="s-tx-detail" style="background:#f3f4f6;">
+  <div style="background:#f3f4f6;padding:52px 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:5;flex-shrink:0;">
+    <button onclick="S('history')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
+      <svg width="22" height="22" fill="none" stroke="#111" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+  </div>
+  <div id="tx-detail-content" style="flex:1;overflow-y:auto;padding-bottom:40px"></div>
+</div>
+
 <div class="scr" id="s-send-wave" style="background:#fff;flex-direction:column;">
   <div style="background:#fff;padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:5;flex-shrink:0;">
     <button onclick="setTab('home')" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;">
@@ -694,6 +704,7 @@ function setTab(t){
   else if(t==='paiements'){document.getElementById('s-paiements').classList.add('on');}
   else if(t==='pay-detail'){document.getElementById('s-pay-detail').classList.add('on');}
   else if(t==='send-wave'){document.getElementById('s-send-wave').classList.add('on');}
+  else if(t==='tx-detail'){document.getElementById('s-tx-detail').classList.add('on');}
 }
 
 function chkLogin(){var v=document.getElementById('login-tel').value.trim();document.getElementById('lg-btn').disabled=!v;document.getElementById('lg-btn').style.opacity=v?'1':'.4';}
@@ -883,23 +894,98 @@ function txRow(tx){
   var cid=G.compte?G.compte.id:'';
   var isIn=tx.compteDestId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
   var sign=isIn?'+':'−';
-  var col=isIn?cfg.c:'#ef4444';
-  var label=cfg.l;
+  var col=isIn?'#16a34a':'#ef4444';
+  // Label style Wave : "À Nom Prénom 07..." ou "De Nom Prénom 07..."
+  var label='', sublabel='';
   if(tx.type==='transfert'){
-    if(isIn&&tx.compteSource&&tx.compteSource.utilisateur)label='Reçu de '+tx.compteSource.utilisateur.prenom;
-    else if(!isIn&&tx.compteDest&&tx.compteDest.utilisateur)label='Envoyé à '+tx.compteDest.utilisateur.prenom;
+    if(isIn){
+      var src=tx.compteSource&&tx.compteSource.utilisateur;
+      var srcNom=src?((src.prenom||'')+' '+(src.nom||'')).trim():'';
+      var srcTel=src?src.telephone:'';
+      label='De '+(srcNom||srcTel||'—');
+      sublabel=srcTel&&srcNom?srcTel:'';
+    } else {
+      var dst=tx.compteDest&&tx.compteDest.utilisateur;
+      var dstNom=dst?((dst.prenom||'')+' '+(dst.nom||'')).trim():'';
+      var dstTel=dst?dst.telephone:'';
+      label='À '+(dstNom||dstTel||'—');
+      sublabel=dstTel&&dstNom?dstTel:'';
+    }
+  } else if(tx.type==='paiement_marchand'){
+    label='Paiement '+(tx.description||'Marchand');
+  } else {
+    label=cfg.l;
   }
-  return '<div class="tx-row">'
+  // Date courte style Wave
+  var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
+  var now=new Date();
+  var ds;
+  if(d.toDateString()===now.toDateString()) ds=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  else { var diff=Math.floor((now-d)/86400000); ds=diff<7?d.toLocaleDateString('fr-FR',{weekday:'short'}):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }
+
+  return '<div class="tx-row" onclick="voirDetailTx(\''+tx.id+'\')" style="cursor:pointer;border-radius:10px;transition:background .15s" onmousedown="this.style.background=\'#f9fafb\'" onmouseup="this.style.background=\'\'">'
     +'<div class="tx-icon" style="background:'+cfg.bg+'">'+cfg.i+'</div>'
-    +'<div style="flex:1"><div style="font-size:14px;font-weight:600">'+label+'</div><div style="color:var(--m);font-size:12px;margin-top:2px">'+FD(tx.dateCreation)+'</div></div>'
-    +'<div style="text-align:right"><div style="color:'+col+';font-size:15px;font-weight:800">'+sign+F(tx.montant)+'</div><div style="color:var(--d);font-size:10px;font-family:monospace">'+(tx.reference||'')+'</div></div>'
+    +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:14px;font-weight:700;color:#1e3a5f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+label+'</div>'
+      +(sublabel?'<div style="color:#9ca3af;font-size:12px;margin-top:1px">'+sublabel+'</div>':'')
+      +'<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+ds+'</div>'
+    +'</div>'
+    +'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+      +'<div style="color:'+col+';font-size:15px;font-weight:800">'+sign+F(tx.montant)+'</div>'
+    +'</div>'
     +'</div>';
+}
+
+// Cache des transactions pour le détail
+var _txCache = {};
+
+function voirDetailTx(id) {
+  var tx = _txCache[id]; if(!tx) return;
+  var cid=G.compte?G.compte.id:'';
+  var isIn=tx.compteDestId===cid||['commission','commission_depot','bonus_reseau','depot'].includes(tx.type);
+  var col=isIn?'#16a34a':'#ef4444';
+  var sign=isIn?'+':'−';
+  // Nom de la contrepartie
+  var contre='', contreTel='';
+  if(tx.type==='transfert'){
+    if(isIn){
+      var src=tx.compteSource&&tx.compteSource.utilisateur;
+      contre=src?((src.prenom||'')+' '+(src.nom||'')).trim():'';
+      contreTel=src?src.telephone:'';
+    } else {
+      var dst=tx.compteDest&&tx.compteDest.utilisateur;
+      contre=dst?((dst.prenom||'')+' '+(dst.nom||'')).trim():'';
+      contreTel=dst?dst.telephone:'';
+    }
+  }
+  var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
+  var ds=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  var el=document.getElementById('tx-detail-content');
+  if(!el)return;
+  el.innerHTML=
+    '<div style="text-align:center;padding:28px 20px 16px">'
+      +'<div style="width:64px;height:64px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px">👤</div>'
+      +'<div style="font-size:36px;font-weight:900;color:'+col+'">'+sign+F(tx.montant)+'</div>'
+      +(contre?'<div style="font-size:15px;color:#374151;margin-top:8px;font-weight:600">'+(isIn?'De ':'À ')+contre+'</div>':'')
+      +(contreTel?'<div style="font-size:13px;color:#9ca3af;margin-top:2px">'+contreTel+'</div>':'')
+    +'</div>'
+    +'<div style="margin:0 16px;background:#fff;border-radius:16px;padding:4px 0;box-shadow:0 1px 4px rgba(0,0,0,.08)">'
+      +'<div style="display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:14px">Montant '+(isIn?'reçu':'envoyé')+'</span><span style="font-weight:700;font-size:14px">'+F(tx.montant)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:14px">Statut</span><span style="font-weight:700;font-size:14px">✅ Effectué</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:14px">Frais</span><span style="font-weight:700;font-size:14px">'+F(tx.frais||0)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f3f4f6"><span style="color:#6b7280;font-size:14px">Date et heure</span><span style="font-weight:700;font-size:14px;text-align:right;max-width:55%">'+ds+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px"><span style="color:#6b7280;font-size:14px">Référence</span><span style="font-weight:600;font-size:12px;font-family:monospace;color:#374151">'+(tx.reference||tx.id||'')+'</span></div>'
+    +'</div>'
+    +'<div style="text-align:center;color:#9ca3af;font-size:12px;padding:20px">AFRIM PAY</div>';
+  S('s-tx-detail');
 }
 
 async function chargerTxns(){
   var el=document.getElementById('h-txns');
   el.innerHTML='<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
-  try{var r=await get('/transactions?limit=5');var list=r.data||[];el.innerHTML=list.length?'<div class="card">'+list.map(txRow).join('')+'</div>':'<div style="text-align:center;padding:24px;color:var(--m);font-size:14px">Aucune transaction pour l\'instant</div>';}
+  try{var r=await get('/transactions?limit=5');var list=r.data||[];
+    list.forEach(function(tx){_txCache[tx.id]=tx;});
+    el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:14px">Aucune transaction pour l\'instant</div>';}
   catch(e){el.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:12px;border-radius:12px;font-size:13px">'+e.message+'</div>';}
 }
 
@@ -910,7 +996,12 @@ async function chargerHistorique(){
   document.getElementById('hist-chips').innerHTML=chips;
   var el=document.getElementById('hist-list');
   el.innerHTML='<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
-  try{var p='/transactions?limit=50';if(histFilter!=='all')p+='&type='+histFilter;var r=await get(p);var list=r.data||[];el.innerHTML=list.length?'<div class="card">'+list.map(txRow).join('')+'</div>':'<div style="text-align:center;padding:24px;color:var(--m);font-size:14px">Aucune transaction</div>';}
+  try{
+    var p='/transactions?limit=50';if(histFilter!=='all')p+='&type='+histFilter;
+    var r=await get(p);var list=r.data||[];
+    list.forEach(function(tx){_txCache[tx.id]=tx;});
+    el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:14px">Aucune transaction</div>';
+  }
   catch(e){el.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:12px;border-radius:12px;font-size:13px">'+e.message+'</div>';}
 }
 function setHistFilter(f){histFilter=f;chargerHistorique();}
