@@ -1390,23 +1390,27 @@ function canDeleteComptes(){ return isSuperAdmin(); }
 // acteur : identifiant de l'opérateur pour traçabilité
 function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
 // canActOnUser : peut-on suspendre/bloquer/réinitialiser cet utilisateur ?
+// Rôles que backoffice peut cibler : admin + tous sauf backoffice et Super BO
+var _BO_TARGETS  = ['admin','superviseur','master','mini_master','agent','business','client','support_client','support_tech'];
+// Rôles que admin peut cibler : tous sauf backoffice et admin
+var _ADM_TARGETS = ['superviseur','master','mini_master','agent','business','client','support_client','support_tech'];
+
 function canActOnUser(target){
   var me=G.user; if(!me||!target) return false;
+  // Super BO : tout le monde sauf lui-même
   if(isSuperAdmin()) return target.telephone!==SUPER_ADMIN_TEL;
-  if(me.role==='backoffice') return target.telephone!==SUPER_ADMIN_TEL;
-  if(me.role==='admin') return !['backoffice','admin'].includes(target.role);
+  // Back-office : peut suspendre/bloquer admin + superviseur/master/etc — PAS Super BO, PAS autres backoffice
+  if(me.role==='backoffice') return target.telephone!==SUPER_ADMIN_TEL && _BO_TARGETS.includes(target.role);
+  // Admin : peut suspendre/bloquer superviseur/master/etc — PAS backoffice, PAS admin
+  if(me.role==='admin') return _ADM_TARGETS.includes(target.role);
   return false;
 }
-// canResetPin : qui peut réinitialiser le PIN de qui ?
+// canResetPin : mêmes règles que canActOnUser
 function canResetPin(target){
   var me=G.user; if(!me||!target) return false;
-  // Super BO peut réinitialiser tout le monde sauf lui-même
   if(isSuperAdmin()) return target.telephone!==SUPER_ADMIN_TEL;
-  // Back-office : peut réinitialiser admin + autres, PAS Super BO, PAS autres backoffice
-  if(me.role==='backoffice') return target.telephone!==SUPER_ADMIN_TEL && target.role!=='backoffice';
-  // Admin : peut réinitialiser client/agent/business/mini_master/master/superviseur
-  //         PAS Super BO, PAS backoffice, PAS autres admin
-  if(me.role==='admin') return !['backoffice','admin'].includes(target.role);
+  if(me.role==='backoffice') return target.telephone!==SUPER_ADMIN_TEL && _BO_TARGETS.includes(target.role);
+  if(me.role==='admin') return _ADM_TARGETS.includes(target.role);
   return false;
 }
 
