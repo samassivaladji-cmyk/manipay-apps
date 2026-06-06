@@ -1380,25 +1380,27 @@ try{G.token=localStorage.getItem('afrim_token');G.refresh=localStorage.getItem('
 
 // Super Admin : seul autorisé à supprimer et voir les stats
 // Identifié par son numéro de téléphone
-var SUPER_ADMIN_TEL = '0505414751';
-function isSuperAdmin(){
-  return G.user && G.user.role === 'admin' && G.user.telephone === SUPER_ADMIN_TEL;
-}
-function isAdminGestionnaire(){
-  return G.user && (G.user.role === 'backoffice' || isSuperAdmin());
-}
 
+var SUPER_ADMIN_TEL = '0505414751';
+function isSuperAdmin(){ return G.user && (G.user.role==='admin'||G.user.role==='backoffice') && G.user.telephone===SUPER_ADMIN_TEL; }
+function isAdminGestionnaire(){ return G.user && (G.user.role==='backoffice'||G.user.role==='admin'); }
+// canDeleteContent : Super Back-office + autres Back-office (mais PAS admin)
+function canDeleteContent(){ return isSuperAdmin() || (G.user && G.user.role==='backoffice'); }
+// canDeleteComptes : Super Back-office uniquement
+function canDeleteComptes(){ return isSuperAdmin(); }
+// acteur : identifiant de l'opérateur pour la traçabilité
+function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
 var PERMS={
-  // Back-Office (Super Admin) : acces total + suppression
+  // Super Back-office (0505414751) : tout sans exception
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
+  // Back-office : tout voir + supprimer contenu (notifs/tickets/alertes), PAS les comptes
+  backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1},
   // Superviseur : sa zone uniquement
   superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:0,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
   // Support Client : recherche client, remboursement, tickets
   support_client:{home:0,users:0,txns:0,monitoring:0,support:1,tech:0,creer:0,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:0,logs:0},
   // Support Tech : logs, transactions, alertes systeme
-  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
-  // Admin (gestionnaire) : tout voir + gérer, SANS suppression
-  backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1}
+  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1}
 };
 function perm(k){var u=G.user;if(!u)return 0;var p=PERMS[u.role];return p?p[k]||0:0;}
 
@@ -1868,7 +1870,7 @@ function voirU(id){
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  if(isSuperAdmin())mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
+  if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
     document.getElementById('sh-confirm-id').value=id;
     document.getElementById('sh-confirm-input').value='';
@@ -1883,7 +1885,7 @@ async function activerAvecKyc(clientId,niveauKyc){
   try{
     var rd=await apiPatch('/users/'+clientId+'/kyc',{kycNiveau:niveauKyc});
     if(!rd||!rd.success)throw new Error((rd&&rd.message)||'Erreur serveur');
-    toast('✅ Compte activé — niveau '+niveauKyc);
+    toast('✅ Compte activé '+niveauKyc+' par '+acteur());
     closeSh('user');chargerUsers();
   }catch(e){toast('Activation: '+e.message,true);}
 }
@@ -1900,8 +1902,8 @@ async function chgStatut(id,statut){
   var motif=statut==='actif'?motifDefaut:window.prompt('Motif (optionnel — laissez vide pour message par défaut) :',motifDefaut);
   if(motif===null)return; // Annulé
   try{
-    await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut});
-    toast('Statut mis à jour — notification envoyée');
+    await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut,acteur:acteur()});
+    toast('✅ Statut mis à jour — fait par '+acteur());
     closeSh('user');
     chargerUsers();
   }catch(e){toast(e.message,true);}
@@ -1912,7 +1914,7 @@ async function supprimerCompte(){
   var saisie=document.getElementById('sh-confirm-input').value.trim();
   var errEl=document.getElementById('sh-confirm-err');
   if(saisie!=='SUPPRIMER'){errEl.textContent='Tapez exactement SUPPRIMER';errEl.style.display='';return;}
-  try{await callAPI('/users/'+id,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token}});toast('Compte supprime');closeSh('confirm-delete');chargerUsers();}
+  try{await callAPI('/users/'+id,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token}});toast('🗑 Compte supprimé par '+acteur());closeSh('confirm-delete');chargerUsers();}
   catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
@@ -3009,17 +3011,26 @@ var API='https://afrim-pay-backend.onrender.com/api/v1';
 var G={token:null,refresh:null,user:null,pin:''};
 try{G.token=localStorage.getItem('afrim_token');G.refresh=localStorage.getItem('afrim_refresh');G.user=JSON.parse(localStorage.getItem('afrim_user')||'null');}catch(e){}
 
+var SUPER_ADMIN_TEL = '0505414751';
+function isSuperAdmin(){ return G.user && (G.user.role==='admin'||G.user.role==='backoffice') && G.user.telephone===SUPER_ADMIN_TEL; }
+function isAdminGestionnaire(){ return G.user && (G.user.role==='backoffice'||G.user.role==='admin'); }
+// canDeleteContent : Super Back-office + autres Back-office (mais PAS admin)
+function canDeleteContent(){ return isSuperAdmin() || (G.user && G.user.role==='backoffice'); }
+// canDeleteComptes : Super Back-office uniquement
+function canDeleteComptes(){ return isSuperAdmin(); }
+// acteur : identifiant de l'opérateur pour la traçabilité
+function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
 var PERMS={
-  // Back-Office (Super Admin) : acces total + suppression
+  // Super Back-office (0505414751) : tout sans exception
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
+  // Back-office : tout voir + supprimer contenu (notifs/tickets/alertes), PAS les comptes
+  backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1},
   // Superviseur : sa zone uniquement
   superviseur:   {home:1,users:1,txns:0,monitoring:1,stats:1,support:0,tech:0,creer:0,soldes:1,supprimer:0,rembourser:0,kyc:0,gels:0,logs:0,superviseur_zone:1},
   // Support Client : recherche client, remboursement, tickets
   support_client:{home:0,users:0,txns:0,monitoring:0,support:1,tech:0,creer:0,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:0,logs:0},
   // Support Tech : logs, transactions, alertes systeme
-  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1},
-  // Admin (gestionnaire) : tout voir + gérer, SANS suppression
-  backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1}
+  support_tech:  {home:0,users:0,txns:0,monitoring:0,stats:0,support:0,tech:1,creer:0,soldes:0,supprimer:0,rembourser:0,kyc:0,gels:0,logs:1}
 };
 function perm(k){var u=G.user;if(!u)return 0;var p=PERMS[u.role];return p?p[k]||0:0;}
 
@@ -3485,7 +3496,7 @@ function voirU(id){
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  if(isSuperAdmin())mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
+  if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
     document.getElementById('sh-confirm-id').value=id;
     document.getElementById('sh-confirm-input').value='';
@@ -3500,7 +3511,7 @@ async function activerAvecKyc(clientId,niveauKyc){
   try{
     var rd=await apiPatch('/users/'+clientId+'/kyc',{kycNiveau:niveauKyc});
     if(!rd||!rd.success)throw new Error((rd&&rd.message)||'Erreur serveur');
-    toast('✅ Compte activé — niveau '+niveauKyc);
+    toast('✅ Compte activé '+niveauKyc+' par '+acteur());
     closeSh('user');chargerUsers();
   }catch(e){toast('Activation: '+e.message,true);}
 }
@@ -3517,8 +3528,8 @@ async function chgStatut(id,statut){
   var motif=statut==='actif'?motifDefaut:window.prompt('Motif (optionnel — laissez vide pour message par défaut) :',motifDefaut);
   if(motif===null)return; // Annulé
   try{
-    await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut});
-    toast('Statut mis à jour — notification envoyée');
+    await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut,acteur:acteur()});
+    toast('✅ Statut mis à jour — fait par '+acteur());
     closeSh('user');
     chargerUsers();
   }catch(e){toast(e.message,true);}
@@ -3529,7 +3540,7 @@ async function supprimerCompte(){
   var saisie=document.getElementById('sh-confirm-input').value.trim();
   var errEl=document.getElementById('sh-confirm-err');
   if(saisie!=='SUPPRIMER'){errEl.textContent='Tapez exactement SUPPRIMER';errEl.style.display='';return;}
-  try{await callAPI('/users/'+id,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token}});toast('Compte supprime');closeSh('confirm-delete');chargerUsers();}
+  try{await callAPI('/users/'+id,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token}});toast('🗑 Compte supprimé par '+acteur());closeSh('confirm-delete');chargerUsers();}
   catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
@@ -5257,7 +5268,7 @@ function _renderNotifList(){
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:flex-start;gap:10px';
     // Checkbox (only in sel mode, or always visible for admin)
-    if(isSuperAdmin()){
+    if(canDeleteContent()){
       var cb = document.createElement('input');
       cb.type='checkbox'; cb.checked=checked;
       cb.style.cssText='width:18px;height:18px;accent-color:var(--y);cursor:pointer;flex-shrink:0;margin-top:2px';
@@ -5296,7 +5307,7 @@ function _renderNotifList(){
     row.appendChild(body);
     card.appendChild(row);
     // Click on card = toggle checkbox
-    if(isSuperAdmin()){
+    if(canDeleteContent()){
       card.addEventListener('click', function(e){
         if(e.target.type==='checkbox') return;
         var cbEl = card.querySelector('input[type=checkbox]');
@@ -5315,7 +5326,7 @@ function _updateNotifToolbar(){
   if(!tb) return;
   var count = Object.keys(_notifSelection).length;
   var total = _notifListCache.length;
-  if(!isSuperAdmin()){tb.style.display='none';return;}
+  if(!canDeleteContent()){tb.style.display='none';return;}
   tb.style.display='flex';
   document.getElementById('notif-sel-count').textContent = count > 0 ? count+' sélectionnée(s)' : total+' notification(s)';
   document.getElementById('notif-btn-selall').textContent = count===total && total>0 ? '☑ Tout désélect.' : '☐ Tout sélect.';
@@ -5340,7 +5351,7 @@ async function _supprimerSelection(){
   if(!confirm('Supprimer '+ids.length+' notification(s) pour cet utilisateur ?')) return;
   try{
     await callAPI('/notifications/bulk', {method:'DELETE', body:JSON.stringify({ids:ids})});
-    toast('✓ '+ids.length+' notification(s) supprimée(s)');
+    toast('🗑 '+ids.length+' notif(s) supprimée(s) par '+acteur());
     _notifSelection={};
     _chargerListeNotifs(_notifUserId);
   }catch(e){toast('Erreur: '+e.message,true);}
@@ -5364,7 +5375,7 @@ async function supprimerToutesNotifsUser(){
   if(!confirm('Supprimer TOUTES les notifications de cet utilisateur ?')) return;
   try{
     await callAPI('/notifications/user/'+_notifUserId, {method:'DELETE'});
-    toast('✓ Toutes les notifications supprimées');
+    toast('🗑 Toutes notifs supprimées par '+acteur());
     _notifListCache=[];
     _notifSelection={};
     _chargerListeNotifs(_notifUserId);
@@ -5430,7 +5441,7 @@ async function resetPinClient(userId,nom){
     var resp=await fetch(API+'/users/'+userId+'/reset-pin',{method:'POST',headers:h});
     var data=await resp.json();
     if(!resp.ok)throw new Error(data.message||'Erreur lors de la réinitialisation');
-    toast('✓ PIN de '+nom+' réinitialisé à 1234');
+    toast('🔐 PIN de '+nom+' réinitialisé par '+acteur());
   }catch(e){toast('Erreur: '+e.message,true);}
 }
 
@@ -5477,7 +5488,7 @@ async function campSupprimerSel(){
     for(var i=0;i<ids.length;i++){
       await callAPI('/notif-campagnes/'+ids[i],{method:'DELETE'});
     }
-    toast('✓ '+ids.length+' campagne(s) supprimée(s)');
+    toast('🗑 '+ids.length+' campagne(s) supprimée(s) par '+acteur());
     _campSel={};
     chargerCampagnes();
   }catch(e){toast('Erreur: '+e.message,true);}
@@ -6015,7 +6026,7 @@ async function nadmSupprimerSelection() {
   if(!confirm('Supprimer '+ids.length+' notification(s) ?')) return;
   try{
     await callAPI('/notifications/bulk',{method:'DELETE',body:JSON.stringify({ids:ids})});
-    toast('✓ '+ids.length+' notification(s) supprimée(s)');
+    toast('🗑 '+ids.length+' notif(s) supprimée(s) par '+acteur());
     _nadmSel={}; chargerNotifsAdmin();
   }catch(e){toast('Erreur: '+e.message,true);}
 }
@@ -6570,7 +6581,7 @@ async function supprimerTicketsSelection(listId) {
   if (!confirm('Supprimer '+ids.length+' ticket(s) définitivement ?')) return;
   try {
     for (var i=0; i<ids.length; i++) { await callAPI('/tickets/'+ids[i], {method:'DELETE'}); }
-    toast('✓ '+ids.length+' ticket(s) supprimé(s)');
+    toast('🗑 '+ids.length+' ticket(s) supprimé(s) par '+acteur());
     _tkSelIds[listId] = {};
     _tkUpdateToolbar(listId);
     setTimeout(function(){ setMonTab(_monActiveTab||'bo'); }, 300);
@@ -6578,7 +6589,7 @@ async function supprimerTicketsSelection(listId) {
 }
 
 function _tkGlobalUpdateBtnTout() {
-  if (!isSuperAdmin()) return;
+  if (!canDeleteContent()) return;
   var btn = document.getElementById('btn-global-selall'); if (!btn) return;
   var hasAny = _globalSections.some(function(lid) {
     var el = document.getElementById(lid);
@@ -6620,7 +6631,7 @@ async function _tkGlobalSupprimerTout() {
   if (!confirm('Supprimer définitivement ' + allIds.length + ' ticket(s) de toutes les sections ?')) return;
   try {
     for (var i = 0; i < allIds.length; i++) { await callAPI('/tickets/' + allIds[i], {method:'DELETE'}); }
-    toast('✓ ' + allIds.length + ' ticket(s) supprimé(s)');
+    toast('🗑 ' + allIds.length + ' ticket(s) supprimé(s) par '+acteur());
     _globalSections.forEach(function(lid) { _tkSelIds[lid] = {}; _tkUpdateToolbar(lid); });
     _tkGlobalUpdateToolbar();
     setTimeout(function(){ setMonTab('global'); }, 300);
@@ -6650,7 +6661,7 @@ function _tkRender(el, list, listId) {
     card.style.cssText = 'background:#fff;border:1px solid #f3f4f6;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)';
 
     // Checkbox sélection (admin)
-    if (isSuperAdmin()) {
+    if (canDeleteContent()) {
       var cbWrap = document.createElement('label');
       cbWrap.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;cursor:pointer';
       var cb = document.createElement('input');
@@ -6763,7 +6774,7 @@ function _tkRender(el, list, listId) {
     }
 
     // Bouton supprimer (admin seulement)
-    if (isSuperAdmin()) {
+    if (canDeleteContent()) {
       var bDel = document.createElement('button');
       bDel.textContent = '🗑';
       bDel.title = 'Supprimer ce ticket';
@@ -7391,7 +7402,7 @@ function _alerteUpdateToolbar() {
   var tb = document.getElementById('alerte-sel-toolbar');
   var cEl = document.getElementById('alerte-sel-count');
   var btnSuppr = document.getElementById('alerte-btn-suppr-sel');
-  if (tb) tb.style.display = ((isSuperAdmin() || isAdminGestionnaire()) && total > 0) ? 'flex' : 'none';
+  if (tb) tb.style.display = (canDeleteContent() && total > 0) ? 'flex' : 'none';
   if (cEl) cEl.textContent = count > 0 ? count + ' sélectionnée(s)' : total + ' alerte(s)';
   if (btnSuppr) btnSuppr.style.display = count > 0 ? '' : 'none';
 }
@@ -7419,7 +7430,7 @@ async function _alerteSupprimerSel() {
     for (var i = 0; i < ids.length; i++) {
       await callAPI('/alerts/' + ids[i], {method: 'DELETE'});
     }
-    toast('✓ ' + ids.length + ' alerte(s) supprimée(s)');
+    toast('🗑 ' + ids.length + ' alerte(s) supprimée(s) par '+acteur());
     _alerteSel = {};
     chargerAlertesCentralisees();
     chargerCompteurs();
@@ -7557,7 +7568,7 @@ async function chargerAlertesCentralisees() {
       card.appendChild(_inner);
       // Action buttons
       // Bouton supprimer toujours visible pour admin (toutes alertes)
-    if (isSuperAdmin()) {
+    if (canDeleteContent()) {
       var adminDelRow = document.createElement('div');
       adminDelRow.style.cssText = 'display:flex;justify-content:flex-end;margin-top:4px';
       var bAdminDel = document.createElement('button');
@@ -8069,7 +8080,7 @@ async function supNhSupprimerSel() {
   if (!confirm('Supprimer '+ids.length+' notification(s) ?')) return;
   try {
     await callAPI('/notifications/bulk', {method:'DELETE', body:JSON.stringify({ids:ids})});
-    toast('✓ '+ids.length+' notification(s) supprimée(s)');
+    toast('🗑 '+ids.length+' notif(s) supprimée(s) par '+acteur());
     _supNhSel = {}; _supNhOffset = 0; _loadSupNh(false);
   } catch(e) { toast('Erreur: '+e.message, true); }
 }
