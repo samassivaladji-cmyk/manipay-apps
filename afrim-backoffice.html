@@ -1389,6 +1389,17 @@ function canDeleteContent(){ return isSuperAdmin() || (G.user && G.user.role==='
 function canDeleteComptes(){ return isSuperAdmin(); }
 // acteur : identifiant de l'opérateur pour traçabilité
 function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
+// canActOnUser : peut-on suspendre/bloquer/réinitialiser cet utilisateur ?
+function canActOnUser(target){
+  var me=G.user; if(!me||!target) return false;
+  // Super BO peut tout faire sur tout le monde sauf lui-même
+  if(isSuperAdmin()) return target.telephone!==SUPER_ADMIN_TEL;
+  // Back-office peut agir sur tout le monde sauf le Super BO
+  if(me.role==='backoffice') return target.telephone!==SUPER_ADMIN_TEL;
+  // Admin peut agir uniquement sur client/agent/business/mini_master/master/superviseur
+  if(me.role==='admin') return !['backoffice','admin'].includes(target.role);
+  return false;
+}
 
 var PERMS={
   // Super Back-office (0505414751) + Admin : tout sans exception
@@ -1733,7 +1744,11 @@ async function chargerUsers(){
   // Superviseur voit uniquement son réseau terrain (pas clients)
   var rolesVis=u.role==='superviseur'
     ?['agent','business','mini_master','master']
-    :['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
+    :(function(){
+      if(u.role==='backoffice') return ['all','client','agent','business','mini_master','master','superviseur','admin'];
+      if(u.role==='admin') return ['all','client','agent','business','mini_master','master','superviseur'];
+      return ['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
+    })();
   // Superviseur: forcer le filtre par défaut sur agent si 'all' ou 'client'
   if(u.role==='superviseur'&&(uFilter==='all'||uFilter==='client'))uFilter='agent';
   var chipsEl=document.getElementById('u-chips');chipsEl.innerHTML='';
@@ -1858,15 +1873,17 @@ function voirU(id){
       activerBtn.disabled=true;
     });
   }
-  if(u.statut==='actif'){
-    mkBtn('Suspendre','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;border:1px solid #fed7aa;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){chgStatut(id,'suspendu');});
-    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+  if(canActOnUser(u)){
+    if(u.statut==='actif'){
+      mkBtn('Suspendre','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;border:1px solid #fed7aa;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){chgStatut(id,'suspendu');});
+      mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+    }
+    if(u.statut==='suspendu'){
+      mkBtn('Reactiver','btn-g','',function(){chgStatut(id,'actif');});
+      mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+    }
+    if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   }
-  if(u.statut==='suspendu'){
-    mkBtn('Reactiver','btn-g','',function(){chgStatut(id,'actif');});
-    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
-  }
-  if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
@@ -3350,7 +3367,11 @@ async function chargerUsers(){
   // Superviseur voit uniquement son réseau terrain (pas clients)
   var rolesVis=u.role==='superviseur'
     ?['agent','business','mini_master','master']
-    :['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
+    :(function(){
+      if(u.role==='backoffice') return ['all','client','agent','business','mini_master','master','superviseur','admin'];
+      if(u.role==='admin') return ['all','client','agent','business','mini_master','master','superviseur'];
+      return ['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
+    })();
   // Superviseur: forcer le filtre par défaut sur agent si 'all' ou 'client'
   if(u.role==='superviseur'&&(uFilter==='all'||uFilter==='client'))uFilter='agent';
   var chipsEl=document.getElementById('u-chips');chipsEl.innerHTML='';
@@ -3475,15 +3496,17 @@ function voirU(id){
       activerBtn.disabled=true;
     });
   }
-  if(u.statut==='actif'){
-    mkBtn('Suspendre','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;border:1px solid #fed7aa;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){chgStatut(id,'suspendu');});
-    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+  if(canActOnUser(u)){
+    if(u.statut==='actif'){
+      mkBtn('Suspendre','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;border:1px solid #fed7aa;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){chgStatut(id,'suspendu');});
+      mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+    }
+    if(u.statut==='suspendu'){
+      mkBtn('Reactiver','btn-g','',function(){chgStatut(id,'actif');});
+      mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
+    }
+    if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   }
-  if(u.statut==='suspendu'){
-    mkBtn('Reactiver','btn-g','',function(){chgStatut(id,'actif');});
-    mkBtn('Bloquer','btn-r','',function(){chgStatut(id,'bloque');});
-  }
-  if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
@@ -5318,6 +5341,14 @@ function _updateNotifToolbar(){
   var count = Object.keys(_notifSelection).length;
   var total = _notifListCache.length;
   if(!canDeleteContent()){tb.style.display='none';return;}
+  // Masquer les boutons de suppression pour role admin
+  var btnTout=document.getElementById('notif-btn-tout');
+  var btnSupprAll=document.getElementById('notif-btn-suppr');
+  var btnPartout=document.getElementById('notif-btn-partout');
+  var isAdmin=G.user&&G.user.role==='admin'&&!isSuperAdmin();
+  if(btnTout)btnTout.style.display=isAdmin?'none':'';
+  if(btnSupprAll)btnSupprAll.style.display=isAdmin?'none':(count>0?'':'none');
+  if(btnPartout)btnPartout.style.display=isAdmin?'none':'none';
   tb.style.display='flex';
   document.getElementById('notif-sel-count').textContent = count > 0 ? count+' sélectionnée(s)' : total+' notification(s)';
   document.getElementById('notif-btn-selall').textContent = count===total && total>0 ? '☑ Tout désélect.' : '☐ Tout sélect.';
@@ -8234,7 +8265,7 @@ if (_origChargerTechFn) {
         <button id="notif-btn-selall" onclick="_toggleSelectAll()" style="background:#fff;border:1.5px solid var(--y);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--y2);cursor:pointer;font-family:inherit">☐ Tout sélect.</button>
         <button id="notif-btn-suppr" onclick="_supprimerSelection()" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit">🗑 Supprimer</button>
         <button id="notif-btn-partout" onclick="_supprimerPourTous()" style="display:none;background:#fef3c7;border:1px solid var(--y);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--y2);cursor:pointer;font-family:inherit">🌍 Suppr. pour tous</button>
-        <button onclick="supprimerToutesNotifsUser()" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit">🗑 Tout</button>
+        <button id="notif-btn-tout" onclick="supprimerToutesNotifsUser()" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#ef4444;cursor:pointer;font-family:inherit">🗑 Tout</button>
       </div>
       <div id="notif-hist-list">
         <div style="padding:20px;text-align:center"><div class="spin"></div></div>
