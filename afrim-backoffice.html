@@ -5522,8 +5522,10 @@ function _campUpdateToolbar(){
   var bSuppr=document.getElementById('camp-btn-suppr');
   if(tb) tb.style.display=total>0?'flex':'none';
   if(cEl) cEl.textContent=count>0?count+' sélectionnée(s)':total+' envoi(s)';
+  // Tout sélect + Supprimer : uniquement Super BO et Back-office
+  if(bAll) bAll.style.display=canDeleteContent()?'':'none';
   if(bAll) bAll.textContent=(count===total&&total>0)?'☑ Désélect.':'☐ Tout';
-  if(bSuppr) bSuppr.style.display=count>0?'':'none';
+  if(bSuppr) bSuppr.style.display=(canDeleteContent()&&count>0)?'':'none';
 }
 
 function campToggleAll(){
@@ -5540,6 +5542,7 @@ function campToggleAll(){
 }
 
 async function campSupprimerSel(){
+  if(!canDeleteContent()){toast('Permission refusée',true);return;}
   var ids=Object.keys(_campSel);
   if(!ids.length) return;
   if(!confirm('Supprimer '+ids.length+' notification(s) chez TOUS leurs destinataires ?')) return;
@@ -5611,8 +5614,8 @@ async function chargerCampagnes(){
       btnSuppr.title='Supprimer';
       btnSuppr.style.cssText='background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 8px;font-size:14px;color:#ef4444;cursor:pointer;flex-shrink:0';
       (function(cId){ btnSuppr.onclick=function(e){e.stopPropagation();supprimerCampagne(cId);}; })(c.id);
-      inner.appendChild(cb);inner.appendChild(body);
-      if(isSuperAdmin()) inner.appendChild(btnSuppr);
+      if(canDeleteContent()) inner.appendChild(cb);inner.appendChild(body);
+      if(canDeleteContent()) inner.appendChild(btnSuppr);
       card.appendChild(inner);
       frag.appendChild(card);
     });
@@ -5624,6 +5627,7 @@ async function chargerCampagnes(){
 }
 
 async function supprimerCampagne(id){
+  if(!canDeleteContent()){toast('Permission refusée',true);return;}
   if(!confirm('Supprimer cette notification chez TOUS ses destinataires ?')) return;
   try{
     var r=await callAPI('/notif-campagnes/'+id,{method:'DELETE'});
