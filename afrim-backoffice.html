@@ -1380,18 +1380,18 @@ try{G.token=localStorage.getItem('afrim_token');G.refresh=localStorage.getItem('
 
 // Super Admin : seul autorisé à supprimer et voir les stats
 // Identifié par son numéro de téléphone
-
 var SUPER_ADMIN_TEL = '0505414751';
 function isSuperAdmin(){ return G.user && (G.user.role==='admin'||G.user.role==='backoffice') && G.user.telephone===SUPER_ADMIN_TEL; }
 function isAdminGestionnaire(){ return G.user && (G.user.role==='backoffice'||G.user.role==='admin'); }
-// canDeleteContent : Super Back-office + autres Back-office (mais PAS admin)
+// canDeleteContent : Super Back-office + Back-office (PAS admin simple)
 function canDeleteContent(){ return isSuperAdmin() || (G.user && G.user.role==='backoffice'); }
 // canDeleteComptes : Super Back-office uniquement
 function canDeleteComptes(){ return isSuperAdmin(); }
-// acteur : identifiant de l'opérateur pour la traçabilité
+// acteur : identifiant de l'opérateur pour traçabilité
 function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
+
 var PERMS={
-  // Super Back-office (0505414751) : tout sans exception
+  // Super Back-office (0505414751) + Admin : tout sans exception
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
   // Back-office : tout voir + supprimer contenu (notifs/tickets/alertes), PAS les comptes
   backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1},
@@ -1733,12 +1733,12 @@ async function chargerUsers(){
   // Superviseur voit uniquement son réseau terrain (pas clients)
   var rolesVis=u.role==='superviseur'
     ?['agent','business','mini_master','master']
-    :['all','client','agent','business','mini_master','master','superviseur'];
+    :['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
   // Superviseur: forcer le filtre par défaut sur agent si 'all' ou 'client'
   if(u.role==='superviseur'&&(uFilter==='all'||uFilter==='client'))uFilter='agent';
   var chipsEl=document.getElementById('u-chips');chipsEl.innerHTML='';
   rolesVis.forEach(function(r){
-    var on=uFilter===r;var lbl=r==='all'?'Tous':r;
+    var on=uFilter===r;var RLBL={'all':'Tous','client':'client','agent':'agent','business':'business','mini_master':'Mini-M.','master':'master','superviseur':'Superv.','backoffice':'Back-office','admin':'Admin'};var lbl=RLBL[r]||r;
     var btn=document.createElement('button');
     btn.setAttribute('data-r',r);
     btn.style.cssText='padding:6px 14px;border-radius:99px;border:1.5px solid '+(on?'#ca8a04':'#e5e7eb')+';background:'+(on?'#fef3c7':'#fff')+';color:'+(on?'#a16207':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0';
@@ -1903,7 +1903,7 @@ async function chgStatut(id,statut){
   if(motif===null)return; // Annulé
   try{
     await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut,acteur:acteur()});
-    toast('✅ Statut mis à jour — fait par '+acteur());
+    toast('✅ Statut mis à jour par '+acteur());
     closeSh('user');
     chargerUsers();
   }catch(e){toast(e.message,true);}
@@ -3011,17 +3011,8 @@ var API='https://afrim-pay-backend.onrender.com/api/v1';
 var G={token:null,refresh:null,user:null,pin:''};
 try{G.token=localStorage.getItem('afrim_token');G.refresh=localStorage.getItem('afrim_refresh');G.user=JSON.parse(localStorage.getItem('afrim_user')||'null');}catch(e){}
 
-var SUPER_ADMIN_TEL = '0505414751';
-function isSuperAdmin(){ return G.user && (G.user.role==='admin'||G.user.role==='backoffice') && G.user.telephone===SUPER_ADMIN_TEL; }
-function isAdminGestionnaire(){ return G.user && (G.user.role==='backoffice'||G.user.role==='admin'); }
-// canDeleteContent : Super Back-office + autres Back-office (mais PAS admin)
-function canDeleteContent(){ return isSuperAdmin() || (G.user && G.user.role==='backoffice'); }
-// canDeleteComptes : Super Back-office uniquement
-function canDeleteComptes(){ return isSuperAdmin(); }
-// acteur : identifiant de l'opérateur pour la traçabilité
-function acteur(){ var u=G.user; if(!u)return 'inconnu'; return (u.prenom||'')+' '+(u.nom||'')+' ('+u.role+' · '+u.telephone+')'; }
 var PERMS={
-  // Super Back-office (0505414751) : tout sans exception
+  // Super Back-office (0505414751) + Admin : tout sans exception
   admin:         {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:1,rembourser:1,kyc:1,gels:1,logs:1},
   // Back-office : tout voir + supprimer contenu (notifs/tickets/alertes), PAS les comptes
   backoffice:    {home:1,users:1,txns:1,monitoring:1,stats:1,support:1,tech:1,creer:1,soldes:1,supprimer:0,rembourser:1,kyc:1,gels:1,logs:1,admin_gestionnaire:1},
@@ -3359,12 +3350,12 @@ async function chargerUsers(){
   // Superviseur voit uniquement son réseau terrain (pas clients)
   var rolesVis=u.role==='superviseur'
     ?['agent','business','mini_master','master']
-    :['all','client','agent','business','mini_master','master','superviseur'];
+    :['all','client','agent','business','mini_master','master','superviseur','backoffice','admin'];
   // Superviseur: forcer le filtre par défaut sur agent si 'all' ou 'client'
   if(u.role==='superviseur'&&(uFilter==='all'||uFilter==='client'))uFilter='agent';
   var chipsEl=document.getElementById('u-chips');chipsEl.innerHTML='';
   rolesVis.forEach(function(r){
-    var on=uFilter===r;var lbl=r==='all'?'Tous':r;
+    var on=uFilter===r;var RLBL={'all':'Tous','client':'client','agent':'agent','business':'business','mini_master':'Mini-M.','master':'master','superviseur':'Superv.','backoffice':'Back-office','admin':'Admin'};var lbl=RLBL[r]||r;
     var btn=document.createElement('button');
     btn.setAttribute('data-r',r);
     btn.style.cssText='padding:6px 14px;border-radius:99px;border:1.5px solid '+(on?'#ca8a04':'#e5e7eb')+';background:'+(on?'#fef3c7':'#fff')+';color:'+(on?'#a16207':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0';
@@ -3529,7 +3520,7 @@ async function chgStatut(id,statut){
   if(motif===null)return; // Annulé
   try{
     await apiPatch('/users/'+id+'/status',{statut:statut,motif:motif||motifDefaut,acteur:acteur()});
-    toast('✅ Statut mis à jour — fait par '+acteur());
+    toast('✅ Statut mis à jour par '+acteur());
     closeSh('user');
     chargerUsers();
   }catch(e){toast(e.message,true);}
@@ -5488,7 +5479,7 @@ async function campSupprimerSel(){
     for(var i=0;i<ids.length;i++){
       await callAPI('/notif-campagnes/'+ids[i],{method:'DELETE'});
     }
-    toast('🗑 '+ids.length+' campagne(s) supprimée(s) par '+acteur());
+    toast('✓ '+ids.length+' campagne(s) supprimée(s)');
     _campSel={};
     chargerCampagnes();
   }catch(e){toast('Erreur: '+e.message,true);}
