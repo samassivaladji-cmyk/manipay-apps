@@ -8332,13 +8332,14 @@ async function chargerJournal(){
   try{
     var url='/actions-log?limit=30&offset=0'+(_journalFilter!=='all'?'&action='+_journalFilter:'');
     var r=await apiGet(url);
-    var logs=r.logs||[];
+    var logs=(r.data&&r.data.logs)||r.logs||[];
+    var total=(r.data&&r.data.total)||r.total||0;
     _journalOffset=logs.length;
     el.innerHTML='';
     if(!logs.length){el.innerHTML='<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px">Aucune action enregistrée</div>';return;}
     logs.forEach(function(log){ el.appendChild(_journalCard(log)); });
     var more=document.getElementById('journal-more');
-    if(more) more.style.display=r.total>_journalOffset?'block':'none';
+    if(more) more.style.display=total>_journalOffset?'block':'none';
   }catch(e){
     document.getElementById('journal-list').innerHTML='<div style="color:#ef4444;padding:12px;font-size:13px">'+e.message+'</div>';
   }
@@ -8348,12 +8349,13 @@ async function chargerJournalPlus(){
   try{
     var url='/actions-log?limit=30&offset='+_journalOffset+(_journalFilter!=='all'?'&action='+_journalFilter:'');
     var r=await apiGet(url);
-    var logs=r.logs||[];
+    var logs=(r.data&&r.data.logs)||r.logs||[];
+    var total=(r.data&&r.data.total)||r.total||0;
     _journalOffset+=logs.length;
     var el=document.getElementById('journal-list');
     logs.forEach(function(log){ el.appendChild(_journalCard(log)); });
     var more=document.getElementById('journal-more');
-    if(more) more.style.display=r.total>_journalOffset?'block':'none';
+    if(more) more.style.display=total>_journalOffset?'block':'none';
   }catch(e){}
 }
 
