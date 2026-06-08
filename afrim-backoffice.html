@@ -944,6 +944,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button onclick="setJournalFilter('statut_actif')"     id="jf-actif"  class="jf-btn">Réactivations</button>
       <button onclick="setJournalFilter('reset_pin')"        id="jf-pin"    class="jf-btn">Reset PIN</button>
       <button onclick="setJournalFilter('suppression_compte')" id="jf-suppr" class="jf-btn">Suppressions</button>
+      <button onclick="setJournalFilter('notif_envoyee')"    id="jf-notif"  class="jf-btn">Notifs</button>
+      <button onclick="setJournalFilter('notif_masse')"      id="jf-masse"  class="jf-btn">Masse</button>
+      <button onclick="setJournalFilter('alerte_creee')"     id="jf-alerte" class="jf-btn">Alertes</button>
+      <button onclick="setJournalFilter('ticket_cree')"      id="jf-ticket" class="jf-btn">Tickets</button>
     </div>
     <div id="journal-list"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
     <div id="journal-more" style="text-align:center;margin-top:10px;display:none">
@@ -1203,7 +1207,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
-</div>
 <script>// ═══════════════════════════════════════════════════════
 // MODULE KYC UNIVERSEL — AFRIM PAY
 // Intégrable dans tous les formulaires d'inscription
@@ -8307,18 +8310,22 @@ var _journalFilter = 'all';
 var _journalOffset = 0;
 
 var ACTION_LABELS = {
-  'statut_suspendu':   {ico:'⚠️', txt:'Suspension',    col:'#c2410c'},
-  'statut_bloque':     {ico:'🔴', txt:'Blocage',        col:'#dc2626'},
-  'statut_actif':      {ico:'✅', txt:'Réactivation',   col:'#15803d'},
-  'statut_en_attente': {ico:'⏳', txt:'Mise en attente',col:'#d97706'},
-  'reset_pin':         {ico:'🔐', txt:'Reset PIN',      col:'#7c3aed'},
-  'suppression_compte':{ico:'🗑', txt:'Suppression',    col:'#ef4444'},
+  'statut_suspendu':   {ico:'⚠️', txt:'Suspension',      col:'#c2410c'},
+  'statut_bloque':     {ico:'🔴', txt:'Blocage',          col:'#dc2626'},
+  'statut_actif':      {ico:'✅', txt:'Réactivation',     col:'#15803d'},
+  'statut_en_attente': {ico:'⏳', txt:'Mise en attente',  col:'#d97706'},
+  'reset_pin':         {ico:'🔐', txt:'Reset PIN',        col:'#7c3aed'},
+  'suppression_compte':{ico:'🗑', txt:'Suppression',      col:'#ef4444'},
+  'notif_envoyee':     {ico:'📢', txt:'Notif envoyée',    col:'#0369a1'},
+  'notif_masse':       {ico:'📣', txt:'Notif masse',      col:'#0284c7'},
+  'alerte_creee':      {ico:'🚨', txt:'Alerte créée',     col:'#b45309'},
+  'ticket_cree':       {ico:'🎫', txt:'Ticket créé',      col:'#7c3aed'},
 };
 
 function setJournalFilter(f){
   _journalFilter=f; _journalOffset=0;
   document.querySelectorAll('.jf-btn').forEach(function(b){b.classList.remove('jf-active');});
-  var map={'all':'jf-all','statut_suspendu':'jf-susp','statut_bloque':'jf-bloq','statut_actif':'jf-actif','reset_pin':'jf-pin','suppression_compte':'jf-suppr'};
+  var map={'all':'jf-all','statut_suspendu':'jf-susp','statut_bloque':'jf-bloq','statut_actif':'jf-actif','reset_pin':'jf-pin','suppression_compte':'jf-suppr','notif_envoyee':'jf-notif','notif_masse':'jf-masse','alerte_creee':'jf-alerte','ticket_cree':'jf-ticket'};
   var el=document.getElementById(map[f]);
   if(el) el.classList.add('jf-active');
   chargerJournal();
