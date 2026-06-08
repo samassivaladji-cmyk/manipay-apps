@@ -29,14 +29,14 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .btn-a{background:linear-gradient(135deg,var(--a2),var(--a));color:#030200}
 .btn-ghost{background:transparent;border:1.5px solid var(--b);color:var(--a)}
 .btn-g{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff}
-.btn-r{background:#180404;border:1px solid #7f1d1d;color:#f87171}
+.btn-r{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
 .btn-o{background:linear-gradient(135deg,#c2410c,#f97316);color:#fff}
 .card{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:16px}
 .lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--a);display:block;margin-bottom:6px}
 .info{border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:13px;font-weight:500;line-height:1.5}
-.info-g{background:#052010;border:1px solid rgba(34,197,94,.2);color:#86efac}
-.info-r{background:#180404;border:1px solid rgba(239,68,68,.2);color:#fca5a5}
-.info-a{background:#180a00;border:1px solid rgba(245,158,11,.2);color:#fcd34d}
+.info-g{background:#f0fdf4;border:1px solid #a7f3d0;color:#065f46}
+.info-r{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.info-a{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
 .ph{padding:52px 22px 18px}
 .sc{padding:0 22px 20px}
 .row{display:flex;justify-content:space-between;align-items:center}
@@ -238,15 +238,15 @@ function setTab(t){
 
 <!-- HOME -->
 <div class="scr" id="s-home">
-  <div style="background:linear-gradient(160deg,#1a1000,var(--bg));padding:52px 22px 22px;border-radius:0 0 28px 28px;margin-bottom:18px">
+  <div style="background:linear-gradient(160deg,rgba(245,158,11,.07),#ffffff);padding:52px 22px 22px;border-radius:0 0 28px 28px;margin-bottom:18px">
     <div class="row" style="margin-bottom:20px">
       <div>
         <div style="color:var(--m);font-size:13px;margin-bottom:2px">Agent AFRIM PAY</div>
         <div style="font-size:22px;font-weight:800" id="h-name">—</div>
-        <div style="color:var(--d);font-size:11px" id="h-zone">—</div>
+        <div style="color:var(--m);font-size:11px" id="h-zone">—</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button onclick="ouvrirPopupQR()" style="background:var(--s);border:1px solid var(--b);border-radius:11px;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">📷</button>
+        <button onclick="ouvrirPopupQR()" title="Scanner QR Code" style="background:var(--a);border:none;border-radius:11px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(217,119,6,.3)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
         <button onclick="rafraichir()" style="background:var(--s);border:1px solid var(--b);border-radius:11px;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">🔄</button>
       </div>
     </div>
@@ -267,21 +267,21 @@ function setTab(t){
   <div class="sc">
     <span class="lbl">Opérations rapides</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      <button onclick="ouvrirDepot()" style="background:#071a08;border:1px solid rgba(34,197,94,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+      <button onclick="ouvrirDepot()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px">↓</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#4ade80">Dépôt Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission 0,2%</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">Dépôt Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission 0,2%</div></div>
       </button>
-      <button onclick="ouvrirRetrait()" style="background:#180a00;border:1px solid rgba(249,115,22,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+      <button onclick="ouvrirRetrait()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px">↑</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#fb923c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">35% des frais</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#c2410c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">35% des frais</div></div>
       </button>
       <button onclick="openSh('inscription')" style="background:var(--s);border:1px solid rgba(245,158,11,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:24px">👤</div>
         <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:var(--a)">Inscrire</div><div style="font-size:10px;color:var(--m);margin-top:2px">Client · Business · Agent</div></div>
       </button>
-      <button onclick="openSh('transfert')" style="background:#030d1a;border:1px solid rgba(59,130,246,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+      <button onclick="openSh('transfert')" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px">⇄</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#60a5fa">Transfert</div><div style="font-size:10px;color:var(--m);margin-top:2px">Liquidité · Gratuit</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#1d4ed8">Transfert</div><div style="font-size:10px;color:var(--m);margin-top:2px">Liquidité · Gratuit</div></div>
       </button>
     </div>
     <span class="lbl">Transactions récentes</span>
@@ -339,13 +339,13 @@ function setTab(t){
 
 <!-- STATISTIQUES -->
 <div class="scr" id="s-stats">
-  <div style="background:linear-gradient(135deg,#030d1a,#0f172a);padding:52px 22px 24px">
+  <div style="background:linear-gradient(135deg,var(--a2),var(--a));padding:52px 22px 24px">
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Statistiques 📊</div>
-    <div style="color:rgba(255,255,255,.6);font-size:13px">Volume et performance</div>
+    <div style="color:rgba(255,255,255,.8);font-size:13px">Volume et performance</div>
     <div style="display:flex;gap:8px;margin-top:14px;overflow-x:auto;padding-bottom:4px">
-      <button class="chip on" id="stp-week" onclick="setStatPeriod('week')" style="border-color:rgba(245,158,11,.4);color:var(--a)">Semaine</button>
-      <button class="chip" id="stp-month" onclick="setStatPeriod('month')" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7)">Ce mois</button>
-      <button class="chip" id="stp-year" onclick="setStatPeriod('year')" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7)">Cette année</button>
+      <button class="chip on" id="stp-week" onclick="setStatPeriod('week')" style="border-color:rgba(255,255,255,.8);color:#fff;background:rgba(255,255,255,.2)">Semaine</button>
+      <button class="chip" id="stp-month" onclick="setStatPeriod('month')" style="border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)">Ce mois</button>
+      <button class="chip" id="stp-year" onclick="setStatPeriod('year')" style="border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)">Cette année</button>
     </div>
   </div>
   <div class="sc" style="margin-top:16px" id="stats-content">
@@ -370,7 +370,7 @@ function setTab(t){
       <div style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);position:relative">
         <canvas id="qr-profil-canvas" width="130" height="130" style="display:block;border-radius:6px"></canvas>
         <div style="position:absolute;bottom:10px;left:0;right:0;text-align:center">
-          <span style="background:rgba(0,0,0,.55);border-radius:8px;padding:3px 8px;color:#fff;font-size:10px;font-weight:700">📷 Scanner</span>
+          <span style="background:rgba(0,0,0,.45);border-radius:8px;padding:3px 10px;color:#fff;font-size:10px;font-weight:800">⬛ Scanner QR</span>
         </div>
       </div>
       <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:600;margin-top:8px">Mon QR · Toucher pour scanner</div>
@@ -486,7 +486,7 @@ function setTab(t){
       <span class="lbl">Numéro client</span>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="ret-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="onTelInput('ret')"/>
-        <button onclick="scanPourOp('ret')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;font-size:18px;cursor:pointer">📷</button>
+        <button onclick="scanPourOp('ret')" title="Scanner QR" style="background:var(--a);border:none;border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:49px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
         <button id="ret-ok" onclick="identClient('ret')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4">ID</button>
       </div>
     </div>
@@ -541,7 +541,7 @@ function setTab(t){
   <div class="sh">
     <div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Transfert Liquidité</div><div style="color:var(--m);font-size:12px">Agent ↔ Agent/MM · Gratuit</div></div><button class="sh-x" onclick="closeSh('transfert');rstTrf()">✕</button></div>
-    <div class="info info-a">ℹ️ Transferts entre agents et mini-masters sont sans commission. Utile pour rééquilibrer la liquidité.</div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#92400e;">ℹ️ Transferts entre agents et mini-masters sans commission. Utile pour rééquilibrer la liquidité.</div>
     <div id="trf-err" class="info info-r" style="display:none"></div>
     <span class="lbl">Numéro destinataire</span>
     <div style="margin-bottom:14px"><input class="inp" id="trf-tel" type="tel" placeholder="+225 07 XX XX XX"/></div>
