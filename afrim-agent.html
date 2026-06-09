@@ -176,6 +176,7 @@ async function doRefresh(){
 
 function T(msg,err){var el=document.getElementById('toast');el.textContent=msg;el.className=err?'on err':'on';clearTimeout(T._t);T._t=setTimeout(function(){el.className='';},2800);}
 function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function FN(n){return Number(n||0).toLocaleString('fr-FR');}
 function FN(n){return Number(n||0).toLocaleString('fr-FR');} // sans FCFA
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function S(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
@@ -1000,29 +1001,26 @@ async function chargerHistorique(){
   el.innerHTML='<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
   try{
     if(histFilter==='commission'){
-      // Commissions depuis table dédiée
       var r=await get('/commissions?limit=100');
       var list=r.data||[];
       if(!list.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune commission</div>';return;}
       el.innerHTML=list.map(function(c){
-        var isDepot=c.type_commission==='depot_agent';
-        var isRetrait=c.type_commission==='retrait_agent';
-        var col=isDepot?'#22c55e':isRetrait?'#f97316':'#f59e0b';
-        var icon=isDepot?'↓':isRetrait?'↑':'★';
-        var label=isDepot?'Commission dépôt':isRetrait?'Commission retrait':'Commission';
+        var isD=c.type_commission==='depot_agent',isR=c.type_commission==='retrait_agent';
+        var col=isD?'#22c55e':isR?'#f97316':'#f59e0b';
+        var icon=isD?'↓':isR?'↑':'★';
+        var label=isD?'Commission dépôt':isR?'Commission retrait':'Commission';
         var d=new Date(c.date_calcul||c.created_at||0);
-        var dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
         return '<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
           +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">'+icon+'</div>'
-          +'<div>'
-            +'<div style="font-size:13px;font-weight:700">'+label+'</div>'
-            +'<div style="color:var(--m);font-size:11px;margin-top:1px">'+dateStr+'</div>'
-            +'<div style="font-size:10px;font-weight:600;margin-top:2px;color:'+(c.statut==='verse'?'#16a34a':'#9ca3af')+'">'+( c.statut==='verse'?'✓ Disponible':'Viré')+'</div>'
+          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
+          +'<div><div style="font-size:13px;font-weight:700">'+label+'</div>'
+          +'<div style="color:var(--m);font-size:11px">'+ds+'</div>'
+          +'<div style="font-size:10px;font-weight:600;color:'+(c.statut==='verse'?'#16a34a':'#9ca3af')+'">'+( c.statut==='verse'?'✓ Disponible':'En attente')+'</div>'
           +'</div></div>'
           +'<div style="text-align:right">'
-            +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
-            +'<div style="color:var(--d);font-size:10px">'+(Math.round((c.taux||0)*100*10)/10)+'%</div>'
+          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
+          +'<div style="color:var(--d);font-size:10px">'+(Math.round((c.taux||0)*100*10)/10)+'%</div>'
           +'</div></div>';
       }).join('');
     } else {
@@ -1035,7 +1033,6 @@ async function chargerHistorique(){
 }
 
 // ══ GAINS / COMMISSIONS ══════════════════════════════════════════
-var _gainsCacheCode='';
 async function chargerGains(){
   var el=document.getElementById('gains-content');
   el.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
@@ -1050,38 +1047,30 @@ async function chargerGains(){
     var comms=results[1].data||[];
     var sr=results[2].data||{};
     var me=results[3].data||{};
-
-    var now=new Date(), d1=new Date(now.getFullYear(),now.getMonth(),1);
-    var dPrec=new Date(now.getFullYear(),now.getMonth()-1,1);
-    var dPrec2=new Date(now.getFullYear(),now.getMonth(),1);
-
-    // Totaux depuis commissions
+    var now=new Date(),d1=new Date(now.getFullYear(),now.getMonth(),1);
     var tMois=Number(summ.totalMois||0);
     var tTotal=Number(summ.totalHistorique||0);
     var nbDep=sr.depotsMois&&sr.depotsMois.count||0;
     var nbRet=sr.retraitsMois&&sr.retraitsMois.count||0;
-
-    // Commissions ce mois
     var commMois=comms.filter(function(c){return new Date(c.date_calcul||0)>=d1;});
     var commDep=commMois.filter(function(c){return c.type_commission==='depot_agent';});
     var commRet=commMois.filter(function(c){return c.type_commission==='retrait_agent';});
     var tDep=commDep.reduce(function(s,c){return s+Number(c.montant||0);},0);
     var tRet=commRet.reduce(function(s,c){return s+Number(c.montant||0);},0);
-
+    var codeParrainage=me.codeParrainage||'—';
     var h='';
-
-    // ── Carte gains ce mois ──
+    // Carte gains
     h+='<div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px 22px;margin-bottom:16px;color:#030200">'
       +'<div style="font-size:11px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Gains ce mois</div>'
       +'<div style="font-size:36px;font-weight:900;margin-bottom:16px">'+F(tMois)+'</div>'
       +'<div style="display:flex;gap:10px">'
         +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
           +'<div style="font-size:16px;font-weight:800">'+F(tDep)+'</div>'
-          +'<div style="font-size:10px;opacity:.6;margin-top:2px">↓ Dépôts ('+commDep.length+')</div>'
+          +'<div style="font-size:10px;opacity:.6;margin-top:2px">&#8595; Dépôts ('+commDep.length+')</div>'
         +'</div>'
         +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
           +'<div style="font-size:16px;font-weight:800">'+F(tRet)+'</div>'
-          +'<div style="font-size:10px;opacity:.6;margin-top:2px">↑ Retraits ('+commRet.length+')</div>'
+          +'<div style="font-size:10px;opacity:.6;margin-top:2px">&#8593; Retraits ('+commRet.length+')</div>'
         +'</div>'
         +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
           +'<div style="font-size:16px;font-weight:800">'+F(tTotal)+'</div>'
@@ -1089,11 +1078,9 @@ async function chargerGains(){
         +'</div>'
       +'</div>'
     +'</div>';
-
-    // ── Parrainage & réseau ──
-    var codeParrainage=me.codeParrainage||'—'; _gainsCacheCode=codeParrainage;
+    // Réseau
     h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
-      +'<div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:12px">🌐 Mon réseau</div>'
+      +'<div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:12px">&#127760; Mon réseau</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
         +'<div style="flex:1;min-width:80px;background:#f9fafb;border-radius:12px;padding:12px;text-align:center">'
           +'<div style="font-size:22px;font-weight:900;color:var(--a)">'+nbDep+'</div>'
@@ -1104,29 +1091,27 @@ async function chargerGains(){
           +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Retraits mois</div>'
         +'</div>'
         +'<div id="gains-reseau-btn" style="flex:1;min-width:80px;background:#fffbeb;border-radius:12px;padding:12px;text-align:center;cursor:pointer">'
-          +'<div style="font-size:22px;font-weight:900;color:var(--a)">👥</div>'
+          +'<div style="font-size:22px;font-weight:900;color:var(--a)">&#128101;</div>'
           +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Mon réseau</div>'
         +'</div>'
       +'</div>'
-      +'<div id="gains-code-wrap" style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">'
         +'<div style="font-size:12px;color:#92400e;font-weight:600">Code parrainage</div>'
         +'<div id="gains-code-val" style="font-size:14px;font-weight:900;color:var(--a);letter-spacing:.08em;cursor:pointer">'
-          +codeParrainage+' <span style="font-size:10px">📋</span>'
+          +codeParrainage+' &#128203;'
         +'</div>'
       +'</div>'
     +'</div>';
-
-    // ── Barème ──
+    // Barème
     h+='<div style="background:#fffbeb;border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:14px">'
-      +'<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">📋 Barème commissions</div>'
+      +'<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">&#128203; Barème commissions</div>'
       +'<div style="display:flex;flex-direction:column;gap:6px">'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↓ Dépôt client</span><span style="font-weight:800">0,2% du montant</span></div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↑ Retrait client</span><span style="font-weight:800">35% des frais (1%)</span></div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>🤝 Parrainage filleul</span><span style="font-weight:800">10% des frais</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>&#8595; Dépôt client</span><span style="font-weight:800">0,2% du montant</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>&#8593; Retrait client</span><span style="font-weight:800">35% des frais (1%)</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>&#129309; Parrainage filleul</span><span style="font-weight:800">10% des frais</span></div>'
       +'</div>'
     +'</div>';
-
-    // ── Détail commissions ce mois ──
+    // Détail ce mois
     h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Détail ce mois</div>';
     if(!commMois.length){
       h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission ce mois</div>';
@@ -1134,30 +1119,27 @@ async function chargerGains(){
       commMois.forEach(function(c){
         var isD=c.type_commission==='depot_agent';
         var col=isD?'#22c55e':'#f97316';
-        var icon=isD?'↓':'↑';
+        var icon=isD?'&#8595;':'&#8593;';
         var label=isD?'Commission dépôt':'Commission retrait';
         var d=new Date(c.date_calcul||0);
         var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
         h+='<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
           +'<div style="display:flex;align-items:center;gap:10px">'
-            +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
-            +'<div><div style="font-size:13px;font-weight:700">'+label+'</div><div style="color:var(--m);font-size:11px">'+ds+'</div></div>'
-          +'</div>'
-          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
-        +'</div>';
+          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
+          +'<div><div style="font-size:13px;font-weight:700">'+label+'</div><div style="color:var(--m);font-size:11px">'+ds+'</div></div></div>'
+          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
       });
     }
     el.innerHTML=h;
-    var reseauBtn=document.getElementById('gains-reseau-btn');
-    if(reseauBtn)reseauBtn.addEventListener('click',function(){chargerReseau();});
-    var codeBtn=document.getElementById('gains-code-val');
-    if(codeBtn)codeBtn.addEventListener('click',function(){
-      if(navigator.clipboard)navigator.clipboard.writeText(_gainsCacheCode||'').then(function(){T('Code copié !');});
-      else T('Code: '+(_gainsCacheCode||''));
+    var rb=document.getElementById('gains-reseau-btn');
+    if(rb)rb.addEventListener('click',function(){chargerReseau();});
+    var cv=document.getElementById('gains-code-val');
+    if(cv)cv.addEventListener('click',function(){
+      if(navigator.clipboard)navigator.clipboard.writeText(codeParrainage).then(function(){T('Code copié !');});
+      else T('Code: '+codeParrainage);
     });
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
-
 // ══ STATISTIQUES ═════════════════════════════════════════════════
 var statPeriod='week';
 function setStatPeriod(p){
@@ -1245,7 +1227,385 @@ async function chargerStats(){
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
-// ══ INIT ═══════════════════════════════════════════════════════════
+// ══ PROFIL ═══════════════════════════════════════════════════════
+function chargerProfil(){
+  var u=G.user;if(!u)return;
+  document.getElementById('prof-name-top').textContent=(u.prenom||'')+' '+(u.nom||'');
+  document.getElementById('prof-tel-top').textContent=u.telephone||'';
+  genererQR();
+}
+
+function ouvrirInfos(){
+  var u=G.user;if(!u)return;
+  var rows=[
+    {l:'Prénom',v:u.prenom||'—'},{l:'Nom',v:u.nom||'—'},{l:'Téléphone',v:u.telephone||'—'},
+    {l:'Zone',v:u.zone||'—'},{l:'KYC',v:u.kycNiveau||'—'},{l:'Statut',v:u.statut||'—'},
+    {l:'Code parrainage',v:u.codeParrainage||'—'},{l:'Solde',v:G.compte?F(G.compte.solde):'—'}
+  ];
+  var h=rows.map(function(r){return '<div class="srow"><span style="color:var(--m);font-size:13px">'+r.l+'</span><span style="font-weight:700;font-size:13px">'+r.v+'</span></div>';}).join('');
+  document.getElementById('sh-infos-body').innerHTML=h;
+  openSh('infos');
+}
+
+async function chargerReseau(){
+  var el=document.getElementById('reseau-list');
+  el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+  try{
+    var r=await get('/users/'+G.user.id+'/referrals');
+    var list=r.data.filleuls||[];
+    var h='<div style="padding:0 0 12px"><div class="srow"><span style="color:var(--m);font-size:13px">Filleuls total</span><span style="color:var(--a);font-size:16px;font-weight:800">'+list.length+'</span></div><div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Gains parrainage</span><span style="color:var(--a);font-size:16px;font-weight:800;font-family:monospace">'+F(r.data.totalGains)+'</span></div></div>';
+    if(list.length){list.forEach(function(f){h+='<div class="tx" style="background:var(--s);border:1px solid var(--b)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:14px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div><div style="font-size:13px;font-weight:600">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+f.telephone+'</div></div></div><div style="color:var(--d);font-size:11px">'+FD(f.dateCreation)+'</div></div>';});}
+    else h+='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucun filleul pour l\'instant</div>';
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
+  openSh('reseau');
+}
+
+async function doChangePin(){
+  var oldPin=document.getElementById('old-pin').value;
+  var newPin=document.getElementById('new-pin').value;
+  var newPin2=document.getElementById('new-pin2').value;
+  var errEl=document.getElementById('change-pin-err');
+  if(newPin.length!==4||oldPin.length!==4){errEl.textContent='Les codes PIN doivent avoir 4 chiffres.';errEl.style.display='';return;}
+  if(newPin!==newPin2){errEl.textContent='Les nouveaux PIN ne correspondent pas.';errEl.style.display='';return;}
+  errEl.style.display='none';
+  document.getElementById('change-pin-form').style.display='none';
+  document.getElementById('change-pin-loading').style.display='';
+  try{
+    await post('/auth/change-pin',{oldPin,newPin});
+    document.getElementById('change-pin-loading').style.display='none';
+    document.getElementById('change-pin-success').style.display='';
+  }catch(e){
+    document.getElementById('change-pin-loading').style.display='none';
+    document.getElementById('change-pin-form').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
+function rstChangePin(){
+  ['old-pin','new-pin','new-pin2'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('change-pin-err').style.display='none';
+  document.getElementById('change-pin-form').style.display='';
+  document.getElementById('change-pin-loading').style.display='none';
+  document.getElementById('change-pin-success').style.display='none';
+}
+
+function inviterAmi(){
+  var u=G.user;if(!u)return;var code=u.codeParrainage||'';
+  var msg='Rejoignez AFRIM PAY avec mon code '+code+' !';
+  if(navigator.share)navigator.share({title:'AFRIM PAY',text:msg});
+  else if(navigator.clipboard){navigator.clipboard.writeText(msg);T('Message copié !');}
+  else T('Code : '+code);
+}
+
+async function logout(){
+  try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}
+  G.token=G.refresh=G.user=G.compte=null;
+  _ls.del('afrim_token');_ls.del('afrim_refresh');_ls.del('afrim_user');
+  document.getElementById('s-lock').classList.remove('on');
+  S('s-login');
+}
+
+// ══ QR CODE ══════════════════════════════════════════════════════
+var _qrCallback=null;
+var _qrGenInstances={};
+
+function genererQR(){
+  var u=G.user;if(!u||!u.telephone)return;
+  var data=u.telephone+'|'+(u.prenom||'')+' '+(u.nom||'');
+  ['qr-profil-canvas','wqr-carte-canvas'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    if(_qrGenInstances[id]){try{_qrGenInstances[id].clear();}catch(e){}}
+    el.innerHTML='';
+    try{
+      _qrGenInstances[id]=new QRCode(el,{text:data,width:id==='qr-profil-canvas'?130:200,height:id==='qr-profil-canvas'?130:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){}
+  });
+  var nm=document.getElementById('wqr-carte-name');var tl=document.getElementById('wqr-carte-tel');
+  if(nm)nm.textContent=(u.prenom||'')+' '+(u.nom||'');
+  if(tl)tl.textContent=u.telephone||'';
+}
+
+function ouvrirPopupQR(callback){
+  _qrCallback=callback||null;
+  var popup=document.getElementById('wave-qr-popup');
+  popup.classList.add('on');
+  wqrTab('scan');
+  genererQR();
+}
+function fermerPopupQR(){
+  var popup=document.getElementById('wave-qr-popup');
+  popup.classList.remove('on');
+  var video=document.getElementById('wqr-video');
+  if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
+  if(window._scanAnimFrame){cancelAnimationFrame(window._scanAnimFrame);window._scanAnimFrame=null;}
+  // NE PAS nullifier _qrCallback ici — il sera utilisé dans le setTimeout du scanner
+}
+
+function wqrTab(tab){
+  var scanner=document.getElementById('wqr-scanner');
+  var carte=document.getElementById('wqr-carte');
+  ['wtab-scan','wtab-scan2','wtab-carte','wtab-carte2'].forEach(function(id){
+    var b=document.getElementById(id);if(!b)return;
+    var isActive=(id.includes('scan')&&tab==='scan')||(id.includes('carte')&&tab==='carte');
+    b.classList.toggle('on',isActive);
+  });
+  if(scanner)scanner.style.display=tab==='scan'?'flex':'none';
+  if(carte)carte.style.display=tab==='carte'?'flex':'none';
+  if(tab==='scan')demarrerScan();
+  else{var video=document.getElementById('wqr-video');if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}}
+}
+
+function demarrerScan(){
+  var video=document.getElementById('wqr-video');
+  var msg=document.getElementById('wqr-scan-msg');
+  if(!video)return;
+  if('BarcodeDetector' in window){
+    var bd=new BarcodeDetector({formats:['qr_code']});
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
+      video.srcObject=stream;video.style.display='';
+      if(msg)msg.style.display='none';
+      function scanFrame(){
+        if(!video.srcObject){return;}
+        bd.detect(video).then(function(codes){
+          if(codes.length>0){
+            var raw=codes[0].rawValue;
+            var parts=raw.split('|');var tel=parts[0]||raw;
+            var cb=_qrCallback;_qrCallback=null;
+            fermerPopupQR();
+            setTimeout(function(){
+              if(typeof cb==='function'){cb(tel,parts);}
+              else afficherChoixOp(tel,parts);
+            },300);
+            return;
+          }
+          window._scanAnimFrame=requestAnimationFrame(scanFrame);
+        }).catch(function(){window._scanAnimFrame=requestAnimationFrame(scanFrame);});
+      }
+      video.onloadedmetadata=function(){video.play();window._scanAnimFrame=requestAnimationFrame(scanFrame);};
+    }).catch(function(){if(msg)msg.textContent='Caméra non disponible';});
+  } else {
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
+      video.srcObject=stream;video.style.display='';
+      if(msg)msg.style.display='none';
+      var canvas=document.getElementById('wqr-canvas');var ctx=canvas.getContext('2d');
+      function tick(){
+        if(!video.srcObject)return;
+        if(video.readyState>=2&&window.jsQR){
+          canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+          ctx.drawImage(video,0,0);
+          var d=ctx.getImageData(0,0,canvas.width,canvas.height);
+          var code=jsQR(d.data,d.width,d.height);
+          if(code&&code.data){
+            var raw=code.data;var parts=raw.split('|');var tel=parts[0]||raw;
+            var cb=_qrCallback;_qrCallback=null;
+            fermerPopupQR();
+            setTimeout(function(){
+              if(typeof cb==='function'){cb(tel,parts);}
+              else afficherChoixOp(tel,parts);
+            },300);
+            return;
+          }
+        }
+        window._scanAnimFrame=requestAnimationFrame(tick);
+      }
+      video.onloadedmetadata=function(){video.play();window._scanAnimFrame=requestAnimationFrame(tick);};
+    }).catch(function(){
+      if(msg)msg.textContent='Caméra non disponible — utilisez la galerie';
+    });
+  }
+}
+
+var _flashOn=false;
+function toggleFlash(){
+  var video=document.getElementById('wqr-video');
+  if(!video||!video.srcObject)return;
+  var track=video.srcObject.getVideoTracks()[0];
+  if(!track)return;
+  _flashOn=!_flashOn;
+  track.applyConstraints({advanced:[{torch:_flashOn}]}).catch(function(){T('Torche non disponible',true);_flashOn=!_flashOn;});
+  var btn=document.getElementById('wqr-flash-btn');
+  if(btn)btn.style.background=_flashOn?'rgba(245,158,11,.4)':'rgba(255,255,255,.15)';
+}
+
+// Galerie QR
+document.addEventListener('DOMContentLoaded',function(){
+  var ni=document.getElementById('wqr-native-input');
+  if(!ni)return;
+  ni.addEventListener('change',function(){
+    if(!this.files||!this.files[0])return;
+    var file=this.files[0];this.value='';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+        var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+        if(window.jsQR){
+          var d=ctx.getImageData(0,0,img.width,img.height);
+          var code=jsQR(d.data,d.width,d.height);
+          if(code&&code.data){
+            var parts=code.data.split('|');var tel=parts[0]||code.data;
+            var cb=_qrCallback;_qrCallback=null;
+            fermerPopupQR();
+            setTimeout(function(){
+              if(typeof cb==='function'){cb(tel,parts);}
+            else afficherChoixOp(tel,parts);
+            },300);
+            return;
+          }
+        }
+        T('QR non reconnu',true);
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// ══ AUTO-LOCK (60s background) ════════════════════════════════════
+var _lockTimer=null;var _lockPin='';
+function initAutoLock(){
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      _lockTimer=setTimeout(function(){
+        if(G.user){
+          var lock=document.getElementById('s-lock');
+          document.getElementById('lock-name').textContent=(G.user.prenom||'')+' '+(G.user.nom||'');
+          lock.classList.add('on');
+          _lockPin='';rLockDots();
+        }
+      },60000);
+    } else {
+      if(_lockTimer){clearTimeout(_lockTimer);_lockTimer=null;}
+    }
+  });
+}
+function rLockDots(){for(var i=0;i<4;i++){var d=document.getElementById('ld'+i);if(d){d.textContent=_lockPin.length>i?'●':'';d.classList.toggle('on',_lockPin.length>i);}}}
+function lockPIN(n){if(_lockPin.length>=4)return;_lockPin+=String(n);rLockDots();if(_lockPin.length===4)setTimeout(verifierLock,300);}
+function lockDEL(){_lockPin=_lockPin.slice(0,-1);rLockDots();}
+async function verifierLock(){
+  var errEl=document.getElementById('lock-err');errEl.style.display='none';
+  try{
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin});
+    document.getElementById('s-lock').classList.remove('on');
+    G.token=r.data.accessToken;_ls.set('afrim_token',G.token);
+  }catch(e){
+    _lockPin='';rLockDots();errEl.style.display='';
+  }
+}
+
+
+// ── Menu choix opération après scan accueil ──────────────────────
+var _scannedClient = null;
+function afficherChoixOp(tel, parts){
+  // Identifier le client puis afficher le choix
+  (async function(){
+    try{
+      var r = await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+      var arr = Array.isArray(r.data)?r.data:[r.data];
+      if(!arr.length||!arr[0]) throw new Error('Client introuvable');
+      var u = arr[0];
+      _scannedClient = u;
+      document.getElementById('choix-av').textContent = (u.prenom||'?')[0].toUpperCase();
+      document.getElementById('choix-name').textContent = (u.prenom||'')+' '+(u.nom||'');
+      document.getElementById('choix-tel').textContent = u.telephone||tel;
+      document.getElementById('choix-kyc').textContent = u.kycNiveau||'KYC1';
+      document.getElementById('choix-op-sub').textContent = 'Que souhaitez-vous faire ?';
+      openSh('choix-op');
+    }catch(e){ T(e.message, true); }
+  })();
+}
+
+function ouvrirDepotAvecClient(){
+  if(!_scannedClient) return;
+  closeSh('choix-op');
+  setTimeout(function(){
+    rstOp('dep');
+    openSh('depot');
+    document.getElementById('dep-tel').value = _scannedClient.telephone||'';
+    onTelInput('dep');
+    // Pré-remplir le recap directement
+    opClients['dep'] = _scannedClient;
+    var u = _scannedClient;
+    document.getElementById('dep-s1').style.display='none';
+    document.getElementById('dep-s2').style.display='';
+    document.getElementById('dep-recap').style.display='';
+    document.getElementById('dep-av').textContent=(u.prenom||'?')[0].toUpperCase();
+    document.getElementById('dep-cname').textContent=(u.prenom||'')+' '+(u.nom||'');
+    document.getElementById('dep-ctel').textContent=u.telephone||'';
+    document.getElementById('dep-kyc').textContent=u.kycNiveau||'KYC1';
+    document.getElementById('dep-btn-valider').style.display='';
+  },300);
+}
+
+function ouvrirTransfertAvecClient(){
+  if(!_scannedClient) return;
+  closeSh('choix-op');
+  setTimeout(function(){
+    rstTrf();
+    openSh('transfert');
+    document.getElementById('trf-tel').value = _scannedClient.telephone||'';
+  },300);
+}
+
+function ouvrirTransfertAvecClient(){
+  if(!_scannedClient) return;
+  closeSh('choix-op');
+  setTimeout(function(){
+    rstTrf();
+    openSh('transfert');
+    document.getElementById('trf-tel').value = _scannedClient.telephone||'';
+  },300);
+}
+
+function ouvrirRetraitAvecClient(){
+  if(!_scannedClient) return;
+  closeSh('choix-op');
+  setTimeout(function(){
+    rstOp('ret');
+    openSh('retrait');
+    document.getElementById('ret-tel').value = _scannedClient.telephone||'';
+    onTelInput('ret');
+    opClients['ret'] = _scannedClient;
+    var u = _scannedClient;
+    document.getElementById('ret-s1').style.display='none';
+    document.getElementById('ret-s2').style.display='';
+    document.getElementById('ret-recap').style.display='';
+    document.getElementById('ret-av').textContent=(u.prenom||'?')[0].toUpperCase();
+    document.getElementById('ret-cname').textContent=(u.prenom||'')+' '+(u.nom||'');
+    document.getElementById('ret-ctel').textContent=u.telephone||'';
+    document.getElementById('ret-kyc').textContent=u.kycNiveau||'KYC1';
+    var sol=u.comptes&&(Array.isArray(u.comptes)?u.comptes[0]:u.comptes);
+    if(sol)document.getElementById('ret-csolde').textContent=F(sol.solde);
+    document.getElementById('ret-btn-valider').style.display='';
+  },300);
+}
+
+// ── Toggle solde ────────────────────────────────────────────────
+var _soldeVisible = true;
+var _soldeVal = '—';
+function toggleSolde(){
+  _soldeVisible = !_soldeVisible;
+  var el = document.getElementById('h-solde');
+  var eye = document.getElementById('eye-icon');
+  if(el) el.textContent = _soldeVisible ? _soldeVal : '••••••';
+  if(eye) eye.innerHTML = _soldeVisible
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+function setSoldeVal(v){
+  _soldeVal = v;
+  var el = document.getElementById('h-solde');
+  if(el) el.textContent = _soldeVisible ? v : '••••••';
+}
+
+// ── Notifs (placeholder) ─────────────────────────────────────────
+async function ouvrirNotifs(){
+  T('Notifications — bientôt disponible');
+}
+
+// ══ INIT ═════════════════════════════════════════════════════════
 document.querySelectorAll('.sh-ov').forEach(function(el){
   el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);}});
 });
@@ -1257,6 +1617,46 @@ document.querySelectorAll('.sh-ov').forEach(function(el){
   S('s-login');
 })();
 </script>
+
+<!-- SHEET CHOIX OPÉRATION après scan QR accueil -->
+<div class="sh-ov" id="sh-choix-op">
+  <div class="sh" style="padding-bottom:60px">
+    <div class="sh-bar"></div>
+    <div class="sh-top">
+      <div>
+        <div class="sh-title">Client identifié</div>
+        <div style="color:var(--m);font-size:12px" id="choix-op-sub">Choisissez l'opération</div>
+      </div>
+      <button class="sh-x" onclick="closeSh('choix-op')">✕</button>
+    </div>
+    <!-- Recap client -->
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:18px;font-weight:800" id="choix-av">?</div>
+        <div>
+          <div style="font-weight:700;font-size:15px" id="choix-name">—</div>
+          <div style="color:var(--m);font-size:12px" id="choix-tel">—</div>
+        </div>
+        <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(245,158,11,.1);color:var(--a)" id="choix-kyc">—</div>
+      </div>
+    </div>
+    <!-- Boutons opérations -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="ouvrirDepotAvecClient()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;flex-shrink:0">↓</div>
+        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un Dépôt</div><div style="font-size:11px;color:var(--m)">Commission 0,2% du montant</div></div>
+      </button>
+      <button onclick="ouvrirRetraitAvecClient()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px;flex-shrink:0">↑</div>
+        <div><div style="font-size:14px;font-weight:700;color:#c2410c">Effectuer un Retrait</div><div style="font-size:11px;color:var(--m)">35% des frais de retrait</div></div>
+      </button>
+      <button onclick="ouvrirTransfertAvecClient()" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px;flex-shrink:0">⇄</div>
+        <div><div style="font-size:14px;font-weight:700;color:#1d4ed8">Transfert de liquidité</div><div style="font-size:11px;color:var(--m)">Agent ↔ Agent/MM · Gratuit</div></div>
+      </button>
+    </div>
+  </div>
+</div>
 </div>
 </body>
 </html>
