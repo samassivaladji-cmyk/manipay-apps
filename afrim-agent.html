@@ -1035,6 +1035,7 @@ async function chargerHistorique(){
 }
 
 // ══ GAINS / COMMISSIONS ══════════════════════════════════════════
+var _gainsCacheCode='';
 async function chargerGains(){
   var el=document.getElementById('gains-content');
   el.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
@@ -1090,7 +1091,7 @@ async function chargerGains(){
     +'</div>';
 
     // ── Parrainage & réseau ──
-    var codeParrainage=me.codeParrainage||'—';
+    var codeParrainage=me.codeParrainage||'—'; _gainsCacheCode=codeParrainage;
     h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
       +'<div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:12px">🌐 Mon réseau</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
@@ -1107,9 +1108,9 @@ async function chargerGains(){
           +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Mon réseau</div>'
         +'</div>'
       +'</div>'
-      +'<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">'
+      +'<div id="gains-code-wrap" style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">'
         +'<div style="font-size:12px;color:#92400e;font-weight:600">Code parrainage</div>'
-        +'<div style="font-size:14px;font-weight:900;color:var(--a);letter-spacing:.08em;cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText(''+codeParrainage+'').then(function(){T('Code copié !');})">'
+        +'<div id="gains-code-val" style="font-size:14px;font-weight:900;color:var(--a);letter-spacing:.08em;cursor:pointer">'
           +codeParrainage+' <span style="font-size:10px">📋</span>'
         +'</div>'
       +'</div>'
@@ -1149,6 +1150,11 @@ async function chargerGains(){
     el.innerHTML=h;
     var reseauBtn=document.getElementById('gains-reseau-btn');
     if(reseauBtn)reseauBtn.addEventListener('click',function(){chargerReseau();});
+    var codeBtn=document.getElementById('gains-code-val');
+    if(codeBtn)codeBtn.addEventListener('click',function(){
+      if(navigator.clipboard)navigator.clipboard.writeText(_gainsCacheCode||'').then(function(){T('Code copié !');});
+      else T('Code: '+(_gainsCacheCode||''));
+    });
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
@@ -1235,3 +1241,22 @@ async function chargerStats(){
         +'</div></div>';
     });
     h+='</div>';
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
+}
+
+// ══ INIT ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.sh-ov').forEach(function(el){
+  el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);}});
+});
+
+(function init(){
+  if(G.token&&G.user&&['agent','mini_master','master','superviseur','admin'].includes(G.user.role)){
+    S('s-home');chargerAccueil();genererQR();initAutoLock();return;
+  }
+  S('s-login');
+})();
+</script>
+</div>
+</body>
+</html>
