@@ -176,6 +176,7 @@ async function doRefresh(){
 
 function T(msg,err){var el=document.getElementById('toast');el.textContent=msg;el.className=err?'on err':'on';clearTimeout(T._t);T._t=setTimeout(function(){el.className='';},2800);}
 function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function FN(n){return Number(n||0).toLocaleString('fr-FR');} // sans FCFA
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function S(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
 function openSh(id){document.getElementById('sh-'+id).classList.add('on');}
@@ -238,21 +239,45 @@ function setTab(t){
 
 <!-- HOME -->
 <div class="scr" id="s-home">
-  <div style="background:linear-gradient(160deg,rgba(245,158,11,.07),#ffffff);padding:52px 22px 22px;border-radius:0 0 28px 28px;margin-bottom:18px">
-    <div class="row" style="margin-bottom:20px">
+  <!-- HEADER : nom + solde sur même ligne -->
+  <div style="padding:52px 22px 0;background:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <!-- Gauche : identité -->
       <div>
-        <div style="color:var(--m);font-size:13px;margin-bottom:2px">Agent AFRIM PAY</div>
-        <div style="font-size:22px;font-weight:800" id="h-name">—</div>
-        <div style="color:var(--m);font-size:11px" id="h-zone">—</div>
+        <div style="color:var(--m);font-size:12px;margin-bottom:2px">Agent AFRIM PAY</div>
+        <div style="font-size:24px;font-weight:900;color:var(--a)" id="h-name">—</div>
+        <div style="color:var(--d);font-size:11px;margin-top:1px" id="h-zone">—</div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button onclick="ouvrirPopupQR()" title="Scanner QR Code" style="background:var(--a);border:none;border-radius:11px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(217,119,6,.3)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
-        <button onclick="rafraichir()" style="background:var(--s);border:1px solid var(--b);border-radius:11px;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">🔄</button>
+      <!-- Droite : solde -->
+      <div style="text-align:right">
+        <div style="color:var(--m);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Solde</div>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+          <div style="font-size:28px;font-weight:900;color:var(--a);letter-spacing:-.5px;font-family:'DM Sans',sans-serif" id="h-solde">—</div>
+          <button id="h-eye" onclick="toggleSolde()" style="background:none;border:none;cursor:pointer;padding:2px;color:var(--d);display:flex;align-items:center;">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
     </div>
-    <div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:22px 24px;box-shadow:0 10px 32px rgba(245,158,11,.2)">
-      <div style="font-size:11px;font-weight:700;color:#030200;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Solde</div>
-      <div style="font-size:34px;font-weight:900;color:#030200;letter-spacing:-.5px" id="h-solde">—</div>
+    <!-- Ligne d'actions rapides : QR · Notifs · Actualiser · Quitter -->
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-bottom:18px">
+      <button onclick="ouvrirPopupQR()" title="Scanner QR" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.2);border-radius:14px;padding:10px 6px;cursor:pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="var(--a)"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="var(--a)"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="var(--a)"/></svg>
+        <span style="font-size:10px;font-weight:700;color:var(--a)">Scanner</span>
+      </button>
+      <button onclick="ouvrirNotifs()" title="Notifications" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:14px;padding:10px 6px;cursor:pointer;position:relative">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span style="font-size:10px;font-weight:700;color:#374151">Notifs</span>
+        <div id="h-notif-badge" style="display:none;position:absolute;top:6px;right:10px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;border-radius:99px;padding:1px 4px;min-width:14px;text-align:center">0</div>
+      </button>
+      <button onclick="rafraichir()" title="Actualiser" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:14px;padding:10px 6px;cursor:pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span style="font-size:10px;font-weight:700;color:#374151">Actualiser</span>
+      </button>
+      <button onclick="logout()" title="Déconnexion" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:10px 6px;cursor:pointer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span style="font-size:10px;font-weight:700;color:#dc2626">Quitter</span>
+      </button>
     </div>
   </div>
   <div class="sc">
@@ -906,12 +931,12 @@ async function chargerAccueil(){
     var res=await Promise.all([get('/accounts/me'),get('/users/me'),get('/stats/dashboard')]);
     var cr=res[0],ur=res[1],sr=res[2];
     G.compte=cr.data;G.user=ur.data;_ls.set('afrim_user',JSON.stringify(G.user));
-    document.getElementById('h-solde').textContent=F(cr.data.solde);
+    setSoldeVal(FN(cr.data.solde));
     document.getElementById('h-dep').textContent=(sr.data.depotsMois&&sr.data.depotsMois.count)||'0';
     document.getElementById('h-gains').textContent=F(sr.data.gainsMois||0);
     document.getElementById('h-ret').textContent=(sr.data.retraitsMois&&sr.data.retraitsMois.count)||'0';
     document.getElementById('h-nb-ops').textContent=(sr.data.opsJour||sr.data.transactionsJour||0);
-  }catch(e){document.getElementById('h-solde').textContent=G.compte?F(G.compte.solde):'—';}
+  }catch(e){setSoldeVal(G.compte?FN(G.compte.solde):'—');}
   chargerTxns();
 }
 function rafraichir(){chargerAccueil();}
@@ -973,9 +998,40 @@ function setHistFilter(f){
 async function chargerHistorique(){
   var el=document.getElementById('hist-list');
   el.innerHTML='<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
-  var url='/transactions?limit=50'+(histFilter!=='all'?'&type='+histFilter:'');
-  try{var r=await get(url);var list=r.data||[];el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction</div>';}
-  catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
+  try{
+    if(histFilter==='commission'){
+      // Commissions depuis table dédiée
+      var r=await get('/commissions?limit=100');
+      var list=r.data||[];
+      if(!list.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune commission</div>';return;}
+      el.innerHTML=list.map(function(c){
+        var isDepot=c.type_commission==='depot_agent';
+        var isRetrait=c.type_commission==='retrait_agent';
+        var col=isDepot?'#22c55e':isRetrait?'#f97316':'#f59e0b';
+        var icon=isDepot?'↓':isRetrait?'↑':'★';
+        var label=isDepot?'Commission dépôt':isRetrait?'Commission retrait':'Commission';
+        var d=new Date(c.date_calcul||c.created_at||0);
+        var dateStr=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        return '<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">'+icon+'</div>'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700">'+label+'</div>'
+            +'<div style="color:var(--m);font-size:11px;margin-top:1px">'+dateStr+'</div>'
+            +'<div style="font-size:10px;font-weight:600;margin-top:2px;color:'+(c.statut==='verse'?'#16a34a':'#9ca3af')+'">'+( c.statut==='verse'?'✓ Disponible':'Viré')+'</div>'
+          +'</div></div>'
+          +'<div style="text-align:right">'
+            +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
+            +'<div style="color:var(--d);font-size:10px">'+(Math.round((c.taux||0)*100*10)/10)+'%</div>'
+          +'</div></div>';
+      }).join('');
+    } else {
+      var url='/transactions?limit=50'+(histFilter!=='all'?'&type='+histFilter:'');
+      var r=await get(url);
+      var list=r.data||[];
+      el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction</div>';
+    }
+  }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
 // ══ GAINS / COMMISSIONS ══════════════════════════════════════════
@@ -983,66 +1039,116 @@ async function chargerGains(){
   var el=document.getElementById('gains-content');
   el.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
   try{
-    var res=await Promise.all([
+    var results=await Promise.all([
+      get('/commissions/summary'),
+      get('/commissions?limit=100'),
       get('/stats/dashboard'),
-      get('/transactions?type=commission&limit=100'),
-      get('/transactions?type=commission_depot&limit=100')
+      get('/users/me')
     ]);
-    var sr=res[0].data||{};
-    var comms=(res[1].data||[]).concat(res[2].data||[]);
-    comms.sort(function(a,b){return new Date(b.dateCreation||b.date_creation)-new Date(a.dateCreation||a.date_creation);});
-    var now=new Date(),d1=new Date(now.getFullYear(),now.getMonth(),1);
-    var tMois=0,tPrec=0,tTotal=0,nbMois=0,commMois=[];
-    comms.forEach(function(c){
-      var d=new Date(c.dateCreation||c.date_creation||0);
-      var m=Number(c.montant||0);
-      tTotal+=m;
-      if(d>=d1){tMois+=m;nbMois++;commMois.push(c);}
-      else tPrec+=m;
-    });
-    var gainsMois=sr.gainsMois||tMois;
-    var h='';
-    // Carte résumé
-    h+='<div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px;margin-bottom:16px;color:#030200">'
-      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;margin-bottom:8px">CE MOIS-CI</div>'
-      +'<div style="font-size:38px;font-weight:900;margin-bottom:12px">'+F(gainsMois)+'</div>'
-      +'<div style="display:flex;gap:16px">'
-      +'<div><div style="font-size:17px;font-weight:800">'+nbMois+'</div><div style="font-size:10px;opacity:.6">opérations</div></div>'
-      +'<div style="width:1px;background:rgba(3,2,0,.15)"></div>'
-      +'<div><div style="font-size:17px;font-weight:800">'+F(tPrec)+'</div><div style="font-size:10px;opacity:.6">mois précédent</div></div>'
-      +'<div style="width:1px;background:rgba(3,2,0,.15)"></div>'
-      +'<div><div style="font-size:17px;font-weight:800">'+F(tTotal)+'</div><div style="font-size:10px;opacity:.6">total historique</div></div>'
-      +'</div></div>';
-    // Grille stats rapides
+    var summ=results[0].data||{};
+    var comms=results[1].data||[];
+    var sr=results[2].data||{};
+    var me=results[3].data||{};
+
+    var now=new Date(), d1=new Date(now.getFullYear(),now.getMonth(),1);
+    var dPrec=new Date(now.getFullYear(),now.getMonth()-1,1);
+    var dPrec2=new Date(now.getFullYear(),now.getMonth(),1);
+
+    // Totaux depuis commissions
+    var tMois=Number(summ.totalMois||0);
+    var tTotal=Number(summ.totalHistorique||0);
     var nbDep=sr.depotsMois&&sr.depotsMois.count||0;
     var nbRet=sr.retraitsMois&&sr.retraitsMois.count||0;
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">'
-      +'<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:900;color:#22c55e">'+nbDep+'</div><div style="font-size:11px;color:#6b7280">Dépôts ce mois</div></div>'
-      +'<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:900;color:#f97316">'+nbRet+'</div><div style="font-size:11px;color:#6b7280">Retraits ce mois</div></div>'
-      +'</div>';
-    // Barème commissions
-    h+='<div style="background:#fffbeb;border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:16px">'
+
+    // Commissions ce mois
+    var commMois=comms.filter(function(c){return new Date(c.date_calcul||0)>=d1;});
+    var commDep=commMois.filter(function(c){return c.type_commission==='depot_agent';});
+    var commRet=commMois.filter(function(c){return c.type_commission==='retrait_agent';});
+    var tDep=commDep.reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var tRet=commRet.reduce(function(s,c){return s+Number(c.montant||0);},0);
+
+    var h='';
+
+    // ── Carte gains ce mois ──
+    h+='<div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px 22px;margin-bottom:16px;color:#030200">'
+      +'<div style="font-size:11px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Gains ce mois</div>'
+      +'<div style="font-size:36px;font-weight:900;margin-bottom:16px">'+F(tMois)+'</div>'
+      +'<div style="display:flex;gap:10px">'
+        +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
+          +'<div style="font-size:16px;font-weight:800">'+F(tDep)+'</div>'
+          +'<div style="font-size:10px;opacity:.6;margin-top:2px">↓ Dépôts ('+commDep.length+')</div>'
+        +'</div>'
+        +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
+          +'<div style="font-size:16px;font-weight:800">'+F(tRet)+'</div>'
+          +'<div style="font-size:10px;opacity:.6;margin-top:2px">↑ Retraits ('+commRet.length+')</div>'
+        +'</div>'
+        +'<div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:10px;text-align:center">'
+          +'<div style="font-size:16px;font-weight:800">'+F(tTotal)+'</div>'
+          +'<div style="font-size:10px;opacity:.6;margin-top:2px">Total historique</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+
+    // ── Parrainage & réseau ──
+    var codeParrainage=me.codeParrainage||'—';
+    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+      +'<div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:12px">🌐 Mon réseau</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:80px;background:#f9fafb;border-radius:12px;padding:12px;text-align:center">'
+          +'<div style="font-size:22px;font-weight:900;color:var(--a)">'+nbDep+'</div>'
+          +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Dépôts mois</div>'
+        +'</div>'
+        +'<div style="flex:1;min-width:80px;background:#f9fafb;border-radius:12px;padding:12px;text-align:center">'
+          +'<div style="font-size:22px;font-weight:900;color:#f97316">'+nbRet+'</div>'
+          +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Retraits mois</div>'
+        +'</div>'
+        +'<div id="gains-reseau-btn" style="flex:1;min-width:80px;background:#fffbeb;border-radius:12px;padding:12px;text-align:center;cursor:pointer">'
+          +'<div style="font-size:22px;font-weight:900;color:var(--a)">👥</div>'
+          +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Mon réseau</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">'
+        +'<div style="font-size:12px;color:#92400e;font-weight:600">Code parrainage</div>'
+        +'<div style="font-size:14px;font-weight:900;color:var(--a);letter-spacing:.08em;cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText(''+codeParrainage+'').then(function(){T('Code copié !');})">'
+          +codeParrainage+' <span style="font-size:10px">📋</span>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+
+    // ── Barème ──
+    h+='<div style="background:#fffbeb;border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:14px">'
       +'<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">📋 Barème commissions</div>'
-      +'<div style="font-size:12px;color:#a16207;line-height:1.8">'
-      +'<div>Dépôt client → <b>0,2% du montant</b></div>'
-      +'<div>Retrait client → <b>35% des frais</b> (frais = 1%)</div>'
-      +'<div>Parrainage filleul → <b>10% des frais retrait/paiement</b></div>'
-      +'</div></div>';
-    // Détail commissions ce mois
+      +'<div style="display:flex;flex-direction:column;gap:6px">'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↓ Dépôt client</span><span style="font-weight:800">0,2% du montant</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↑ Retrait client</span><span style="font-weight:800">35% des frais (1%)</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>🤝 Parrainage filleul</span><span style="font-weight:800">10% des frais</span></div>'
+      +'</div>'
+    +'</div>';
+
+    // ── Détail commissions ce mois ──
     h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Détail ce mois</div>';
     if(!commMois.length){
       h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission ce mois</div>';
     } else {
       commMois.forEach(function(c){
-        var tp=TX_CFG[c.type]||{c:'#f59e0b',i:'★',l:'Commission'};
-        h+='<div class="tx" style="background:'+tp.c+'0d;border:1px solid '+tp.c+'22">'
+        var isD=c.type_commission==='depot_agent';
+        var col=isD?'#22c55e':'#f97316';
+        var icon=isD?'↓':'↑';
+        var label=isD?'Commission dépôt':'Commission retrait';
+        var d=new Date(c.date_calcul||0);
+        var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        h+='<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
           +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:36px;height:36px;border-radius:10px;background:'+tp.c+'18;color:'+tp.c+';display:flex;align-items:center;justify-content:center;font-size:15px">'+tp.i+'</div>'
-          +'<div><div style="font-size:13px;font-weight:600">'+tp.l+'</div><div style="color:var(--m);font-size:11px">'+FD(c.dateCreation||c.date_creation)+'</div></div></div>'
-          +'<div style="color:'+tp.c+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
+            +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
+            +'<div><div style="font-size:13px;font-weight:700">'+label+'</div><div style="color:var(--m);font-size:11px">'+ds+'</div></div>'
+          +'</div>'
+          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
+        +'</div>';
       });
     }
     el.innerHTML=h;
+    var reseauBtn=document.getElementById('gains-reseau-btn');
+    if(reseauBtn)reseauBtn.addEventListener('click',function(){chargerReseau();});
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
@@ -1129,393 +1235,3 @@ async function chargerStats(){
         +'</div></div>';
     });
     h+='</div>';
-    el.innerHTML=h;
-  }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
-}
-
-// ══ PROFIL ═══════════════════════════════════════════════════════
-function chargerProfil(){
-  var u=G.user;if(!u)return;
-  document.getElementById('prof-name-top').textContent=(u.prenom||'')+' '+(u.nom||'');
-  document.getElementById('prof-tel-top').textContent=u.telephone||'';
-  genererQR();
-}
-
-function ouvrirInfos(){
-  var u=G.user;if(!u)return;
-  var rows=[
-    {l:'Prénom',v:u.prenom||'—'},{l:'Nom',v:u.nom||'—'},{l:'Téléphone',v:u.telephone||'—'},
-    {l:'Zone',v:u.zone||'—'},{l:'KYC',v:u.kycNiveau||'—'},{l:'Statut',v:u.statut||'—'},
-    {l:'Code parrainage',v:u.codeParrainage||'—'},{l:'Solde',v:G.compte?F(G.compte.solde):'—'}
-  ];
-  var h=rows.map(function(r){return '<div class="srow"><span style="color:var(--m);font-size:13px">'+r.l+'</span><span style="font-weight:700;font-size:13px">'+r.v+'</span></div>';}).join('');
-  document.getElementById('sh-infos-body').innerHTML=h;
-  openSh('infos');
-}
-
-async function chargerReseau(){
-  var el=document.getElementById('reseau-list');
-  el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
-  try{
-    var r=await get('/users/'+G.user.id+'/referrals');
-    var list=r.data.filleuls||[];
-    var h='<div style="padding:0 0 12px"><div class="srow"><span style="color:var(--m);font-size:13px">Filleuls total</span><span style="color:var(--a);font-size:16px;font-weight:800">'+list.length+'</span></div><div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Gains parrainage</span><span style="color:var(--a);font-size:16px;font-weight:800;font-family:monospace">'+F(r.data.totalGains)+'</span></div></div>';
-    if(list.length){list.forEach(function(f){h+='<div class="tx" style="background:var(--s);border:1px solid var(--b)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:14px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div><div style="font-size:13px;font-weight:600">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+f.telephone+'</div></div></div><div style="color:var(--d);font-size:11px">'+FD(f.dateCreation)+'</div></div>';});}
-    else h+='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucun filleul pour l\'instant</div>';
-    el.innerHTML=h;
-  }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
-  openSh('reseau');
-}
-
-async function doChangePin(){
-  var oldPin=document.getElementById('old-pin').value;
-  var newPin=document.getElementById('new-pin').value;
-  var newPin2=document.getElementById('new-pin2').value;
-  var errEl=document.getElementById('change-pin-err');
-  if(newPin.length!==4||oldPin.length!==4){errEl.textContent='Les codes PIN doivent avoir 4 chiffres.';errEl.style.display='';return;}
-  if(newPin!==newPin2){errEl.textContent='Les nouveaux PIN ne correspondent pas.';errEl.style.display='';return;}
-  errEl.style.display='none';
-  document.getElementById('change-pin-form').style.display='none';
-  document.getElementById('change-pin-loading').style.display='';
-  try{
-    await post('/auth/change-pin',{oldPin,newPin});
-    document.getElementById('change-pin-loading').style.display='none';
-    document.getElementById('change-pin-success').style.display='';
-  }catch(e){
-    document.getElementById('change-pin-loading').style.display='none';
-    document.getElementById('change-pin-form').style.display='';
-    errEl.textContent=e.message;errEl.style.display='';
-  }
-}
-function rstChangePin(){
-  ['old-pin','new-pin','new-pin2'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('change-pin-err').style.display='none';
-  document.getElementById('change-pin-form').style.display='';
-  document.getElementById('change-pin-loading').style.display='none';
-  document.getElementById('change-pin-success').style.display='none';
-}
-
-function inviterAmi(){
-  var u=G.user;if(!u)return;var code=u.codeParrainage||'';
-  var msg='Rejoignez AFRIM PAY avec mon code '+code+' !';
-  if(navigator.share)navigator.share({title:'AFRIM PAY',text:msg});
-  else if(navigator.clipboard){navigator.clipboard.writeText(msg);T('Message copié !');}
-  else T('Code : '+code);
-}
-
-async function logout(){
-  try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}
-  G.token=G.refresh=G.user=G.compte=null;
-  _ls.del('afrim_token');_ls.del('afrim_refresh');_ls.del('afrim_user');
-  document.getElementById('s-lock').classList.remove('on');
-  S('s-login');
-}
-
-// ══ QR CODE ══════════════════════════════════════════════════════
-var _qrCallback=null;
-var _qrGenInstances={};
-
-function genererQR(){
-  var u=G.user;if(!u||!u.telephone)return;
-  var data=u.telephone+'|'+(u.prenom||'')+' '+(u.nom||'');
-  ['qr-profil-canvas','wqr-carte-canvas'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(!el)return;
-    if(_qrGenInstances[id]){try{_qrGenInstances[id].clear();}catch(e){}}
-    el.innerHTML='';
-    try{
-      _qrGenInstances[id]=new QRCode(el,{text:data,width:id==='qr-profil-canvas'?130:200,height:id==='qr-profil-canvas'?130:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){}
-  });
-  var nm=document.getElementById('wqr-carte-name');var tl=document.getElementById('wqr-carte-tel');
-  if(nm)nm.textContent=(u.prenom||'')+' '+(u.nom||'');
-  if(tl)tl.textContent=u.telephone||'';
-}
-
-function ouvrirPopupQR(callback){
-  _qrCallback=callback||null;
-  var popup=document.getElementById('wave-qr-popup');
-  popup.classList.add('on');
-  wqrTab('scan');
-  genererQR();
-}
-function fermerPopupQR(){
-  var popup=document.getElementById('wave-qr-popup');
-  popup.classList.remove('on');
-  var video=document.getElementById('wqr-video');
-  if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
-  if(window._scanAnimFrame){cancelAnimationFrame(window._scanAnimFrame);window._scanAnimFrame=null;}
-  // NE PAS nullifier _qrCallback ici — il sera utilisé dans le setTimeout du scanner
-}
-
-function wqrTab(tab){
-  var scanner=document.getElementById('wqr-scanner');
-  var carte=document.getElementById('wqr-carte');
-  ['wtab-scan','wtab-scan2','wtab-carte','wtab-carte2'].forEach(function(id){
-    var b=document.getElementById(id);if(!b)return;
-    var isActive=(id.includes('scan')&&tab==='scan')||(id.includes('carte')&&tab==='carte');
-    b.classList.toggle('on',isActive);
-  });
-  if(scanner)scanner.style.display=tab==='scan'?'flex':'none';
-  if(carte)carte.style.display=tab==='carte'?'flex':'none';
-  if(tab==='scan')demarrerScan();
-  else{var video=document.getElementById('wqr-video');if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}}
-}
-
-function demarrerScan(){
-  var video=document.getElementById('wqr-video');
-  var msg=document.getElementById('wqr-scan-msg');
-  if(!video)return;
-  if('BarcodeDetector' in window){
-    var bd=new BarcodeDetector({formats:['qr_code']});
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
-      video.srcObject=stream;video.style.display='';
-      if(msg)msg.style.display='none';
-      function scanFrame(){
-        if(!video.srcObject){return;}
-        bd.detect(video).then(function(codes){
-          if(codes.length>0){
-            var raw=codes[0].rawValue;
-            var parts=raw.split('|');var tel=parts[0]||raw;
-            var cb=_qrCallback;_qrCallback=null;
-            fermerPopupQR();
-            setTimeout(function(){
-              if(typeof cb==='function'){cb(tel,parts);}
-              else afficherChoixOp(tel,parts);
-            },300);
-            return;
-          }
-          window._scanAnimFrame=requestAnimationFrame(scanFrame);
-        }).catch(function(){window._scanAnimFrame=requestAnimationFrame(scanFrame);});
-      }
-      video.onloadedmetadata=function(){video.play();window._scanAnimFrame=requestAnimationFrame(scanFrame);};
-    }).catch(function(){if(msg)msg.textContent='Caméra non disponible';});
-  } else {
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
-      video.srcObject=stream;video.style.display='';
-      if(msg)msg.style.display='none';
-      var canvas=document.getElementById('wqr-canvas');var ctx=canvas.getContext('2d');
-      function tick(){
-        if(!video.srcObject)return;
-        if(video.readyState>=2&&window.jsQR){
-          canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-          ctx.drawImage(video,0,0);
-          var d=ctx.getImageData(0,0,canvas.width,canvas.height);
-          var code=jsQR(d.data,d.width,d.height);
-          if(code&&code.data){
-            var raw=code.data;var parts=raw.split('|');var tel=parts[0]||raw;
-            var cb=_qrCallback;_qrCallback=null;
-            fermerPopupQR();
-            setTimeout(function(){
-              if(typeof cb==='function'){cb(tel,parts);}
-              else afficherChoixOp(tel,parts);
-            },300);
-            return;
-          }
-        }
-        window._scanAnimFrame=requestAnimationFrame(tick);
-      }
-      video.onloadedmetadata=function(){video.play();window._scanAnimFrame=requestAnimationFrame(tick);};
-    }).catch(function(){
-      if(msg)msg.textContent='Caméra non disponible — utilisez la galerie';
-    });
-  }
-}
-
-var _flashOn=false;
-function toggleFlash(){
-  var video=document.getElementById('wqr-video');
-  if(!video||!video.srcObject)return;
-  var track=video.srcObject.getVideoTracks()[0];
-  if(!track)return;
-  _flashOn=!_flashOn;
-  track.applyConstraints({advanced:[{torch:_flashOn}]}).catch(function(){T('Torche non disponible',true);_flashOn=!_flashOn;});
-  var btn=document.getElementById('wqr-flash-btn');
-  if(btn)btn.style.background=_flashOn?'rgba(245,158,11,.4)':'rgba(255,255,255,.15)';
-}
-
-// Galerie QR
-document.addEventListener('DOMContentLoaded',function(){
-  var ni=document.getElementById('wqr-native-input');
-  if(!ni)return;
-  ni.addEventListener('change',function(){
-    if(!this.files||!this.files[0])return;
-    var file=this.files[0];this.value='';
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      var img=new Image();
-      img.onload=function(){
-        var c=document.createElement('canvas');c.width=img.width;c.height=img.height;
-        var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
-        if(window.jsQR){
-          var d=ctx.getImageData(0,0,img.width,img.height);
-          var code=jsQR(d.data,d.width,d.height);
-          if(code&&code.data){
-            var parts=code.data.split('|');var tel=parts[0]||code.data;
-            var cb=_qrCallback;_qrCallback=null;
-            fermerPopupQR();
-            setTimeout(function(){
-              if(typeof cb==='function'){cb(tel,parts);}
-            else afficherChoixOp(tel,parts);
-            },300);
-            return;
-          }
-        }
-        T('QR non reconnu',true);
-      };
-      img.src=ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-});
-
-// ══ AUTO-LOCK (60s background) ════════════════════════════════════
-var _lockTimer=null;var _lockPin='';
-function initAutoLock(){
-  document.addEventListener('visibilitychange',function(){
-    if(document.hidden){
-      _lockTimer=setTimeout(function(){
-        if(G.user){
-          var lock=document.getElementById('s-lock');
-          document.getElementById('lock-name').textContent=(G.user.prenom||'')+' '+(G.user.nom||'');
-          lock.classList.add('on');
-          _lockPin='';rLockDots();
-        }
-      },60000);
-    } else {
-      if(_lockTimer){clearTimeout(_lockTimer);_lockTimer=null;}
-    }
-  });
-}
-function rLockDots(){for(var i=0;i<4;i++){var d=document.getElementById('ld'+i);if(d){d.textContent=_lockPin.length>i?'●':'';d.classList.toggle('on',_lockPin.length>i);}}}
-function lockPIN(n){if(_lockPin.length>=4)return;_lockPin+=String(n);rLockDots();if(_lockPin.length===4)setTimeout(verifierLock,300);}
-function lockDEL(){_lockPin=_lockPin.slice(0,-1);rLockDots();}
-async function verifierLock(){
-  var errEl=document.getElementById('lock-err');errEl.style.display='none';
-  try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin});
-    document.getElementById('s-lock').classList.remove('on');
-    G.token=r.data.accessToken;_ls.set('afrim_token',G.token);
-  }catch(e){
-    _lockPin='';rLockDots();errEl.style.display='';
-  }
-}
-
-
-// ── Menu choix opération après scan accueil ──────────────────────
-var _scannedClient = null;
-function afficherChoixOp(tel, parts){
-  // Identifier le client puis afficher le choix
-  (async function(){
-    try{
-      var r = await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-      var arr = Array.isArray(r.data)?r.data:[r.data];
-      if(!arr.length||!arr[0]) throw new Error('Client introuvable');
-      var u = arr[0];
-      _scannedClient = u;
-      document.getElementById('choix-av').textContent = (u.prenom||'?')[0].toUpperCase();
-      document.getElementById('choix-name').textContent = (u.prenom||'')+' '+(u.nom||'');
-      document.getElementById('choix-tel').textContent = u.telephone||tel;
-      document.getElementById('choix-kyc').textContent = u.kycNiveau||'KYC1';
-      document.getElementById('choix-op-sub').textContent = 'Que souhaitez-vous faire ?';
-      openSh('choix-op');
-    }catch(e){ T(e.message, true); }
-  })();
-}
-
-function ouvrirDepotAvecClient(){
-  if(!_scannedClient) return;
-  closeSh('choix-op');
-  setTimeout(function(){
-    rstOp('dep');
-    openSh('depot');
-    document.getElementById('dep-tel').value = _scannedClient.telephone||'';
-    onTelInput('dep');
-    // Pré-remplir le recap directement
-    opClients['dep'] = _scannedClient;
-    var u = _scannedClient;
-    document.getElementById('dep-s1').style.display='none';
-    document.getElementById('dep-s2').style.display='';
-    document.getElementById('dep-recap').style.display='';
-    document.getElementById('dep-av').textContent=(u.prenom||'?')[0].toUpperCase();
-    document.getElementById('dep-cname').textContent=(u.prenom||'')+' '+(u.nom||'');
-    document.getElementById('dep-ctel').textContent=u.telephone||'';
-    document.getElementById('dep-kyc').textContent=u.kycNiveau||'KYC1';
-    document.getElementById('dep-btn-valider').style.display='';
-  },300);
-}
-
-function ouvrirRetraitAvecClient(){
-  if(!_scannedClient) return;
-  closeSh('choix-op');
-  setTimeout(function(){
-    rstOp('ret');
-    openSh('retrait');
-    document.getElementById('ret-tel').value = _scannedClient.telephone||'';
-    onTelInput('ret');
-    opClients['ret'] = _scannedClient;
-    var u = _scannedClient;
-    document.getElementById('ret-s1').style.display='none';
-    document.getElementById('ret-s2').style.display='';
-    document.getElementById('ret-recap').style.display='';
-    document.getElementById('ret-av').textContent=(u.prenom||'?')[0].toUpperCase();
-    document.getElementById('ret-cname').textContent=(u.prenom||'')+' '+(u.nom||'');
-    document.getElementById('ret-ctel').textContent=u.telephone||'';
-    document.getElementById('ret-kyc').textContent=u.kycNiveau||'KYC1';
-    var sol=u.comptes&&(Array.isArray(u.comptes)?u.comptes[0]:u.comptes);
-    if(sol)document.getElementById('ret-csolde').textContent=F(sol.solde);
-    document.getElementById('ret-btn-valider').style.display='';
-  },300);
-}
-
-// ══ INIT ═════════════════════════════════════════════════════════
-document.querySelectorAll('.sh-ov').forEach(function(el){
-  el.addEventListener('click',function(e){if(e.target===el){var id=el.id.replace('sh-','');closeSh(id);}});
-});
-
-(function init(){
-  if(G.token&&G.user&&['agent','mini_master','master','superviseur','admin'].includes(G.user.role)){
-    S('s-home');chargerAccueil();genererQR();initAutoLock();return;
-  }
-  S('s-login');
-})();
-</script>
-
-<!-- SHEET CHOIX OPÉRATION après scan QR accueil -->
-<div class="sh-ov" id="sh-choix-op">
-  <div class="sh" style="padding-bottom:60px">
-    <div class="sh-bar"></div>
-    <div class="sh-top">
-      <div>
-        <div class="sh-title">Client identifié</div>
-        <div style="color:var(--m);font-size:12px" id="choix-op-sub">Choisissez l'opération</div>
-      </div>
-      <button class="sh-x" onclick="closeSh('choix-op')">✕</button>
-    </div>
-    <!-- Recap client -->
-    <div style="background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:44px;height:44px;border-radius:50%;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:18px;font-weight:800" id="choix-av">?</div>
-        <div>
-          <div style="font-weight:700;font-size:15px" id="choix-name">—</div>
-          <div style="color:var(--m);font-size:12px" id="choix-tel">—</div>
-        </div>
-        <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(245,158,11,.1);color:var(--a)" id="choix-kyc">—</div>
-      </div>
-    </div>
-    <!-- Boutons opérations -->
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button onclick="ouvrirDepotAvecClient()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;flex-shrink:0">↓</div>
-        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un Dépôt</div><div style="font-size:11px;color:var(--m)">Commission 0,2% du montant</div></div>
-      </button>
-      <button onclick="ouvrirRetraitAvecClient()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px;flex-shrink:0">↑</div>
-        <div><div style="font-size:14px;font-weight:700;color:#c2410c">Effectuer un Retrait</div><div style="font-size:11px;color:var(--m)">35% des frais de retrait</div></div>
-      </button>
-    </div>
-  </div>
-</div>
-</div>
-</body>
-</html>
