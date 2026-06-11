@@ -1102,6 +1102,17 @@ async function chargerCommissions(){
       +'<div style="font-size:9px;opacity:.6;margin-top:2px">'+retC.length+' ops</div>'
       +'</div></div></div>';
 
+    // ── Virer commissions ──
+    var tTotalComm=all.reduce(function(s,c){return s+Number(c.montant||0);},0);
+    h+='<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+      +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">💸 Virer mes commissions</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-bottom:12px">Disponible : <strong style="color:var(--a)">'+F(tTotalComm)+'</strong></div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input id="comm-vir-input" type="number" placeholder="Montant en FCFA" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;color:#111">'
+        +'<button onclick="virerCommissions()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">Virer</button>'
+      +'</div>'
+      +'<div id="comm-vir-msg" style="margin-top:8px;font-size:12px;display:none"></div>'
+    +'</div>';
     h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">D&#233;tail</div>';
     if(!comms.length){h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission sur cette p&#233;riode</div>';}
     else{
@@ -1117,20 +1128,7 @@ async function chargerCommissions(){
           +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
       });
     }
-    // ── Virer commissions ──
-    var tTotalComm=all.filter(function(c){return c.type_commission==='depot_agent'||c.type_commission==='retrait_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
-    h+='<div style="margin-top:16px;background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:16px">'
-      +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">💸 Virer mes commissions</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-bottom:12px">Disponible : <strong style="color:var(--a)">'+F(tTotalComm)+' FCFA</strong></div>'
-      +'<div style="display:flex;gap:8px;align-items:center">'
-        +'<input id="comm-vir-input" type="number" placeholder="Montant en FCFA" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;color:#111">'
-        +'<button onclick="virerCommissions()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">Virer</button>'
-      +'</div>'
-      +'<div id="comm-vir-msg" style="margin-top:8px;font-size:12px;display:none"></div>'
-    +'</div>';
     el.innerHTML=h;
-    // Bind virer
-    var cvMsg=document.getElementById('comm-vir-msg');
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
@@ -1230,6 +1228,17 @@ async function chargerGains(){
         +'<div style="font-size:11px;opacity:.8">TOTAL DEPUIS TOUJOURS</div>'
         +'<div style="font-size:20px;font-weight:900">'+F(tTotal)+' F</div>'
       +'</div>'
+    +'</div>';
+
+    // ── Virer mes gains ──
+    h+='<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+      +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">💸 Virer mes gains</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-bottom:12px">Disponible : <strong style="color:var(--a)">'+F(tTotal)+'</strong></div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input id="gains-vir-input" type="number" placeholder="Montant en FCFA" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;color:#111">'
+        +'<button id="gains-vir-btn" onclick="virerGains()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">Virer</button>'
+      +'</div>'
+      +'<div id="gains-vir-msg" style="margin-top:8px;font-size:12px;display:none"></div>'
     +'</div>';
 
     // ── Parrainage ──
