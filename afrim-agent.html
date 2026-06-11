@@ -326,7 +326,6 @@ function setTab(t){
       <button class="chip" onclick="setHistFilter('depot')">D&#233;p&#244;ts</button>
       <button class="chip" onclick="setHistFilter('retrait')">Retraits</button>
       <button class="chip" onclick="setHistFilter('transfert')">Transferts</button>
-      <button class="chip" onclick="setHistFilter('commission')">Commissions</button>
     </div>
   </div>
   <div class="sc"><div id="hist-list"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div></div>
@@ -1041,35 +1040,10 @@ async function chargerHistorique(){
   var el=document.getElementById('hist-list');
   el.innerHTML='<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
   try{
-    if(histFilter==='commission'){
-      var r=await get('/commissions?limit=100');
-      var list=r.data||[];
-      if(!list.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune commission</div>';return;}
-      el.innerHTML=list.map(function(c){
-        var isD=c.type_commission==='depot_agent',isR=c.type_commission==='retrait_agent';
-        var col=isD?'#22c55e':isR?'#f97316':'#f59e0b';
-        var icon=isD?'↓':isR?'↑':'★';
-        var label=isD?'Commission d&#233;p&#244;t':isR?'Commission retrait':'Commission';
-        var d=new Date(c.date_calcul||c.created_at||0);
-        var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-        return '<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
-          +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
-          +'<div><div style="font-size:13px;font-weight:700">'+label+'</div>'
-          +'<div style="color:var(--m);font-size:11px">'+ds+'</div>'
-          +'<div style="font-size:10px;font-weight:600;color:'+(c.statut==='verse'?'#16a34a':'#9ca3af')+'">'+( c.statut==='verse'?'✓ Disponible':'En attente')+'</div>'
-          +'</div></div>'
-          +'<div style="text-align:right">'
-          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div>'
-          +'<div style="color:var(--d);font-size:10px">'+(Math.round((c.taux||0)*100*10)/10)+'%</div>'
-          +'</div></div>';
-      }).join('');
-    } else {
-      var url='/transactions?limit=50'+(histFilter!=='all'?'&type='+histFilter:'');
-      var r=await get(url);
-      var list=r.data||[];
-      el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction</div>';
-    }
+    var url='/transactions?limit=50'+(histFilter!=='all'?'&type='+histFilter:'');
+    var r=await get(url);
+    var list=r.data||[];
+    el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction</div>';
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
@@ -1127,42 +1101,7 @@ async function chargerCommissions(){
       +'<div style="font-size:16px;font-weight:900">'+F(tRet)+'</div>'
       +'<div style="font-size:9px;opacity:.6;margin-top:2px">'+retC.length+' ops</div>'
       +'</div></div></div>';
-    // Courbe
-    var cmap={};
-    comms.forEach(function(c){
-      var d=new Date(c.date_calcul||0);
-      var key;
-      if(commPeriod==='day')key=d.getHours()+'h';
-      else if(commPeriod==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];key=j[d.getDay()];}
-      else if(commPeriod==='year'){var m=['J','F','M','A','M','J','J','A','S','O','N','D'];key=m[d.getMonth()];}
-      else key=d.getDate()+'';
-      if(!cmap[key])cmap[key]={label:key,depot_agent:0,retrait_agent:0};
-      if(c.type_commission==='depot_agent')cmap[key].depot_agent+=Number(c.montant||0);
-      else cmap[key].retrait_agent+=Number(c.montant||0);
-    });
-    var ccourbe=Object.values(cmap);
-    if(ccourbe.length>1){
-      var maxV=Math.max.apply(null,ccourbe.map(function(c){return Math.max(c.depot_agent,c.retrait_agent);}));
-      if(maxV>0){
-        h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
-          +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">&#201;volution</div>'
-          +'<div style="display:flex;gap:8px;margin-bottom:8px">'
-          +'<span style="font-size:10px;color:#22c55e">● D&#233;p&#244;ts</span>'
-          +'<span style="font-size:10px;color:#f97316">● Retraits</span></div>'
-          +'<div style="display:flex;align-items:flex-end;gap:3px;height:80px">';
-        ccourbe.forEach(function(c){
-          var v1=c.depot_agent,v2=c.retrait_agent;
-          var p1=maxV>0?Math.max(2,Math.round((v1/maxV)*74)):2;
-          var p2=maxV>0?Math.max(2,Math.round((v2/maxV)*74)):2;
-          h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'
-            +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;height:74px">'
-            +'<div style="flex:1;background:#22c55e;border-radius:2px 2px 0 0;height:'+p1+'px;opacity:'+(v1?'.9':'.15')+'"></div>'
-            +'<div style="flex:1;background:#f97316;border-radius:2px 2px 0 0;height:'+p2+'px;opacity:'+(v2?'.9':'.15')+'"></div>'
-            +'</div><div style="font-size:7px;color:#9ca3af;text-align:center;white-space:nowrap;overflow:hidden;max-width:22px">'+c.label+'</div></div>';
-        });
-        h+='</div></div>';
-      }
-    }
+
     h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">D&#233;tail</div>';
     if(!comms.length){h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission sur cette p&#233;riode</div>';}
     else{
@@ -1178,8 +1117,43 @@ async function chargerCommissions(){
           +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
       });
     }
+    // ── Virer commissions ──
+    var tTotalComm=all.filter(function(c){return c.type_commission==='depot_agent'||c.type_commission==='retrait_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    h+='<div style="margin-top:16px;background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:16px">'
+      +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">💸 Virer mes commissions</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-bottom:12px">Disponible : <strong style="color:var(--a)">'+F(tTotalComm)+' FCFA</strong></div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input id="comm-vir-input" type="number" placeholder="Montant en FCFA" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;color:#111">'
+        +'<button onclick="virerCommissions()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">Virer</button>'
+      +'</div>'
+      +'<div id="comm-vir-msg" style="margin-top:8px;font-size:12px;display:none"></div>'
+    +'</div>';
     el.innerHTML=h;
+    // Bind virer
+    var cvMsg=document.getElementById('comm-vir-msg');
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
+}
+
+async function virerCommissions(){
+  var inp=document.getElementById('comm-vir-input');
+  var msg=document.getElementById('comm-vir-msg');
+  var btn=event.target;
+  var amt=Number(inp&&inp.value);
+  if(!amt||amt<1){if(msg){msg.style.display='block';msg.style.color='#ef4444';msg.textContent='Montant invalide';}return;}
+  btn.disabled=true;btn.textContent='...';
+  try{
+    var r=await post('/accounts/transfer-gains',{montant:amt});
+    if(r.success){
+      if(msg){msg.style.display='block';msg.style.color='#16a34a';msg.textContent='✅ '+F(amt)+' FCFA vir&#233;s !';}
+      if(inp)inp.value='';
+      setTimeout(function(){chargerCommissions();},1200);
+    } else {
+      if(msg){msg.style.display='block';msg.style.color='#ef4444';msg.textContent=r.error||'Erreur';}
+    }
+  }catch(e2){
+    if(msg){msg.style.display='block';msg.style.color='#ef4444';msg.textContent=e2.message;}
+  }
+  btn.disabled=false;btn.textContent='Virer';
 }
 
 // ══ GAINS / COMMISSIONS ══════════════════════════════════════════
@@ -1203,58 +1177,59 @@ async function chargerGains(){
   el.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
   try{
     var results=await Promise.all([
-      get('/commissions/summary'),
-      get('/commissions?limit=100'),
-      get('/stats/dashboard'),
+      get('/commissions?limit=1000'),
       get('/users/me')
     ]);
-    var summ=results[0].data||{};
-    var comms=results[1].data||[];
-    var sr=results[2].data||{};
-    var me=results[3].data||{};
-    var now=new Date(),d1=new Date(now.getFullYear(),now.getMonth(),1);
-    var prevD1=new Date(now.getFullYear(),now.getMonth()-1,1);
-    var prevD2=new Date(now.getFullYear(),now.getMonth(),0,23,59,59);
-    var tMois=Number(summ.totalMois||0);
-    var tTotal=Number(summ.totalHistorique||0);
-    var nbDep=sr.depotsMois&&sr.depotsMois.count||0;
-    var nbRet=sr.retraitsMois&&sr.retraitsMois.count||0;
-    var commMois=comms.filter(function(c){return new Date(c.date_calcul||0)>=d1;});
-    var commPrec=comms.filter(function(c){var d=new Date(c.date_calcul||0);return d>=prevD1&&d<=prevD2;});
-    var commDep=commMois.filter(function(c){return c.type_commission==='depot_agent';});
-    var commRet=commMois.filter(function(c){return c.type_commission==='retrait_agent';});
-    var tDep=commDep.reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var tRet=commRet.reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var tPrec=commPrec.reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var comms=results[0].data||[];
+    var me=results[1].data||{};
+    var now=new Date();
+
+    // GAINS = commissions_parrain UNIQUEMENT (pas depot_agent/retrait_agent)
+    var gainsParr=comms.filter(function(c){return c.type_commission==='commission_parrain';});
+
+    var dAuj=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var dSem=new Date(now);dSem.setDate(dSem.getDate()-dSem.getDay());dSem.setHours(0,0,0,0);
+    var dMois=new Date(now.getFullYear(),now.getMonth(),1);
+    var dAn=new Date(now.getFullYear(),0,1);
+
+    function sumG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){return s+Number(c.montant||0);},0);}
+    function nbG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).length;}
+
+    var tAuj=sumG(dAuj),tSem=sumG(dSem),tMois=sumG(dMois),tAn=sumG(dAn);
+    var tTotal=gainsParr.reduce(function(s,c){return s+Number(c.montant||0);},0);
+
     var codeParrainage=(me.codeParrainage||'').replace(/\s+/g,'').replace(/-/g,'');
-    var soldeGains=Number(summ.soldeGains||summ.disponible||0);
     var h='';
 
-    // ── Carte principale CE MOIS-CI ──
+    // ── Carte gains parrainage ──
     h+='<div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">CE MOIS-CI</div>'
-      +'<div style="font-size:40px;font-weight:900;margin-bottom:4px">'+F(tMois)+' <span style="font-size:16px;opacity:.7">FCFA</span></div>'
-      +'<div style="display:flex;gap:8px;margin-top:12px">'
-        +'<div style="flex:1;background:rgba(0,0,0,.18);border-radius:12px;padding:10px 8px;text-align:center">'
-          +'<div style="font-size:15px;font-weight:800">'+commDep.length+'</div>'
-          +'<div style="font-size:9px;opacity:.7;margin-top:2px">op&#233;rations</div>'
+      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MES GAINS</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
+          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div>'
+          +'<div style="font-size:18px;font-weight:900">'+F(tAuj)+' F</div>'
+          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAuj)+' ops</div>'
         +'</div>'
-        +'<div style="flex:1;background:rgba(0,0,0,.18);border-radius:12px;padding:10px 8px;text-align:center">'
-          +'<div style="font-size:15px;font-weight:800">'+F(tPrec)+' F</div>'
-          +'<div style="font-size:9px;opacity:.7;margin-top:2px">mois pr&#233;c.</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
+          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div>'
+          +'<div style="font-size:18px;font-weight:900">'+F(tSem)+' F</div>'
+          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dSem)+' ops</div>'
+        +'</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
+          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div>'
+          +'<div style="font-size:18px;font-weight:900">'+F(tMois)+' F</div>'
+          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dMois)+' ops</div>'
+        +'</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
+          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div>'
+          +'<div style="font-size:18px;font-weight:900">'+F(tAn)+' F</div>'
+          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAn)+' ops</div>'
         +'</div>'
       +'</div>'
-    +'</div>';
-
-    // ── Virer mes gains ──
-    h+='<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
-      +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">💸 Virer mes gains vers mon compte</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-bottom:12px">Disponible : <strong style="color:var(--a)">'+F(tTotal)+' FCFA</strong></div>'
-      +'<div style="display:flex;gap:8px;align-items:center">'
-        +'<input id="gains-vir-input" type="number" placeholder="Montant en FCFA" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;color:#111">'
-        +'<button id="gains-vir-btn" onclick="virerGains()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">Virer</button>'
+      +'<div style="margin-top:10px;padding:10px;background:rgba(255,255,255,.12);border-radius:10px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="font-size:11px;opacity:.8">TOTAL DEPUIS TOUJOURS</div>'
+        +'<div style="font-size:20px;font-weight:900">'+F(tTotal)+' F</div>'
       +'</div>'
-      +'<div id="gains-vir-msg" style="margin-top:8px;font-size:12px;display:none"></div>'
     +'</div>';
 
     // ── Parrainage ──
@@ -1279,50 +1254,31 @@ async function chargerGains(){
     // ── Comment gagner ──
     h+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:14px;margin-bottom:14px;font-size:12px;color:#166534">'
       +'<div style="font-weight:800;margin-bottom:6px">💡 Comment gagner ?</div>'
-      +'<div style="margin-bottom:4px">Parrainez des contacts. Ils font un <strong>d&#233;p&#244;t ou re&#231;oivent un transfert ≥500 FCFA</strong> = rattachés à vie.</div>'
+      +'<div style="margin-bottom:4px">Parrainez des contacts. Ils font un <strong>d&#233;p&#244;t ou transfert ≥500 FCFA</strong> = rattach&#233;s &#224; vie.</div>'
       +'<div>&#192; chaque <strong>retrait ou paiement</strong> de votre filleul → <strong>10% des frais</strong> pour vous.</div>'
     +'</div>';
 
-    // ── Bar&#232;me ──
-    h+='<div style="background:#fffbeb;border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:14px">'
-      +'<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">📋 Bar&#232;me commissions</div>'
-      +'<div style="display:flex;flex-direction:column;gap:6px">'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↓ D&#233;p&#244;t client</span><span style="font-weight:800">0,2% du montant</span></div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>↑ Retrait client</span><span style="font-weight:800">35% des frais (1%)</span></div>'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#a16207"><span>🤝 Parrainage filleul</span><span style="font-weight:800">10% des frais</span></div>'
-      +'</div>'
-    +'</div>';
-
-    // ── Détail ce mois ──
-    h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Détail ce mois</div>';
-    if(!commMois.length){
-      h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission ce mois</div>';
-    } else {
-      commMois.forEach(function(c){
-        var isD=c.type_commission==='depot_agent',isP=c.type_commission==='commission_parrain';
-        var col=isD?'#22c55e':isP?'#8b5cf6':'#f97316';
-        var icon=isD?'↓':isP?'🤝':'↑';
-        var label=isD?'Commission d&#233;p&#244;t':isP?'Commission parrainage':'Commission retrait';
+    // Historique gains parrainage seulement
+    if(gainsParr.length){
+      h+='<div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Historique gains</div>';
+      gainsParr.slice(0,15).forEach(function(c){
         var d=new Date(c.date_calcul||0);
         var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-        h+='<div class="tx" style="background:'+col+'0d;border:1px solid '+col+'22">'
+        h+='<div class="tx" style="background:#8b5cf60d;border:1px solid #8b5cf622">'
           +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+icon+'</div>'
-          +'<div><div style="font-size:13px;font-weight:700">'+label+'</div><div style="color:var(--m);font-size:11px">'+ds+'</div></div></div>'
-          +'<div style="color:'+col+';font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
+          +'<div style="width:36px;height:36px;border-radius:10px;background:#8b5cf618;color:#8b5cf6;display:flex;align-items:center;justify-content:center;font-size:15px">🤝</div>'
+          +'<div><div style="font-size:13px;font-weight:700">Gain parrainage</div><div style="color:var(--m);font-size:11px">'+ds+'</div></div></div>'
+          +'<div style="color:#8b5cf6;font-size:15px;font-weight:900;font-family:monospace">+'+F(c.montant)+'</div></div>';
       });
     }
 
     el.innerHTML=h;
 
-    // Listeners
     var cv=document.getElementById('gains-code-val');
     if(cv)cv.addEventListener('click',function(){
-      if(navigator.clipboard)navigator.clipboard.writeText(codeParrainage).then(function(){T('Code copié !');});
+      if(navigator.clipboard)navigator.clipboard.writeText(codeParrainage).then(function(){T('Code copi&#233; !');});
       else T('Code: '+codeParrainage);
     });
-
-    // Charger nb parrainés/rattachés
     try{
       var rRef=await get('/users/'+me.id+'/referrals');
       var filleuls=rRef.data&&rRef.data.filleuls||[];
@@ -1347,7 +1303,7 @@ async function virerGains(){
     var r=await post('/accounts/transfer-gains',{montant:amt});
     if(r.success){
       msg.style.display='block';msg.style.color='#16a34a';
-      msg.textContent='✅ '+F(amt)+' FCFA vir&#233;s vers votre compte !';
+      msg.textContent='✅ '+F(amt)+' F vir&#233;s vers votre compte !';
       inp.value='';
       setTimeout(function(){chargerGains();},1200);
     } else {
@@ -1447,110 +1403,85 @@ function renderStatTab(){
   var el=document.getElementById('stats-content');
   if(!el||!_statData)return;
   var d=_statData;
-  var totaux=d.totaux||{};
-  var courbe=d.courbe||[];
-  var commData=d.commData||[];
-  var gainsData=d.gainsData||[];
   var h='';
 
   if(statTab==='depot'){
-    var vol=totaux.depot_effectue&&totaux.depot_effectue.vol||0;
-    var nb=totaux.depot_effectue&&totaux.depot_effectue.n||0;
+    var vol=d.dep.vol,nb=d.dep.list.length;
     h+='<div style="background:linear-gradient(135deg,#15803d,#22c55e);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">VOLUME D&#201;P&#212;TS</div>'
       +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div>'
-    +'</div>';
-    h+=drawCourbe(courbe,'depot_effectue','#22c55e','D&#233;p&#244;ts');
-    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:14px">'
-      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px">D&#233;tail</div>'
-      +'<div class="srow"><span style="color:var(--m);font-size:13px">Volume total</span><span style="font-weight:800;color:#22c55e">'+F(vol)+' F</span></div>'
-      +'<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Nombre d&#39;op&#233;rations</span><span style="font-weight:800">'+nb+'</span></div>'
-    +'</div>';
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div></div>';
+    h+=drawCourbe(d.dep.courbe,'val','#22c55e','D&#233;p&#244;ts');
 
   } else if(statTab==='retrait'){
-    var vol=totaux.retrait_effectue&&totaux.retrait_effectue.vol||0;
-    var nb=totaux.retrait_effectue&&totaux.retrait_effectue.n||0;
+    var vol=d.ret.vol,nb=d.ret.list.length;
     h+='<div style="background:linear-gradient(135deg,#c2410c,#f97316);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">VOLUME RETRAITS</div>'
       +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div>'
-    +'</div>';
-    h+=drawCourbe(courbe,'retrait_effectue','#f97316','Retraits');
-    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:14px">'
-      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px">D&#233;tail</div>'
-      +'<div class="srow"><span style="color:var(--m);font-size:13px">Volume total</span><span style="font-weight:800;color:#f97316">'+F(vol)+' F</span></div>'
-      +'<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Nombre d&#39;op&#233;rations</span><span style="font-weight:800">'+nb+'</span></div>'
-    +'</div>';
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div></div>';
+    h+=drawCourbe(d.ret.courbe,'val','#f97316','Retraits');
 
   } else if(statTab==='transfert'){
-    var vEnv=totaux.transfert_envoye&&totaux.transfert_envoye.vol||0;
-    var nEnv=totaux.transfert_envoye&&totaux.transfert_envoye.n||0;
-    var vRec=totaux.transfert_recu&&totaux.transfert_recu.vol||0;
-    var nRec=totaux.transfert_recu&&totaux.transfert_recu.n||0;
+    var vE=d.trfEnv.vol,nE=d.trfEnv.list.length;
+    var vR=d.trfRec.vol,nR=d.trfRec.list.length;
     h+='<div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">TRANSFERTS</div>'
-      +'<div style="display:flex;gap:12px;margin-top:4px">'
-      +'<div><div style="font-size:22px;font-weight:900">'+F(vEnv)+'</div><div style="font-size:10px;opacity:.7">Envoy&#233;s ('+nEnv+')</div></div>'
-      +'<div style="width:1px;background:rgba(255,255,255,.2)"></div>'
-      +'<div><div style="font-size:22px;font-weight:900">'+F(vRec)+'</div><div style="font-size:10px;opacity:.7">Re&#231;us ('+nRec+')</div></div>'
-      +'</div>'
-    +'</div>';
-    h+=drawDoubleCourbeStat(courbe,'transfert_envoye','#3b82f6','Envoy&#233;s','transfert_recu','#60a5fa','Re&#231;us');
+      +'<div style="display:flex;gap:16px;margin-top:6px">'
+      +'<div><div style="font-size:22px;font-weight:900">'+F(vE)+'</div><div style="font-size:10px;opacity:.7">Envoy&#233;s ('+nE+')</div></div>'
+      +'<div style="width:1px;background:rgba(255,255,255,.25)"></div>'
+      +'<div><div style="font-size:22px;font-weight:900">'+F(vR)+'</div><div style="font-size:10px;opacity:.7">Re&#231;us ('+nR+')</div></div>'
+      +'</div></div>';
+    // Double courbe transferts
+    var envMap={},recMap={};
+    d.trfEnv.courbe.forEach(function(c){envMap[c.label]=c.val;});
+    d.trfRec.courbe.forEach(function(c){recMap[c.label]=c.val;});
+    var trfCourbe=d.trfEnv.courbe.map(function(c){return{label:c.label,env:c.val,rec:recMap[c.label]||0};});
+    if(trfCourbe.length>1){
+      var maxV=Math.max.apply(null,trfCourbe.map(function(c){return Math.max(c.env,c.rec);}));
+      if(maxV>0){
+        h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+          +'<div style="font-size:12px;font-weight:700;color:#374151">&#201;volution transferts</div>'
+          +'<div style="display:flex;gap:8px"><span style="font-size:10px;color:#3b82f6">● Envoy&#233;s</span><span style="font-size:10px;color:#60a5fa">● Re&#231;us</span></div></div>'
+          +'<div style="display:flex;align-items:flex-end;gap:3px;height:80px">';
+        trfCourbe.forEach(function(c){
+          var p1=maxV>0?Math.max(2,Math.round((c.env/maxV)*74)):2;
+          var p2=maxV>0?Math.max(2,Math.round((c.rec/maxV)*74)):2;
+          h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'
+            +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;height:74px">'
+            +'<div style="flex:1;background:#3b82f6;border-radius:2px 2px 0 0;height:'+p1+'px;opacity:'+(c.env?'.9':'.15')+'"></div>'
+            +'<div style="flex:1;background:#60a5fa;border-radius:2px 2px 0 0;height:'+p2+'px;opacity:'+(c.rec?'.9':'.15')+'"></div>'
+            +'</div><div style="font-size:7px;color:#9ca3af;text-align:center;white-space:nowrap;overflow:hidden;max-width:22px">'+c.label+'</div>'
+          +'</div>';
+        });
+        h+='</div></div>';
+      } else { h+='<div style="text-align:center;padding:16px;color:var(--m);font-size:12px">Aucune donn&#233;e sur cette p&#233;riode</div>';}
+    }
 
   } else if(statTab==='comm'){
-    var tDep=commData.filter(function(c){return c.type_commission==='depot_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var tRet=commData.filter(function(c){return c.type_commission==='retrait_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var tComm=tDep+tRet;
-    var nbDep=commData.filter(function(c){return c.type_commission==='depot_agent';}).length;
-    var nbRet=commData.filter(function(c){return c.type_commission==='retrait_agent';}).length;
+    var vol=d.comm.vol,nb=d.comm.list.length;
+    var tDep=d.comm.list.filter(function(c){return c.type_commission==='depot_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var tRet=d.comm.list.filter(function(c){return c.type_commission==='retrait_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var nbD=d.comm.list.filter(function(c){return c.type_commission==='depot_agent';}).length;
+    var nbR=d.comm.list.filter(function(c){return c.type_commission==='retrait_agent';}).length;
     h+='<div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">COMMISSIONS</div>'
-      +'<div style="font-size:32px;font-weight:900">'+F(tComm)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
+      +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
       +'<div style="display:flex;gap:12px;margin-top:8px">'
-      +'<div><div style="font-size:14px;font-weight:800">'+F(tDep)+'</div><div style="font-size:9px;opacity:.7">D&#233;p&#244;ts ('+nbDep+')</div></div>'
-      +'<div style="width:1px;background:rgba(255,255,255,.2)"></div>'
-      +'<div><div style="font-size:14px;font-weight:800">'+F(tRet)+'</div><div style="font-size:9px;opacity:.7">Retraits ('+nbRet+')</div></div>'
-      +'</div>'
-    +'</div>';
-    // Courbe commissions par date
-    var cmap={};
-    commData.forEach(function(c){
-      var d=new Date(c.date_calcul||0);
-      var key;
-      if(statPeriod==='day')key=d.getHours()+'h';
-      else if(statPeriod==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];key=j[d.getDay()];}
-      else if(statPeriod==='year'){var m=['J','F','M','A','M','J','J','A','S','O','N','D'];key=m[d.getMonth()];}
-      else key=d.getDate()+'';
-      if(!cmap[key])cmap[key]={label:key,depot_agent:0,retrait_agent:0};
-      if(c.type_commission==='depot_agent')cmap[key].depot_agent+=Number(c.montant||0);
-      else cmap[key].retrait_agent+=Number(c.montant||0);
-    });
-    var commCourbe=Object.values(cmap);
-    if(commCourbe.length>1)h+=drawDoubleCourbeStat(commCourbe,'depot_agent','#22c55e','D&#233;p&#244;t','retrait_agent','#f97316','Retrait');
+      +'<div><div style="font-size:14px;font-weight:800">'+F(tDep)+'</div><div style="font-size:9px;opacity:.7">D&#233;p&#244;ts ('+nbD+')</div></div>'
+      +'<div style="width:1px;background:rgba(255,255,255,.25)"></div>'
+      +'<div><div style="font-size:14px;font-weight:800">'+F(tRet)+'</div><div style="font-size:9px;opacity:.7">Retraits ('+nbR+')</div></div>'
+      +'</div></div>';
+    h+=drawCourbe(d.comm.courbe,'val','#d97706','Commissions');
 
   } else if(statTab==='gains'){
-    var tGains=gainsData.reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var nbGains=gainsData.length;
+    var vol=d.gains.vol,nb=d.gains.list.length;
     h+='<div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">GAINS PARRAINAGE</div>'
-      +'<div style="font-size:32px;font-weight:900">'+F(tGains)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nbGains+' op&#233;rations</div>'
-    +'</div>';
-    var gmap={};
-    gainsData.forEach(function(c){
-      var d=new Date(c.date_calcul||0);
-      var key;
-      if(statPeriod==='day')key=d.getHours()+'h';
-      else if(statPeriod==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];key=j[d.getDay()];}
-      else if(statPeriod==='year'){var m=['J','F','M','A','M','J','J','A','S','O','N','D'];key=m[d.getMonth()];}
-      else key=d.getDate()+'';
-      if(!gmap[key])gmap[key]={label:key,val:0};
-      gmap[key].val+=Number(c.montant||0);
-    });
-    var gainsCourbe=Object.values(gmap);
-    h+=drawCourbe(gainsCourbe,'val','#8b5cf6','Gains parrainage');
-    if(!nbGains)h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucun gain de parrainage sur cette p&#233;riode</div>';
+      +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div></div>';
+    h+=drawCourbe(d.gains.courbe,'val','#8b5cf6','Gains parrainage');
+    if(!nb)h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucun gain de parrainage sur cette p&#233;riode</div>';
   }
 
   el.innerHTML=h;
@@ -1568,43 +1499,81 @@ async function chargerStats(){
       return new Date(now.getFullYear(),now.getMonth(),1);
     }
     var d1=debutPeriod(statPeriod);
+    var typeParam=statPeriod==='day'?'day':statPeriod==='week'?'week':statPeriod==='year'?'year':'month';
 
+    // Charger transactions + commissions en parallèle
     var results=await Promise.all([
-      get('/stats/detailed?role=agent&period='+statPeriod),
-      get('/commissions?limit=500')
+      get('/transactions?limit=1000&type=depot'),
+      get('/transactions?limit=1000&type=retrait'),
+      get('/transactions?limit=500&type=transfert'),
+      get('/commissions?limit=1000')
     ]);
-    var d=results[0].data||{};
-    var allComms=results[1].data||[];
+    var txDep=results[0].data||[];
+    var txRet=results[1].data||[];
+    var txTrf=results[2].data||[];
+    var allComms=results[3].data||[];
 
-    // Filter commissions by period
-    var commData=allComms.filter(function(c){
+    var cid=G.compte&&G.compte.id||'';
+
+    // Filtrer par période et par compte agent
+    function filterTx(list,d1){return list.filter(function(t){return new Date(t.dateCreation||t.date_creation||0)>=d1;});}
+    
+    // Dépôts: l'agent est compte_source (il donne de la liquidité)
+    var depPeriod=filterTx(txDep,d1).filter(function(t){return String(t.compteSourceId||t.compte_source_id||'')===cid;});
+    // Retraits: l'agent est compte_dest (il reçoit de la liquidité)
+    var retPeriod=filterTx(txRet,d1).filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===cid;});
+    // Transferts: envoyés ou reçus
+    var trfEnvPeriod=filterTx(txTrf,d1).filter(function(t){return String(t.compteSourceId||t.compte_source_id||'')===cid;});
+    var trfRecPeriod=filterTx(txTrf,d1).filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===cid;});
+
+    var commPeriodData=allComms.filter(function(c){
       return (c.type_commission==='depot_agent'||c.type_commission==='retrait_agent')&&new Date(c.date_calcul||0)>=d1;
     });
-    var gainsData=allComms.filter(function(c){
+    var gainsPeriodData=allComms.filter(function(c){
       return c.type_commission==='commission_parrain'&&new Date(c.date_calcul||0)>=d1;
     });
 
-    // Build ordered courbe
-    var courbeOrdered=d.courbe||[];
-    if(statPeriod==='month'){
-      var days={};
-      (courbeOrdered).forEach(function(c){if(c.label)days[c.label]=c;});
-      var nDays=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-      courbeOrdered=[];
-      for(var i=1;i<=nDays;i++){courbeOrdered.push(days[String(i)]||{label:String(i)});}
-    } else if(statPeriod==='week'){
-      var jours=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-      var dw={};
-      (d.courbe||[]).forEach(function(c){if(c.label)dw[c.label]=c;});
-      courbeOrdered=jours.map(function(j){return dw[j]||{label:j};});
-    } else if(statPeriod==='year'){
-      var mois=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-      var dm={};
-      (d.courbe||[]).forEach(function(c){if(c.label)dm[c.label]=c;});
-      courbeOrdered=mois.map(function(m){return dm[m]||{label:m};});
+    function sumTx(list){return list.reduce(function(s,t){return s+Number(t.montant||0);},0);}
+    function sumComm(list){return list.reduce(function(s,c){return s+Number(c.montant||0);},0);}
+
+    // Construire courbe selon période
+    function getLabel(date,p){
+      var d=new Date(date);
+      if(p==='day')return d.getHours()+'h';
+      if(p==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];return j[d.getDay()];}
+      if(p==='year'){var m=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];return m[d.getMonth()];}
+      return d.getDate()+'';
     }
 
-    _statData={totaux:d.totaux||{},courbe:courbeOrdered,commData:commData,gainsData:gainsData};
+    function buildCourbe(items,getValue,getDate){
+      var map={};
+      items.forEach(function(item){
+        var key=getLabel(getDate(item),statPeriod);
+        if(!map[key])map[key]={label:key,val:0};
+        map[key].val+=getValue(item);
+      });
+      // Build ordered array
+      var ordered=[];
+      if(statPeriod==='day'){for(var h=0;h<24;h++){var k=h+'h';ordered.push(map[k]||{label:k,val:0});}}
+      else if(statPeriod==='week'){['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].forEach(function(j){ordered.push(map[j]||{label:j,val:0});});}
+      else if(statPeriod==='year'){['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'].forEach(function(m){ordered.push(map[m]||{label:m,val:0});});}
+      else{var n=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();for(var i=1;i<=n;i++){var k=String(i);ordered.push(map[k]||{label:k,val:0});}}
+      return ordered;
+    }
+
+    var getDate=function(t){return t.dateCreation||t.date_creation||0;};
+    var getMontant=function(t){return Number(t.montant||0);};
+    var getCommDate=function(c){return c.date_calcul||0;};
+    var getCommMontant=function(c){return Number(c.montant||0);};
+
+    _statData={
+      dep:{list:depPeriod,vol:sumTx(depPeriod),courbe:buildCourbe(depPeriod,getMontant,getDate)},
+      ret:{list:retPeriod,vol:sumTx(retPeriod),courbe:buildCourbe(retPeriod,getMontant,getDate)},
+      trfEnv:{list:trfEnvPeriod,vol:sumTx(trfEnvPeriod),courbe:buildCourbe(trfEnvPeriod,getMontant,getDate)},
+      trfRec:{list:trfRecPeriod,vol:sumTx(trfRecPeriod),courbe:buildCourbe(trfRecPeriod,getMontant,getDate)},
+      comm:{list:commPeriodData,vol:sumComm(commPeriodData),courbe:buildCourbe(commPeriodData,getCommMontant,getCommDate)},
+      gains:{list:gainsPeriodData,vol:sumComm(gainsPeriodData),courbe:buildCourbe(gainsPeriodData,getCommMontant,getCommDate)}
+    };
     renderStatTab();
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
