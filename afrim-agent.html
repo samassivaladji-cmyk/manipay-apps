@@ -961,32 +961,40 @@ async function doRetrait(){
 
 async function confirmerRetraitOTP(){
   var client=opClients['ret'];if(!client)return;
-  var otp=document.getElementById('ret-otp-input').value.trim();
+  // Cibler la section OTP visible (2 sheets identiques dans le DOM)
+  var otpSecs=document.querySelectorAll('#ret-otp-section');
+  var otpSec=null;
+  for(var i=0;i<otpSecs.length;i++){if(otpSecs[i].style.display!=='none'){otpSec=otpSecs[i];break;}}
+  if(!otpSec){return;}
+  var otpInp=otpSec.querySelector('#ret-otp-input,input');
+  var btn=otpSec.querySelector('#ret-otp-btn,button:last-child');
+  var otpErr=otpSec.querySelector('#ret-otp-err');
+  var otp=(otpInp?otpInp.value:'').trim();
   if(otp.length!==4||isNaN(otp)){T('Code OTP à 4 chiffres requis',true);return;}
-  var amt=Number(document.getElementById('ret-amt').value);
-  var btn=document.getElementById('ret-otp-btn');
-  btn.disabled=true;btn.textContent='...';
-  document.getElementById('ret-otp-err').style.display='none';
+  var amt=Number(document.getElementById('ret-amt').value||0);
+  if(btn){btn.disabled=true;btn.textContent='...';}
+  if(otpErr)otpErr.style.display='none';
   try{
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
-    document.getElementById('ret-otp-section').style.display='none';
-    document.getElementById('ret-success').style.display='';
+    otpSec.style.display='none';
+    // Trouver le ret-success dans le même parent
+    var par=otpSec.parentElement;
+    var succ=par?par.querySelector('#ret-success,[id="ret-success"]'):document.getElementById('ret-success');
+    if(succ)succ.style.display='';
     var d=r.data||{};
     var fraisR=Number(d.frais||0);var totalR=Number(d.total||amt+fraisR);
-    document.getElementById('ret-succ-txt').textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('ret-succ-montant').textContent=F(d.montant||amt);
-    document.getElementById('ret-succ-frais').textContent=F(fraisR);
-    document.getElementById('ret-succ-total').textContent=F(totalR);
-    document.getElementById('ret-succ-gain').textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
-    document.getElementById('ret-succ-ref').textContent=d.reference||'';
+    var el=function(id){return par?par.querySelector('[id="'+id+'"]'):document.getElementById(id);};
+    var e2=el('ret-succ-txt');if(e2)e2.textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
+    var e3=el('ret-succ-montant');if(e3)e3.textContent=F(d.montant||amt);
+    var e4=el('ret-succ-frais');if(e4)e4.textContent=F(fraisR);
+    var e5=el('ret-succ-total');if(e5)e5.textContent=F(totalR);
+    var e6=el('ret-succ-gain');if(e6)e6.textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
+    var e7=el('ret-succ-ref');if(e7)e7.textContent=d.reference||'';
     rafraichir();
   }catch(e){
-    var otpErr=document.getElementById('ret-otp-err');
     if(otpErr){otpErr.textContent=e.message;otpErr.style.display='';}
     if(btn){btn.disabled=false;btn.textContent='Confirmer';}
-    // Vider le champ OTP pour nouvelle saisie
-    var otpInp=document.getElementById('ret-otp-input');
-    if(otpInp){otpInp.value='';otpInp.focus();}
+    if(otpInp){otpInp.value='';setTimeout(function(){otpInp.focus();},50);}
   }
 }
 
@@ -1002,7 +1010,11 @@ function rstOp(op){
   document.getElementById(op+'-err1').style.display='none';
   document.getElementById(op+'-err2').style.display='none';
   document.getElementById(op+'-btn-valider').style.display='none';
-  var otpSec=document.getElementById(op+'-otp-section');if(otpSec)otpSec.style.display='none';
+  // Reset toutes les sections OTP (2 sheets identiques)
+  document.querySelectorAll('[id="'+op+'-otp-section"]').forEach(function(el){el.style.display='none';});
+  document.querySelectorAll('[id="'+op+'-otp-err"]').forEach(function(el){el.style.display='none';el.textContent='';});
+  document.querySelectorAll('[id="'+op+'-otp-btn"]').forEach(function(el){el.disabled=false;el.textContent='Confirmer';});
+  document.querySelectorAll('[id="'+op+'-otp-input"]').forEach(function(el){el.value='';});
   document.getElementById(op+'-ok').disabled=true;document.getElementById(op+'-ok').style.opacity='.4';
 }
 
