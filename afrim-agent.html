@@ -981,9 +981,12 @@ async function confirmerRetraitOTP(){
     document.getElementById('ret-succ-ref').textContent=d.reference||'';
     rafraichir();
   }catch(e){
-    document.getElementById('ret-otp-err').textContent=e.message;
-    document.getElementById('ret-otp-err').style.display='';
-    btn.disabled=false;btn.textContent='Confirmer';
+    var otpErr=document.getElementById('ret-otp-err');
+    if(otpErr){otpErr.textContent=e.message;otpErr.style.display='';}
+    if(btn){btn.disabled=false;btn.textContent='Confirmer';}
+    // Vider le champ OTP pour nouvelle saisie
+    var otpInp=document.getElementById('ret-otp-input');
+    if(otpInp){otpInp.value='';otpInp.focus();}
   }
 }
 
