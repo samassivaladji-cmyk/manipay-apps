@@ -302,7 +302,7 @@ function setTab(t){
         <button onclick="ouvrirNotifs()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:10px 4px;cursor:pointer;position:relative">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           <span style="font-size:10px;font-weight:700;color:#fff">Notifs</span>
-          <span id="h-notif-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:15px;height:15px;background:#ef4444;border-radius:99px;border:2px solid rgba(255,255,255,.25);font-size:8px;font-weight:800;color:#fff;align-items:center;justify-content:center;padding:0 2px"></span>
+          <div id="h-notif-badge" style="display:none;position:absolute;top:5px;right:8px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;border-radius:99px;padding:1px 4px;min-width:14px;text-align:center">0</div>
         </button>
         <button onclick="rafraichir()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:10px 4px;cursor:pointer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -1077,7 +1077,8 @@ function pollNotificationsAgent(){
     var count=Number(r.data&&r.data.nonLues!=null?r.data.nonLues:r.nonLues)||0;
     if(count>_agentNotifCount)jouerSonNotifAgent();
     _agentNotifCount=count;
-    _majBadgeAgent(count);
+    var badge=document.getElementById('h-notif-badge');
+    if(badge){badge.style.display=count>0?'flex':'none';badge.textContent=count>9?'9+':(count>0?String(count):'');}
   }).catch(function(){});
 }
 setInterval(function(){
@@ -2318,23 +2319,8 @@ async function ouvrirNotifs(){
     // Mettre à jour le compteur en temps réel
     _agentNotifCount=nonLues;
     _majBadgeAgent(nonLues);
-    // Marquer tout comme lu après 1.5s (laisse le temps de voir)
-    if(nonLues>0){
-      setTimeout(function(){
-        patch('/notifications/tout-lire',{}).then(function(){
-          _agentNotifCount=0;
-          _majBadgeAgent(0);
-          // Re-render avec tout marqué lu
-          var items=document.querySelectorAll('#sh-notifs-list [data-notif]');
-          items.forEach(function(item){
-            item.style.background='#fff';
-            item.style.fontWeight='600';
-            var dot=item.querySelector('.notif-dot');
-            if(dot)dot.style.display='none';
-          });
-        }).catch(function(){});
-      },1500);
-    }
+    // Ne pas marquer automatiquement — seulement au clic individuel ou "Tout lire"
+    // Le compteur reste exact et ne se remet pas à zéro à l'ouverture
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
@@ -2343,11 +2329,6 @@ function _majBadgeAgent(count){
   if(badge){
     badge.style.display=count>0?'flex':'none';
     badge.textContent=count>9?'9+':(count>0?String(count):'');
-    // Forcer alignement centré
-    if(count>0){
-      badge.style.alignItems='center';
-      badge.style.justifyContent='center';
-    }
   }
 }
 
