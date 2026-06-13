@@ -889,14 +889,25 @@ async function ouvrirNotifications(){
       var tc=lu?'#6b7280':'#111827';
       var mc=lu?'#9ca3af':'#374151';
       var dot=lu?'':'<div style="width:9px;height:9px;background:#ef4444;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px #fee2e2"></div>';
-      var html='<div onclick="lireNotifUI(this)" data-nid="'+n.id+'" data-lu="'+(lu?'1':'0')+'" style="background:'+bg+';border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;box-shadow:'+shadow+';cursor:pointer;border-left:4px solid '+border+';transition:all .2s">';
-      html+='<div style="width:42px;height:42px;border-radius:13px;background:'+col+'22;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;opacity:'+(lu?'.6':'1')+'">'+icon+'</div>';
+      // Extraire OTP si type retrait_otp
+      var data={};try{data=JSON.parse(n.data||'{}');}catch(e){}
+      var isOTP=(n.type==='transaction'&&data.type==='retrait_otp'&&data.otp&&!lu);
+      var html='<div onclick="lireNotifUI(this)" data-nid="'+n.id+'" data-lu="'+(lu?'1':'0')+'" style="background:'+(isOTP?'#fffbeb':bg)+';border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;box-shadow:'+shadow+';cursor:pointer;border-left:4px solid '+(isOTP?'#f59e0b':border)+';transition:all .2s">';
+      html+='<div style="width:42px;height:42px;border-radius:13px;background:'+(isOTP?'#fef3c7':col+'22')+';display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">'+(isOTP?'&#128274;':icon)+'</div>';
       html+='<div style="flex:1;min-width:0">';
       html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">';
       html+='<div style="font-size:13px;font-weight:'+fw+';color:'+tc+';line-height:1.3">'+n.titre+'</div>';
       html+='<div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+ds+'</span>'+dot+'</div>';
       html+='</div>';
       html+='<div style="font-size:12px;color:'+mc+';margin-top:3px;line-height:1.4">'+n.message+'</div>';
+      // Afficher OTP en grand si non lu
+      if(isOTP){
+        html+='<div style="margin-top:10px;background:#fff;border:2px solid #f59e0b;border-radius:12px;padding:10px;text-align:center">';
+        html+='<div style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:4px">Votre code OTP</div>';
+        html+='<div style="font-size:36px;font-weight:900;color:#d97706;letter-spacing:.3em">'+data.otp+'</div>';
+        html+='<div style="font-size:10px;color:#9ca3af;margin-top:4px">Communiquez ce code à l&#39;agent</div>';
+        html+='</div>';
+      }
       html+='</div></div>';
       return html;
     }

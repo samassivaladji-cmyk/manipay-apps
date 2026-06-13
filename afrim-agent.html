@@ -605,6 +605,23 @@ function setTab(t){
       </div>
     </div>
     <div id="ret-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:#f97316"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
+
+    <!-- Section OTP retrait -->
+    <div id="ret-otp-section" style="display:none;padding:0 4px">
+      <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px">
+        <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
+        <div id="ret-otp-info" style="font-size:12px;color:#92400e;margin-bottom:8px;text-align:center"></div>
+        <div id="ret-otp-recap" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:14px;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px"></div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:center">Saisissez le code OTP communiqu&#233; par le client :</div>
+        <input id="ret-otp-input" type="number" inputmode="numeric" placeholder="&#9679; &#9679; &#9679; &#9679;" style="width:100%;border:2px solid #fbbf24;border-radius:10px;padding:14px;font-size:28px;font-weight:900;text-align:center;outline:none;color:#111;box-sizing:border-box;letter-spacing:.3em"/>
+        <div id="ret-otp-err" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;text-align:center"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-ghost" style="flex:1" onclick="rstOp('ret')">Annuler</button>
+          <button id="ret-otp-btn" class="btn btn-o" style="flex:2" onclick="confirmerRetraitOTP()">Confirmer</button>
+        </div>
+      </div>
+    </div>
+
     <div id="ret-success" style="display:none;text-align:center;padding:20px 0">
       <div style="width:60px;height:60px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;color:#fff">✓</div>
       <div style="font-size:20px;font-weight:800;margin-bottom:10px">Retrait valid&#233; !</div>
@@ -927,22 +944,46 @@ async function doRetrait(){
   document.getElementById('ret-btn-valider').style.display='none';
   document.getElementById('ret-loading').style.display='';
   try{
-    var r=await post('/transactions/withdraw',{telephone:client.telephone,montant:amt});
+    var r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt});
     document.getElementById('ret-loading').style.display='none';
+    var d=r.data||{};
+    document.getElementById('ret-otp-section').style.display='';
+    document.getElementById('ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
+    document.getElementById('ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
+    document.getElementById('ret-otp-input').value='';
+    setTimeout(function(){document.getElementById('ret-otp-input').focus();},100);
+  }catch(e){
+    document.getElementById('ret-loading').style.display='none';
+    document.getElementById('ret-btn-valider').style.display='';
+    document.getElementById('ret-err2').textContent=e.message;document.getElementById('ret-err2').style.display='';
+  }
+}
+
+async function confirmerRetraitOTP(){
+  var client=opClients['ret'];if(!client)return;
+  var otp=document.getElementById('ret-otp-input').value.trim();
+  if(otp.length!==4||isNaN(otp)){T('Code OTP à 4 chiffres requis',true);return;}
+  var amt=Number(document.getElementById('ret-amt').value);
+  var btn=document.getElementById('ret-otp-btn');
+  btn.disabled=true;btn.textContent='...';
+  document.getElementById('ret-otp-err').style.display='none';
+  try{
+    var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
+    document.getElementById('ret-otp-section').style.display='none';
     document.getElementById('ret-success').style.display='';
     var d=r.data||{};
     var fraisR=Number(d.frais||0);var totalR=Number(d.total||amt+fraisR);
     document.getElementById('ret-succ-txt').textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('ret-succ-montant').textContent=F(amt);
+    document.getElementById('ret-succ-montant').textContent=F(d.montant||amt);
     document.getElementById('ret-succ-frais').textContent=F(fraisR);
     document.getElementById('ret-succ-total').textContent=F(totalR);
     document.getElementById('ret-succ-gain').textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
     document.getElementById('ret-succ-ref').textContent=d.reference||'';
     rafraichir();
   }catch(e){
-    document.getElementById('ret-loading').style.display='none';
-    document.getElementById('ret-btn-valider').style.display='';
-    document.getElementById('ret-err2').textContent=e.message;document.getElementById('ret-err2').style.display='';
+    document.getElementById('ret-otp-err').textContent=e.message;
+    document.getElementById('ret-otp-err').style.display='';
+    btn.disabled=false;btn.textContent='Confirmer';
   }
 }
 
@@ -958,6 +999,7 @@ function rstOp(op){
   document.getElementById(op+'-err1').style.display='none';
   document.getElementById(op+'-err2').style.display='none';
   document.getElementById(op+'-btn-valider').style.display='none';
+  var otpSec=document.getElementById(op+'-otp-section');if(otpSec)otpSec.style.display='none';
   document.getElementById(op+'-ok').disabled=true;document.getElementById(op+'-ok').style.opacity='.4';
 }
 
@@ -2731,6 +2773,23 @@ document.querySelectorAll('.sh-ov').forEach(function(el){
       </div>
     </div>
     <div id="ret-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:#f97316"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
+
+    <!-- Section OTP retrait -->
+    <div id="ret-otp-section" style="display:none;padding:0 4px">
+      <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px">
+        <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
+        <div id="ret-otp-info" style="font-size:12px;color:#92400e;margin-bottom:8px;text-align:center"></div>
+        <div id="ret-otp-recap" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:14px;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px"></div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:center">Saisissez le code OTP communiqu&#233; par le client :</div>
+        <input id="ret-otp-input" type="number" inputmode="numeric" placeholder="&#9679; &#9679; &#9679; &#9679;" style="width:100%;border:2px solid #fbbf24;border-radius:10px;padding:14px;font-size:28px;font-weight:900;text-align:center;outline:none;color:#111;box-sizing:border-box;letter-spacing:.3em"/>
+        <div id="ret-otp-err" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;text-align:center"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-ghost" style="flex:1" onclick="rstOp('ret')">Annuler</button>
+          <button id="ret-otp-btn" class="btn btn-o" style="flex:2" onclick="confirmerRetraitOTP()">Confirmer</button>
+        </div>
+      </div>
+    </div>
+
     <div id="ret-success" style="display:none;text-align:center;padding:20px 0">
       <div style="width:60px;height:60px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;color:#fff">✓</div>
       <div style="font-size:20px;font-weight:800;margin-bottom:10px">Retrait valid&#233; !</div>
@@ -3053,22 +3112,46 @@ async function doRetrait(){
   document.getElementById('ret-btn-valider').style.display='none';
   document.getElementById('ret-loading').style.display='';
   try{
-    var r=await post('/transactions/withdraw',{telephone:client.telephone,montant:amt});
+    var r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt});
     document.getElementById('ret-loading').style.display='none';
+    var d=r.data||{};
+    document.getElementById('ret-otp-section').style.display='';
+    document.getElementById('ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
+    document.getElementById('ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
+    document.getElementById('ret-otp-input').value='';
+    setTimeout(function(){document.getElementById('ret-otp-input').focus();},100);
+  }catch(e){
+    document.getElementById('ret-loading').style.display='none';
+    document.getElementById('ret-btn-valider').style.display='';
+    document.getElementById('ret-err2').textContent=e.message;document.getElementById('ret-err2').style.display='';
+  }
+}
+
+async function confirmerRetraitOTP(){
+  var client=opClients['ret'];if(!client)return;
+  var otp=document.getElementById('ret-otp-input').value.trim();
+  if(otp.length!==4||isNaN(otp)){T('Code OTP à 4 chiffres requis',true);return;}
+  var amt=Number(document.getElementById('ret-amt').value);
+  var btn=document.getElementById('ret-otp-btn');
+  btn.disabled=true;btn.textContent='...';
+  document.getElementById('ret-otp-err').style.display='none';
+  try{
+    var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
+    document.getElementById('ret-otp-section').style.display='none';
     document.getElementById('ret-success').style.display='';
     var d=r.data||{};
     var fraisR=Number(d.frais||0);var totalR=Number(d.total||amt+fraisR);
     document.getElementById('ret-succ-txt').textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('ret-succ-montant').textContent=F(amt);
+    document.getElementById('ret-succ-montant').textContent=F(d.montant||amt);
     document.getElementById('ret-succ-frais').textContent=F(fraisR);
     document.getElementById('ret-succ-total').textContent=F(totalR);
     document.getElementById('ret-succ-gain').textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
     document.getElementById('ret-succ-ref').textContent=d.reference||'';
     rafraichir();
   }catch(e){
-    document.getElementById('ret-loading').style.display='none';
-    document.getElementById('ret-btn-valider').style.display='';
-    document.getElementById('ret-err2').textContent=e.message;document.getElementById('ret-err2').style.display='';
+    document.getElementById('ret-otp-err').textContent=e.message;
+    document.getElementById('ret-otp-err').style.display='';
+    btn.disabled=false;btn.textContent='Confirmer';
   }
 }
 
