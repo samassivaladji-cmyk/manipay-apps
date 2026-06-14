@@ -1,6 +1,4 @@
-// Service Worker Firebase Messaging — AFRIM PAY
-// À déployer à la racine de samassivaladji-cmyk.github.io/afrim-pay-apps/
-
+// Service Worker Firebase Messaging — AFRIM PAY v2
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
@@ -15,34 +13,33 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Notification reçue en arrière-plan
+// Notification reçue en arrière-plan (écran verrouillé ou autre onglet)
 messaging.onBackgroundMessage(function(payload) {
-  console.log('[SW] Push reçu en arrière-plan:', payload);
-  const { title, body } = payload.notification || {};
-  const data = payload.data || {};
+  const notification = payload.notification || {};
+  const title = notification.title || 'AFRIM PAY';
+  const body = notification.body || '';
   
-  self.registration.showNotification(title || 'AFRIM PAY', {
-    body: body || '',
+  return self.registration.showNotification(title, {
+    body: body,
     icon: 'https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png',
     badge: 'https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png',
-    tag: 'afrim-pay-' + Date.now(),
-    data: data,
-    requireInteraction: false,
-    silent: false
+    vibrate: [200, 100, 200],
+    tag: 'afrim-pay-notif',
+    renotify: true,
+    data: payload.data || {}
   });
 });
 
 // Clic sur notification → ouvrir l'app
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+  const url = 'https://samassivaladji-cmyk.github.io/afrim-pay-apps/afrim-client.html';
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-      for (var client of clientList) {
-        if (client.url.includes('afrim-pay-apps') && 'focus' in client) {
-          return client.focus();
-        }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
+      for (var c of list) {
+        if (c.url.includes('afrim-pay-apps') && 'focus' in c) return c.focus();
       }
-      return clients.openWindow('https://samassivaladji-cmyk.github.io/afrim-pay-apps/afrim-client.html');
+      return clients.openWindow(url);
     })
   );
 });
