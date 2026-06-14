@@ -838,8 +838,8 @@ async function doInscrire(){
 // ══ OPÉRATIONS DÉPÔT / RETRAIT ════════════════════════════════════
 var opClients={dep:null,ret:null};
 
-function ouvrirDepot(){rstOp('dep');openSh('depot');}
-function ouvrirRetrait(){rstOp('ret');openSh('retrait');}
+function ouvrirDepot(){closeSh('choix-op');rstOp('dep');openSh('depot');}
+function ouvrirRetrait(){closeSh('choix-op');rstOp('ret');openSh('retrait');}
 
 function onTelInput(op){
   var v=document.getElementById(op+'-tel').value.replace(/\D/g,'');
@@ -920,10 +920,7 @@ async function doDepot(){
     var r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt});
     document.getElementById('dep-loading').style.display='none';
     document.getElementById('dep-success').style.display='';
-    // Fermer toutes les sheets ouvertes derrière
-    document.querySelectorAll('.sh-ov.on').forEach(function(sh){
-      if(sh.id!=='sh-depot')sh.classList.remove('on');
-    });
+    closeSh('choix-op');
     var d=r.data||{};
     document.getElementById('dep-succ-txt').textContent='Dépôt de '+F(amt)+' pour '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('dep-succ-gain').textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
@@ -984,10 +981,7 @@ async function confirmerRetraitOTP(btnEl){
   try{
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
     otpSec.style.display='none';
-    // Fermer toutes les autres sheets ouvertes derrière
-    document.querySelectorAll('.sh-ov.on').forEach(function(sh){
-      if(sh.id!=='sh-retrait')sh.classList.remove('on');
-    });
+    closeSh('choix-op');
     // Trouver le ret-success dans le même parent
     var par=otpSec.parentElement;
     var succ=par?par.querySelector('#ret-success,[id="ret-success"]'):document.getElementById('ret-success');
