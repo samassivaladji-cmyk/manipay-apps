@@ -516,7 +516,7 @@ function setTab(t){
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="dep-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="onTelInput('dep')"/>
         <button id="dep-qr" onclick="scanPourOp('dep')" title="Scanner QR" style="background:var(--a);border:none;border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:49px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
-        <button id="dep-ok" onclick="identClient('dep')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4">ID</button>
+        <button id="dep-ok" onclick="identClient('dep')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4;min-width:52px">OK</button>
       </div>
     </div>
     <div id="dep-s2" style="display:none">
@@ -573,7 +573,7 @@ function setTab(t){
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="ret-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="onTelInput('ret')"/>
         <button onclick="scanPourOp('ret')" title="Scanner QR" style="background:var(--a);border:none;border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:49px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
-        <button id="ret-ok" onclick="identClient('ret')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4">ID</button>
+        <button id="ret-ok" onclick="identClient('ret')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4;min-width:52px">OK</button>
       </div>
     </div>
     <div id="ret-s2" style="display:none">
@@ -920,8 +920,12 @@ async function doDepot(){
     var r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt});
     document.getElementById('dep-loading').style.display='none';
     document.getElementById('dep-success').style.display='';
+    // Fermer toutes les sheets ouvertes derrière
+    document.querySelectorAll('.sh-ov.on').forEach(function(sh){
+      if(sh.id!=='sh-depot')sh.classList.remove('on');
+    });
     var d=r.data||{};
-    document.getElementById('dep-succ-txt').textContent='D&#233;p&#244;t de '+F(amt)+' pour '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('dep-succ-txt').textContent='Dépôt de '+F(amt)+' pour '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('dep-succ-gain').textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
     document.getElementById('dep-succ-ref').textContent=d.reference||'';
     // Mise à jour immédiate du solde agent (le serveur a déjà mis à jour)
@@ -980,6 +984,10 @@ async function confirmerRetraitOTP(btnEl){
   try{
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
     otpSec.style.display='none';
+    // Fermer toutes les autres sheets ouvertes derrière
+    document.querySelectorAll('.sh-ov.on').forEach(function(sh){
+      if(sh.id!=='sh-retrait')sh.classList.remove('on');
+    });
     // Trouver le ret-success dans le même parent
     var par=otpSec.parentElement;
     var succ=par?par.querySelector('#ret-success,[id="ret-success"]'):document.getElementById('ret-success');
