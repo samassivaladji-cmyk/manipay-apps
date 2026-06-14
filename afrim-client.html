@@ -791,31 +791,37 @@ document.addEventListener('click',function(){initAudio();},{once:false,passive:t
 
 function jouerSonNotif(){
   try{
-    if(!_audioCtx){
-      _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    }
-    if(_audioCtx.state==='suspended'){
-      _audioCtx.resume();
-    }
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(_audioCtx.state==='suspended')_audioCtx.resume();
     var t=_audioCtx.currentTime;
-    // Note 1
-    var o1=_audioCtx.createOscillator();
-    var g1=_audioCtx.createGain();
-    o1.connect(g1);g1.connect(_audioCtx.destination);
-    o1.type='sine';o1.frequency.setValueAtTime(880,t);
+    // Créer un compresseur pour booster le volume global
+    var comp=_audioCtx.createDynamicsCompressor();
+    comp.threshold.value=-10;comp.ratio.value=4;
+    comp.connect(_audioCtx.destination);
+    // Note 1 — plus fort (gain 0.9)
+    var o1=_audioCtx.createOscillator();var g1=_audioCtx.createGain();
+    o1.connect(g1);g1.connect(comp);
+    o1.type='triangle';o1.frequency.setValueAtTime(880,t);
     g1.gain.setValueAtTime(0,t);
-    g1.gain.linearRampToValueAtTime(0.4,t+0.01);
-    g1.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-    o1.start(t);o1.stop(t+0.2);
+    g1.gain.linearRampToValueAtTime(0.9,t+0.01);
+    g1.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+    o1.start(t);o1.stop(t+0.25);
     // Note 2
-    var o2=_audioCtx.createOscillator();
-    var g2=_audioCtx.createGain();
-    o2.connect(g2);g2.connect(_audioCtx.destination);
-    o2.type='sine';o2.frequency.setValueAtTime(1320,t+0.18);
-    g2.gain.setValueAtTime(0,t+0.18);
-    g2.gain.linearRampToValueAtTime(0.3,t+0.19);
-    g2.gain.exponentialRampToValueAtTime(0.001,t+0.42);
-    o2.start(t+0.18);o2.stop(t+0.42);
+    var o2=_audioCtx.createOscillator();var g2=_audioCtx.createGain();
+    o2.connect(g2);g2.connect(comp);
+    o2.type='triangle';o2.frequency.setValueAtTime(1320,t+0.2);
+    g2.gain.setValueAtTime(0,t+0.2);
+    g2.gain.linearRampToValueAtTime(0.85,t+0.21);
+    g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+    o2.start(t+0.2);o2.stop(t+0.5);
+    // Note 3 — troisième bip pour plus d'impact
+    var o3=_audioCtx.createOscillator();var g3=_audioCtx.createGain();
+    o3.connect(g3);g3.connect(comp);
+    o3.type='triangle';o3.frequency.setValueAtTime(1760,t+0.4);
+    g3.gain.setValueAtTime(0,t+0.4);
+    g3.gain.linearRampToValueAtTime(0.75,t+0.41);
+    g3.gain.exponentialRampToValueAtTime(0.001,t+0.65);
+    o3.start(t+0.4);o3.stop(t+0.65);
   }catch(e){console.warn('audio:',e);}
 }
 
@@ -2339,11 +2345,12 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
                       console.log('[FCM] Token obtenu');
                       // Sauvegarder le token sur le serveur
                       if(typeof G!=='undefined'&&G.token){
-                        fetch('/api/v1/users/fcm-token',{
+                        var base='https://afrim-pay-backend.onrender.com';
+                        fetch(base+'/api/v1/users/fcm-token',{
                           method:'POST',
                           headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
                           body:JSON.stringify({token:token})
-                        }).catch(function(){});
+                        }).then(function(){console.log('[FCM] Token saved');}).catch(function(e){console.warn('[FCM]',e);});
                       }
                       // Stocker pour retry après login
                       window._fcmToken=token;
