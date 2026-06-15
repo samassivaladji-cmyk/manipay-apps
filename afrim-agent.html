@@ -148,6 +148,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 const API='https://afrim-pay-backend.onrender.com/api/v1';
 var _ls={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},del:function(k){try{localStorage.removeItem(k);}catch(e){}}};
 let G={token:_ls.get('afrim_token'),refresh:_ls.get('afrim_refresh'),user:null,compte:null,pin:'',lockPin:'',tab:'home'};
+var _soldeVisible=true;var _soldeVal='—';
 try{G.user=JSON.parse(_ls.get('afrim_user')||'null');}catch(e){}
 
 async function api(path,opts){
@@ -176,7 +177,6 @@ async function doRefresh(){
 
 function T(msg,err){var el=document.getElementById('toast');el.textContent=msg;el.className=err?'on err':'on';clearTimeout(T._t);T._t=setTimeout(function(){el.className='';},2800);}
 function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
-function FN(n){return Number(n||0).toLocaleString('fr-FR');}
 function FN(n){return Number(n||0).toLocaleString('fr-FR');} // sans FCFA
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function S(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
