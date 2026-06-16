@@ -1702,8 +1702,8 @@ function ouvrirKycUpgrade(){
 
 function _renderKyc(docsExistants){
   var u=G.user||{};
-  var kycRaw=u.kycNiveau||'en_attente';
-  var kyc=['KYC1','KYC2','KYC3'].includes(kycRaw)?kycRaw:((['KYC1','KYC2','KYC3'].includes(u.kycNiveauDemande))?u.kycNiveauDemande:'KYC1'); // utiliser niveau demandé si pas encore validé
+  var kycRaw=u.kycNiveau||u.kycNiveauDemande||'KYC1';
+  var kyc=['KYC1','KYC2','KYC3'].includes(kycRaw)?kycRaw:'KYC1';
   var statut=u.statut||'';        // 'actif' ou 'en_attente'
   var el=document.getElementById('kyc-body');
   if(!el)return;
