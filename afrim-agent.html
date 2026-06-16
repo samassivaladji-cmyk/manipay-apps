@@ -834,9 +834,11 @@ async function doInscrire(){
   document.getElementById('ins-loading').style.display='';
   try{
     var h={'Content-Type':'application/json'};if(G.token)h['Authorization']='Bearer '+G.token;
+    var parrainCode=G.user&&G.user.codeParrainage?G.user.codeParrainage:undefined;
     var r=await fetch(API+'/auth/register',{method:'POST',headers:h,body:JSON.stringify({
       prenom:prenom,nom:nom,telephone:telephone,pin:pin,
-      role:'client',kycNiveau:insKyc,zone:zone||undefined
+      role:'client',kycNiveau:insKyc,zone:zone||undefined,
+      parrainCode:parrainCode
     })});
     var d=await r.json();if(!r.ok)throw new Error(d.message||'Erreur inscription');
     var newUserId=d.data&&d.data.id;
