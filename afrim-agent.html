@@ -1449,7 +1449,7 @@ async function chargerGains(){
     var now=new Date();
 
     // GAINS = commission_parrain UNIQUEMENT
-    var gainsParr=comms.filter(function(c){return c.type_commission==='parrainage'||c.type_commission==='commission_parrain';});
+    var gainsParr=comms.filter(function(c){return c.type_commission==='commission_parrain';});
     // Gains actuels = statut 'verse' (non encore virés)
     var disponible=gainsParr.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
 
@@ -2264,6 +2264,8 @@ function afficherChoixOp(tel, parts){
       if(!arr.length||!arr[0]) throw new Error('Client introuvable');
       var u = arr[0];
       _scannedClient = u;
+      opClients['scan'] = u;
+      opClients['choix'] = u;
       document.getElementById('choix-av').textContent = (u.prenom||'?')[0].toUpperCase();
       document.getElementById('choix-name').textContent = (u.prenom||'')+' '+(u.nom||'');
       document.getElementById('choix-tel').textContent = u.telephone||tel;
@@ -2275,18 +2277,9 @@ function afficherChoixOp(tel, parts){
 }
 
 function ouvrirDepotAvecClient(){
-  var client=opClients['scan']||opClients['choix'];if(!client)return;
-  closeSh('choix-op');ouvrirScreenDepot(client);
-}
-
-function ouvrirTransfertAvecClient(){
-  if(!_scannedClient) return;
+  var client=_scannedClient||opClients['scan']||opClients['choix'];if(!client)return;
   closeSh('choix-op');
-  setTimeout(function(){
-    rstTrf();
-    openSh('transfert');
-    document.getElementById('trf-tel').value = _scannedClient.telephone||'';
-  },300);
+  setTimeout(function(){ouvrirScreenDepot(client);},300);
 }
 
 function ouvrirTransfertAvecClient(){
@@ -2300,8 +2293,9 @@ function ouvrirTransfertAvecClient(){
 }
 
 function ouvrirRetraitAvecClient(){
-  var client=opClients['scan']||opClients['choix'];if(!client)return;
-  closeSh('choix-op');ouvrirScreenRetrait(client);
+  var client=_scannedClient||opClients['scan']||opClients['choix'];if(!client)return;
+  closeSh('choix-op');
+  setTimeout(function(){ouvrirScreenRetrait(client);},300);
 }
 
 function toggleSolde(){
