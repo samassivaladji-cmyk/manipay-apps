@@ -995,23 +995,6 @@ async function confirmerRetraitOTP(btnEl){
     var e6=el('ret-succ-gain');if(e6)e6.textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
     var e7=el('ret-succ-ref');if(e7)e7.textContent=d.reference||'';
     rafraichir();
-    // Réinitialiser l'écran retrait après 2.5 secondes pour permettre un nouveau retrait
-    setTimeout(function(){
-      // Reset OTP input et bouton
-      var allOtpInp=document.querySelectorAll('input[type="number"]');
-      allOtpInp.forEach(function(i){i.value='';});
-      var allBtns=document.querySelectorAll('button.btn-o');
-      allBtns.forEach(function(b){b.disabled=false;b.textContent='Confirmer';});
-      // Cacher success et OTP section, réafficher formulaire montant
-      var retSuccess=document.getElementById('ret-success');
-      if(retSuccess)retSuccess.style.display='none';
-      var otpSections=document.querySelectorAll('[id="ret-otp-section"]');
-      otpSections.forEach(function(s){s.style.display='none';});
-      var retForm=document.getElementById('ret-form');
-      if(retForm)retForm.style.display='';
-      var retMontant=document.getElementById('ret-montant-section');
-      if(retMontant)retMontant.style.display='';
-    }, 2500);
   }catch(e){
     if(otpErr){otpErr.textContent=e.message;otpErr.style.display='';}
     if(btn){btn.disabled=false;btn.textContent='Confirmer';}
@@ -2637,6 +2620,15 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-phase1').style.display='';
   document.getElementById('sop-ret-phase2').style.display='none';
   document.getElementById('sop-ret-btn1').disabled=true;document.getElementById('sop-ret-btn1').style.opacity='.4';
+  // Reset bouton confirmer OTP et input OTP pour nouveau retrait
+  var btn2=document.getElementById('sop-ret-btn2');
+  if(btn2){btn2.disabled=false;btn2.textContent='Confirmer';}
+  var otpInp=document.getElementById('sop-ret-otp-input');
+  if(otpInp)otpInp.value='';
+  var otpErr=document.getElementById('sop-ret-otp-err');
+  if(otpErr)otpErr.style.display='none';
+  var loading2=document.getElementById('sop-ret-loading2');
+  if(loading2)loading2.style.display='none';
   S('s-op-retrait');
   setTimeout(function(){document.getElementById('sop-ret-amt').focus();},200);
 }
