@@ -177,7 +177,7 @@ async function doRefresh(){
       G.token=d.data.accessToken;_ls.set('afrim_token',G.token);
       if(d.data.refreshToken){G.refresh=d.data.refreshToken;_ls.set('afrim_refresh',G.refresh);}
       return true;
-    }catch(e){logout();return false;}
+    }catch(e){logout(true);return false;}
     finally{_refreshing=null;}
   })();
   return _refreshing;
@@ -832,27 +832,19 @@ async function doInscrire(){
   document.getElementById('ins-form').style.display='none';
   document.getElementById('ins-loading').style.display='';
   try{
-    var parrainCode=G.user&&G.user.codeParrainage?G.user.codeParrainage:undefined;
-    var h={'Content-Type':'application/json'};if(G.token)h['Authorization']='Bearer '+G.token;
-    var r=await fetch(API+'/auth/register',{method:'POST',headers:h,body:JSON.stringify({
-      prenom:prenom,nom:nom,telephone:telephone,pin:pin,
-      role:'client',kycNiveau:insKyc,zone:zone||undefined,parrainCode:parrainCode
-    })});
-    var d=await r.json();if(!r.ok)throw new Error(d.message||'Erreur inscription');
-    var newUserId=d.data&&d.data.id;
-    if(newUserId&&Object.keys(insPhotos).length){
-      var fh={'Authorization':'Bearer '+(G.token||'')};
-      for(var pid in insPhotos){
-        try{
-          var fd2=new FormData();fd2.append('file',insPhotos[pid]);
-          fd2.append('typeDocument',pid);fd2.append('userId',newUserId);
-          await fetch(API+'/kyc/upload',{method:'POST',headers:fh,body:fd2});
-        }catch(pe){console.warn('Photo',pid,pe);}
-      }
-    }
+    var kycLevel=insType==='client'?insKyc:'KYC1';
+    var fd=new FormData();
+    fd.append('prenom',prenom);fd.append('nom',nom);fd.append('telephone',telephone);fd.append('pin',pin);
+    fd.append('role',insType);fd.append('kycNiveau',kycLevel);
+    if(zone)fd.append('zone',zone);
+    if(bizName)fd.append('nomEntreprise',bizName);
+    Object.keys(insPhotos).forEach(function(k){fd.append(k,insPhotos[k]);});
+    var h={};if(G.token)h['Authorization']='Bearer '+G.token;
+    var r=await fetch(API+'/auth/register',{method:'POST',headers:h,body:fd});
+    var d=await r.json();if(!r.ok)throw new Error(d.message||'Erreur');
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-success').style.display='';
-    document.getElementById('ins-succ-txt').textContent='Client créé : '+(prenom+' '+nom)+' — Code : '+(d.data&&d.data.codeParrainage||'');
+    document.getElementById('ins-succ-txt').textContent='Compte '+insType+' cr&#233;&#233; pour '+(prenom+' '+nom)+'. Code : '+(d.data&&d.data.codeParrainage||'');
   }catch(e){
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-form').style.display='';
@@ -2072,7 +2064,27 @@ function inviterAmi(){
   else T('Code : '+code);
 }
 
-async function logout(){
+function showLogoutConfirm(){
+  var overlay=document.createElement('div');
+  overlay.id='logout-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s';
+  overlay.innerHTML=`
+    <div style="background:#fff;border-radius:24px 24px 0 0;padding:32px 24px 40px;width:100%;max-width:480px;text-align:center">
+      <div style="width:48px;height:4px;background:#e5e7eb;border-radius:4px;margin:0 auto 28px"></div>
+      <div style="font-size:32px;margin-bottom:12px">👋</div>
+      <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:8px">Déconnexion</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:28px">Êtes-vous sûr de vouloir quitter l'application ? Vos données sont sauvegardées.</div>
+      <div style="display:flex;gap:12px">
+        <button onclick="document.getElementById('logout-overlay').remove()" style="flex:1;padding:16px;border-radius:14px;border:1.5px solid #e5e7eb;background:#f9fafb;font-size:15px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit">Annuler</button>
+        <button onclick="document.getElementById('logout-overlay').remove();logout(true)" style="flex:1;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);font-size:15px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Se déconnecter</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+}
+
+async function logout(force){
+  if(!force){ showLogoutConfirm(); return; }
   try{await post('/auth/logout',{refreshToken:G.refresh});}catch(e){}
   G.token=G.refresh=G.user=G.compte=null;
   _ls.del('afrim_token');_ls.del('afrim_refresh');_ls.del('afrim_user');
