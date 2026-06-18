@@ -2620,15 +2620,15 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-phase1').style.display='';
   document.getElementById('sop-ret-phase2').style.display='none';
   document.getElementById('sop-ret-btn1').disabled=true;document.getElementById('sop-ret-btn1').style.opacity='.4';
-  // Reset bouton confirmer OTP et input OTP pour nouveau retrait
-  var btn2=document.getElementById('sop-ret-btn2');
-  if(btn2){btn2.disabled=false;btn2.textContent='Confirmer';}
-  var otpInp=document.getElementById('sop-ret-otp-input');
-  if(otpInp)otpInp.value='';
-  var otpErr=document.getElementById('sop-ret-otp-err');
-  if(otpErr)otpErr.style.display='none';
-  var loading2=document.getElementById('sop-ret-loading2');
-  if(loading2)loading2.style.display='none';
+  // RESET btn2 et OTP pour nouveau retrait
+  var b2=document.getElementById('sop-ret-btn2');
+  if(b2){b2.disabled=false;b2.textContent='Confirmer';}
+  var oi=document.getElementById('sop-ret-otp-input');
+  if(oi)oi.value='';
+  var oe=document.getElementById('sop-ret-otp-err');
+  if(oe)oe.style.display='none';
+  var l2=document.getElementById('sop-ret-loading2');
+  if(l2)l2.style.display='none';
   S('s-op-retrait');
   setTimeout(function(){document.getElementById('sop-ret-amt').focus();},200);
 }
