@@ -334,9 +334,9 @@ function setTab(t){
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px">↑</div>
         <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#c2410c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">35% des frais</div></div>
       </button>
-      <button onclick="openSh('inscription')" style="background:var(--s);border:1px solid rgba(245,158,11,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+      <button onclick="openSh('inscription');setInsType('client')" style="background:var(--s);border:1px solid rgba(245,158,11,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:24px">👤</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:var(--a)">Inscrire</div><div style="font-size:10px;color:var(--m);margin-top:2px">Client · Business · Agent</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:var(--a)">Inscrire</div><div style="font-size:10px;color:var(--m);margin-top:2px">Client</div></div>
       </button>
       <button onclick="openSh('transfert')" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px">⇄</div>
@@ -754,9 +754,9 @@ function setTab(t){
 <script>
 // ══ PHOTOS CONFIG ════════════════════════════════════════════════
 var PHOTOS_CFG={
-  client_KYC1:[{id:'selfie_1',label:'Selfie face',req:true,selfie:true},{id:'selfie_2',label:'Selfie angle',req:true,selfie:true}],
+  client_KYC1:[{id:'selfie',label:'Selfie',req:true,selfie:true}],
   client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
-  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'naissance',label:'Extrait naissance',req:true,selfie:false},{id:'domicile',label:'Justif. domicile',req:false,selfie:false}],
+  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'naissance',label:'Extrait naissance',req:true,selfie:false},{id:'domicile',label:'Justif. domicile',req:true,selfie:false}],
   business:[{id:'selfie_gerant',label:'Selfie gérant',req:true,selfie:true},{id:'cni_r',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_v',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:true,selfie:false},{id:'fiscal',label:'Déclaration fiscale',req:false,selfie:false}],
   agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
 };
@@ -786,7 +786,16 @@ function renderInsFields(){
   h+='<span class="lbl">Zone / Quartier</span><div style="margin-bottom:13px"><input class="inp" id="ins-zone" type="text" placeholder="Ex: Cocody, Adjamé..."/></div>';
   document.getElementById('ins-fields').innerHTML=h;
 }
-function setInsKyc(k){insKyc=k;renderInsFields();renderInsPhotos();}
+function setInsKyc(k){
+  var sv={prenom:(document.getElementById('ins-prenom')||{}).value||'',nom:(document.getElementById('ins-nom')||{}).value||'',tel:(document.getElementById('ins-tel')||{}).value||'',pin:(document.getElementById('ins-pin')||{}).value||'',zone:(document.getElementById('ins-zone')||{}).value||''};
+  insKyc=k;renderInsFields();
+  if(document.getElementById('ins-prenom'))document.getElementById('ins-prenom').value=sv.prenom;
+  if(document.getElementById('ins-nom'))document.getElementById('ins-nom').value=sv.nom;
+  if(document.getElementById('ins-tel'))document.getElementById('ins-tel').value=sv.tel;
+  if(document.getElementById('ins-pin'))document.getElementById('ins-pin').value=sv.pin;
+  if(document.getElementById('ins-zone'))document.getElementById('ins-zone').value=sv.zone;
+  renderInsPhotos();
+}
 function renderInsPhotos(){
   var key=insType==='client'?('client_'+insKyc):insType;
   var photos=PHOTOS_CFG[key]||[];
@@ -805,7 +814,7 @@ function renderInsPhotos(){
   document.getElementById('ins-photos').innerHTML=h;
 }
 function phIns(id,input){if(input.files&&input.files[0]){insPhotos[id]=input.files[0];renderInsPhotos();T('✓ Photo enregistrée !');}}
-function rstIns(){insType=null;insPhotos={};insKyc='KYC1';document.getElementById('ins-type-sel').style.display='';document.getElementById('ins-form').style.display='none';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';document.getElementById('ins-err').style.display='none';}
+function rstIns(){insType=null;insPhotos={};insKyc='KYC1';document.getElementById('ins-type-sel').style.display='none';document.getElementById('ins-form').style.display='none';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';document.getElementById('ins-err').style.display='none';}
 
 async function doInscrire(){
   var prenom=document.getElementById('ins-prenom').value.trim();
@@ -1449,7 +1458,7 @@ async function chargerGains(){
     var now=new Date();
 
     // GAINS = commission_parrain UNIQUEMENT
-    var gainsParr=comms.filter(function(c){return c.type_commission==='commission_parrain';});
+    var gainsParr=comms.filter(function(c){return c.type_commission==='parrainage'||c.type_commission==='commission_parrain';});
     // Gains actuels = statut 'verse' (non encore virés)
     var disponible=gainsParr.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
 
@@ -1704,7 +1713,8 @@ async function showTxDetail(txId){
   }
   h+=row('Date',dateStr);
   h+=row('Heure',heureStr);
-  h+=row('Statut',(tx.statut||'—').charAt(0).toUpperCase()+(tx.statut||'—').slice(1));
+  var _sMap={'complete':'Effectué','pending':'En attente','failed':'Échoué','cancelled':'Annulé','en_attente':'En attente'};
+  h+=row('Statut',_sMap[(tx.statut||'').toLowerCase()]||(tx.statut||'—'));
   if(tx.reference)h+=row('R&#233;f&#233;rence','<span style="font-family:monospace;font-size:11px">'+tx.reference+'</span>');
   h+='</div>';
 
@@ -2264,6 +2274,8 @@ function afficherChoixOp(tel, parts){
       if(!arr.length||!arr[0]) throw new Error('Client introuvable');
       var u = arr[0];
       _scannedClient = u;
+      opClients['scan'] = u;
+      opClients['choix'] = u;
       document.getElementById('choix-av').textContent = (u.prenom||'?')[0].toUpperCase();
       document.getElementById('choix-name').textContent = (u.prenom||'')+' '+(u.nom||'');
       document.getElementById('choix-tel').textContent = u.telephone||tel;
@@ -2275,8 +2287,8 @@ function afficherChoixOp(tel, parts){
 }
 
 function ouvrirDepotAvecClient(){
-  var client=opClients['scan']||opClients['choix'];if(!client)return;
-  closeSh('choix-op');ouvrirScreenDepot(client);
+  var client=_scannedClient||opClients['scan']||opClients['choix'];if(!client)return;
+  closeSh('choix-op');setTimeout(function(){ouvrirScreenDepot(client);},300);
 }
 
 function ouvrirTransfertAvecClient(){
@@ -2300,8 +2312,8 @@ function ouvrirTransfertAvecClient(){
 }
 
 function ouvrirRetraitAvecClient(){
-  var client=opClients['scan']||opClients['choix'];if(!client)return;
-  closeSh('choix-op');ouvrirScreenRetrait(client);
+  var client=_scannedClient||opClients['scan']||opClients['choix'];if(!client)return;
+  closeSh('choix-op');setTimeout(function(){ouvrirScreenRetrait(client);},300);
 }
 
 function toggleSolde(){
@@ -2620,15 +2632,10 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-phase1').style.display='';
   document.getElementById('sop-ret-phase2').style.display='none';
   document.getElementById('sop-ret-btn1').disabled=true;document.getElementById('sop-ret-btn1').style.opacity='.4';
-  // RESET btn2 et OTP pour nouveau retrait
-  var b2=document.getElementById('sop-ret-btn2');
-  if(b2){b2.disabled=false;b2.textContent='Confirmer';}
-  var oi=document.getElementById('sop-ret-otp-input');
-  if(oi)oi.value='';
-  var oe=document.getElementById('sop-ret-otp-err');
-  if(oe)oe.style.display='none';
-  var l2=document.getElementById('sop-ret-loading2');
-  if(l2)l2.style.display='none';
+  var b2=document.getElementById('sop-ret-btn2');if(b2){b2.disabled=false;b2.textContent='Confirmer';}
+  var oi=document.getElementById('sop-ret-otp-input');if(oi)oi.value='';
+  var oe=document.getElementById('sop-ret-otp-err');if(oe)oe.style.display='none';
+  var l2=document.getElementById('sop-ret-loading2');if(l2)l2.style.display='none';
   S('s-op-retrait');
   setTimeout(function(){document.getElementById('sop-ret-amt').focus();},200);
 }
