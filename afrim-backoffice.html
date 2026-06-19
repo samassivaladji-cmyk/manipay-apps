@@ -3551,7 +3551,7 @@ function renderU(list){
 var rattachData=[];var rtFilter='all';
 async function chargerRattachements(){
   var btnAdd=document.getElementById('rt-btn-add');
-  if(btnAdd) btnAdd.style.display=perm('rattach_action')?'block':'none';
+  if(btnAdd) btnAdd.style.display=(perm('rattach_action')||isSuperAdmin())?'block':'none';
   var chipsEl=document.getElementById('rt-chips');
   if(chipsEl){
     chipsEl.innerHTML='';
@@ -3613,7 +3613,7 @@ function renderRt(list){
 function voirRattachDetail(x){
   var body=document.getElementById('sh-rt-body');
   var statutColor=x.statut==='valide'?'#22c55e':'#f59e0b';
-  var actionBtn=perm('rattach_action')
+  var actionBtn=(perm('rattach_action')||isSuperAdmin())
     ?'<button onclick="confirmerDetacher(\''+x.filleulId+'\',\''+(x.filleulPrenom+' '+x.filleulNom).replace(/'/g,"&#39;")+'\')" style="width:100%;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">Détacher ce filleul</button>'
     :'';
   body.innerHTML='<div style="background:#f9fafb;border-radius:14px;padding:16px;margin-bottom:14px">'
