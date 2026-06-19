@@ -3709,7 +3709,8 @@ async function rechercherParParrain(){
   resEl.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
   try{
     var r=await apiGet('/admin/rattachements/par-telephone?telephone='+encodeURIComponent(tel));
-    var d=r?r.data:null;
+    if(r===null){resEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--r);font-size:13px">Session expirée ou problème d\'authentification. Reconnecte-toi.</div>';return;}
+    var d=r.data;
     var p=d?d.parrain:null;
     if(!p){resEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--r);font-size:13px">Aucun utilisateur trouvé avec ce numéro</div>';return;}
     var c=ROLE_C[p.role]||'#888';
@@ -3759,6 +3760,7 @@ async function chargerSansFilleul(){
     var p='/admin/rattachements/sans-filleul';
     if(sfRoleFilter!=='all') p+='?role='+sfRoleFilter;
     var r=await apiGet(p);
+    if(r===null){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--r);font-size:13px">Session expirée ou problème d\'authentification. Reconnecte-toi.</div>';return;}
     sansFilleulData=r.data.utilisateurs||[];
     renderSansFilleul(sansFilleulData);
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
