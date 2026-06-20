@@ -1016,6 +1016,107 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 </div>
 
 
+<!-- ECRAN SEGMENTATION -->
+<div class="scr" id="s-segmentation">
+  <div style="background:#fff;padding:52px 20px 12px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
+    <div style="font-size:22px;font-weight:800">🎯 Segmentation</div>
+    <div style="color:var(--m);font-size:12px;margin-top:2px">Cibler des comptes par critères et notifier</div>
+  </div>
+  <div style="padding:14px 16px 100px">
+
+    <!-- Bloc critères -->
+    <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Rôles</div>
+      <div id="seg-roles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Nombre de filleuls</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-filleuls-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-filleuls-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Période des volumes</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-periode-debut" type="date" class="inp" style="flex:1"/>
+        <input id="seg-periode-fin" type="date" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Volume dépôt (FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-depot-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-depot-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Volume retrait (FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-retrait-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-retrait-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Volume transfert (FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-transfert-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-transfert-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Paiement marchand envoyé (clients, FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-paye-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-paye-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Paiement marchand reçu (business, FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-recu-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-recu-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Niveau KYC</div>
+      <div id="seg-kyc" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Statut</div>
+      <div id="seg-statuts" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Date d'inscription</div>
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <input id="seg-inscr-debut" type="date" class="inp" style="flex:1"/>
+        <input id="seg-inscr-fin" type="date" class="inp" style="flex:1"/>
+      </div>
+
+      <button onclick="lancerSegmentation()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher</button>
+    </div>
+
+    <!-- Résultats -->
+    <div id="seg-results-wrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:800" id="seg-results-count">0 résultat</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="segSelectAll(true)" style="background:none;border:none;color:var(--y2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Tout cocher</button>
+          <button onclick="segSelectAll(false)" style="background:none;border:none;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Tout décocher</button>
+        </div>
+      </div>
+      <div id="seg-results-list"></div>
+      <button onclick="ouvrirNotifSegmentation()" id="seg-btn-notify" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">📣 Notifier la sélection (<span id="seg-selected-count">0</span>)</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET NOTIFICATION SEGMENTATION -->
+<div class="sh-ov" id="sh-seg-notif">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Notifier la sélection</div><div style="color:var(--m);font-size:12px" id="seg-notif-sub">0 destinataire(s)</div></div><button class="sh-x" onclick="closeSh('seg-notif')">✕</button></div>
+    <div class="sh-body">
+      <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em">Titre</label>
+      <input class="inp" id="seg-notif-titre" type="text" placeholder="Titre de la notification" style="margin:6px 0 14px"/>
+      <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em">Message</label>
+      <textarea class="inp" id="seg-notif-message" rows="4" placeholder="Votre message..." style="margin:6px 0 14px;resize:vertical"></textarea>
+      <button onclick="envoyerNotifSegmentation()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ECRAN RATTACHEMENTS -->
 <div class="scr" id="s-rattachements">
   <div style="background:#fff;padding:52px 20px 0;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
@@ -3253,6 +3354,7 @@ function buildNavGrid(){
     {id:'txns',     icon:'💳', label:'Flux',     fn:"setTab('txns')",    need:'txns'},
     {id:'monitoring',icon:'📊',label:'Suivi',   fn:"setTab('monitoring')",need:'monitoring'},
     {id:'rattachements',icon:'🔗',label:'Rattachements',fn:"setTab('rattachements')",need:'rattachements'},
+    {id:'segmentation',icon:'🎯',label:'Segmentation',fn:"setTab('segmentation')",need:'rattachements'},
     {id:'support',  icon:'💬', label:'Support',  fn:"setTab('support')", need:'support'},
     {id:'tech',     icon:'🛠', label:'Technique',fn:"setTab('tech')",    need:'tech'},
     {id:'inscr',    icon:'➕', label:'Creer',   fn:"ouvrirInscription()",need:'creer'},
@@ -3317,6 +3419,7 @@ function setTab(t){
   else if(t==='support'){showScr('s-support');chargerSupport();}
   else if(t==='tech'){showScr('s-tech');chargerTech();}
   else if(t==='rattachements'){showScr('s-rattachements');chargerRattachements();}
+  else if(t==='segmentation'){showScr('s-segmentation');initSegmentationUI();}
   else if(t==='stats'){
     showScr('s-stats');
     buildNavs('stats');
@@ -3766,6 +3869,155 @@ function renderSansFilleul(list){
       +'<div style="color:#6b7280;font-size:11px;margin-top:2px">'+u.telephone+'</div></div>';
     el.appendChild(div);
   });
+}
+
+// ═══ SEGMENTATION ═══
+var segRolesSel={},segKycSel={},segStatutSel={};
+var segResults=[];var segSelected={};
+function initSegmentationUI(){
+  var rolesEl=document.getElementById('seg-roles');
+  if(rolesEl&&!rolesEl.dataset.init){
+    rolesEl.dataset.init='1';
+    [['client','Client'],['agent','Agent'],['business','Business'],['mini_master','Mini-Master'],['master','Master'],['superviseur','Superviseur']].forEach(function(r){
+      var btn=document.createElement('button');
+      btn.type='button';
+      btn.textContent=r[1];
+      btn.style.cssText='padding:7px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.addEventListener('click',function(){
+        segRolesSel[r[0]]=!segRolesSel[r[0]];
+        btn.style.borderColor=segRolesSel[r[0]]?'#ca8a04':'#e5e7eb';
+        btn.style.background=segRolesSel[r[0]]?'#fef3c7':'#fff';
+        btn.style.color=segRolesSel[r[0]]?'#a16207':'#6b7280';
+      });
+      rolesEl.appendChild(btn);
+    });
+  }
+  var kycEl=document.getElementById('seg-kyc');
+  if(kycEl&&!kycEl.dataset.init){
+    kycEl.dataset.init='1';
+    ['KYC1','KYC2','KYC3'].forEach(function(k){
+      var btn=document.createElement('button');
+      btn.type='button';btn.textContent=k;
+      btn.style.cssText='padding:7px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.addEventListener('click',function(){
+        segKycSel[k]=!segKycSel[k];
+        btn.style.borderColor=segKycSel[k]?'#ca8a04':'#e5e7eb';
+        btn.style.background=segKycSel[k]?'#fef3c7':'#fff';
+        btn.style.color=segKycSel[k]?'#a16207':'#6b7280';
+      });
+      kycEl.appendChild(btn);
+    });
+  }
+  var statutEl=document.getElementById('seg-statuts');
+  if(statutEl&&!statutEl.dataset.init){
+    statutEl.dataset.init='1';
+    [['actif','Actif'],['suspendu','Suspendu'],['bloque','Bloqué'],['en_attente','En attente']].forEach(function(s){
+      var btn=document.createElement('button');
+      btn.type='button';btn.textContent=s[1];
+      btn.style.cssText='padding:7px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.addEventListener('click',function(){
+        segStatutSel[s[0]]=!segStatutSel[s[0]];
+        btn.style.borderColor=segStatutSel[s[0]]?'#ca8a04':'#e5e7eb';
+        btn.style.background=segStatutSel[s[0]]?'#fef3c7':'#fff';
+        btn.style.color=segStatutSel[s[0]]?'#a16207':'#6b7280';
+      });
+      statutEl.appendChild(btn);
+    });
+  }
+}
+function segNum(id){var v=document.getElementById(id).value;return v===''?undefined:Number(v);}
+function segDate(id){var v=document.getElementById(id).value;return v?v:undefined;}
+async function lancerSegmentation(){
+  var wrap=document.getElementById('seg-results-wrap');
+  var listEl=document.getElementById('seg-results-list');
+  wrap.style.display='';
+  listEl.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  document.getElementById('seg-results-count').textContent='Recherche...';
+  var body={
+    roles:Object.keys(segRolesSel).filter(function(k){return segRolesSel[k];}),
+    kycNiveaux:Object.keys(segKycSel).filter(function(k){return segKycSel[k];}),
+    statuts:Object.keys(segStatutSel).filter(function(k){return segStatutSel[k];}),
+    filleulsMin:segNum('seg-filleuls-min'),filleulsMax:segNum('seg-filleuls-max'),
+    periodeDebut:segDate('seg-periode-debut'),periodeFin:segDate('seg-periode-fin'),
+    depotMin:segNum('seg-depot-min'),depotMax:segNum('seg-depot-max'),
+    retraitMin:segNum('seg-retrait-min'),retraitMax:segNum('seg-retrait-max'),
+    transfertMin:segNum('seg-transfert-min'),transfertMax:segNum('seg-transfert-max'),
+    paiementEnvoyeMin:segNum('seg-paye-min'),paiementEnvoyeMax:segNum('seg-paye-max'),
+    paiementRecuMin:segNum('seg-recu-min'),paiementRecuMax:segNum('seg-recu-max'),
+    dateInscriptionDebut:segDate('seg-inscr-debut'),dateInscriptionFin:segDate('seg-inscr-fin')
+  };
+  // Nettoyer les tableaux vides (sinon le backend filtre sur liste vide = aucun résultat)
+  if(!body.roles.length)delete body.roles;
+  if(!body.kycNiveaux.length)delete body.kycNiveaux;
+  if(!body.statuts.length)delete body.statuts;
+  try{
+    var r=await fetch(API+'/admin/segmentation',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},body:JSON.stringify(body)});
+    var d=await r.json();if(!r.ok)throw new Error(d.message||'Erreur');
+    segResults=d.data.utilisateurs||[];
+    segSelected={};
+    renderSegResults();
+  }catch(e){
+    listEl.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px;text-align:center">'+e.message+'</div>';
+    document.getElementById('seg-results-count').textContent='Erreur';
+  }
+}
+function renderSegResults(){
+  var listEl=document.getElementById('seg-results-list');
+  document.getElementById('seg-results-count').textContent=segResults.length+' résultat'+(segResults.length>1?'s':'');
+  if(!segResults.length){listEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--m);font-size:13px">Aucun compte ne correspond à ces critères</div>';updateSegSelectedCount();return;}
+  listEl.innerHTML='';
+  segResults.forEach(function(u){
+    var c=ROLE_C[u.role]||'#888';
+    var checked=!!segSelected[u.id];
+    var div=document.createElement('div');
+    div.style.cssText='background:#fff;border:1px solid '+(checked?'#fbbf24':'#f3f4f6')+';border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer';
+    var volTxt='';
+    if(u.volumes){
+      var parts=[];
+      if(u.volumes.depot)parts.push('Dépôt: '+F(u.volumes.depot));
+      if(u.volumes.retrait)parts.push('Retrait: '+F(u.volumes.retrait));
+      if(u.volumes.transfert)parts.push('Transfert: '+F(u.volumes.transfert));
+      if(u.volumes.paiementEnvoye)parts.push('Payé: '+F(u.volumes.paiementEnvoye));
+      if(u.volumes.paiementRecu)parts.push('Reçu: '+F(u.volumes.paiementRecu));
+      if(parts.length)volTxt='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+parts.join(' · ')+'</div>';
+    }
+    div.innerHTML='<input type="checkbox" '+(checked?'checked':'')+' style="width:18px;height:18px;accent-color:var(--y);flex-shrink:0"/>'
+      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</span><span style="padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;background:'+c+'22;color:'+c+'">'+u.role+'</span>'+(u.nbFilleuls?'<span style="font-size:9px;color:#9ca3af">· '+u.nbFilleuls+' filleul(s)</span>':'')+'</div>'
+      +'<div style="font-size:11px;color:#6b7280">'+u.telephone+'</div>'+volTxt+'</div>';
+    div.addEventListener('click',function(){
+      segSelected[u.id]=!segSelected[u.id];
+      renderSegResults();
+    });
+    listEl.appendChild(div);
+  });
+  updateSegSelectedCount();
+}
+function updateSegSelectedCount(){
+  var n=Object.keys(segSelected).filter(function(k){return segSelected[k];}).length;
+  document.getElementById('seg-selected-count').textContent=n;
+}
+function segSelectAll(val){
+  segResults.forEach(function(u){segSelected[u.id]=val;});
+  renderSegResults();
+}
+function ouvrirNotifSegmentation(){
+  var n=Object.keys(segSelected).filter(function(k){return segSelected[k];}).length;
+  if(!n){toast('Sélectionnez au moins un destinataire',true);return;}
+  document.getElementById('seg-notif-sub').textContent=n+' destinataire(s)';
+  document.getElementById('seg-notif-titre').value='';
+  document.getElementById('seg-notif-message').value='';
+  openSh('seg-notif');
+}
+async function envoyerNotifSegmentation(){
+  var titre=document.getElementById('seg-notif-titre').value.trim();
+  var message=document.getElementById('seg-notif-message').value.trim();
+  if(!titre||!message){toast('Titre et message requis',true);return;}
+  var userIds=Object.keys(segSelected).filter(function(k){return segSelected[k];});
+  try{
+    await apiPost('/notifications/multi',{userIds:userIds,titre:titre,message:message,type:'systeme'});
+    toast(userIds.length+' notification(s) envoyée(s)');
+    closeSh('seg-notif');
+  }catch(e){toast(e.message,true);}
 }
 
 function voirU(id){
