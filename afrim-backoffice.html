@@ -3729,10 +3729,11 @@ async function chargerSansFilleul(){
     var p='/admin/rattachements/sans-filleul';
     if(sfRoleFilter!=='all') p+='?role='+sfRoleFilter;
     var r=await apiGet(p);
+    alert('DEBUG SANS-FILLEUL: r='+JSON.stringify(r));
     if(r===null){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--r);font-size:13px">Session expirée ou problème d\'authentification. Reconnecte-toi.</div>';return;}
     sansFilleulData=r.data.utilisateurs||[];
     renderSansFilleul(sansFilleulData);
-  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+  }catch(e){alert('DEBUG SANS-FILLEUL ERREUR: '+e.message);el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
 function filtrerSansFilleul(q){
   if(!q){renderSansFilleul(sansFilleulData);return;}
