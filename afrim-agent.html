@@ -2387,11 +2387,14 @@ async function ouvrirNotifs(){
     var r=await get('/notifications?limit=30'+tel);
     var list=(r.data&&r.data.notifications)||[];
     var nonLues=Number(r.data&&r.data.nonLues||0);
+    // Le badge reflète toujours le vrai total non lues (backend), même si la liste affichée est vide ou tronquée
+    _agentNotifCount=nonLues;
+    _majBadgeAgent(nonLues);
     if(!list.length){
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m)"><div style="font-size:42px;margin-bottom:12px">🔔</div><div style="font-size:15px;font-weight:700">Aucune notification</div></div>';
       return;
     }
-    // Séparer lues / non lues
+    // Séparer lues / non lues (sur les 30 notifications chargées, pour l'affichage uniquement)
     var nlu=list.filter(function(n){return !n.lu;});
     var lu=list.filter(function(n){return n.lu;});
     var sorted=nlu.concat(lu);
@@ -2407,9 +2410,12 @@ async function ouvrirNotifs(){
       var fw=n.lu?'500':'700';
       // Petit point rouge en haut à droite pour non lues
       var badge=n.lu?'':'<div class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-top:3px"></div>';
-      // Séparateur "LUES"
+      // Séparateur "NON LUES" / "LUES" pour bien distinguer les deux groupes
       var sep='';
-      if(n.lu&&!luSepDone&&lu.length>0&&nlu.length>0){
+      if(n===sorted[0]&&nlu.length>0){
+        sep='<div style="padding:8px 16px 6px;font-size:11px;font-weight:700;color:#1E90FF;text-transform:uppercase;letter-spacing:.06em;background:#f0f7ff;border-bottom:1px solid #dbeafe">Non lues</div>';
+      }
+      if(n.lu&&!luSepDone&&lu.length>0){
         luSepDone=true;
         sep='<div style="padding:8px 16px 6px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;background:#f9fafb;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">Lues</div>';
       }
@@ -2427,12 +2433,9 @@ async function ouvrirNotifs(){
           '</div>'+
         '</div>';
     }).join('');
-    // En-tête compteur non lues
-    var header=nlu.length>0?'<div style="padding:10px 16px 8px;font-size:12px;font-weight:700;color:#1E90FF;background:#f0f7ff;border-bottom:2px solid #1E90FF20">'+nlu.length+' notification'+(nlu.length>1?'s':'')+' non lue'+(nlu.length>1?'s':'')+'</div>':'';
-    el.innerHTML=header+html;;
-    // Mettre à jour le compteur en temps réel
-    _agentNotifCount=nonLues;
-    _majBadgeAgent(nonLues);
+    // En-tête : toujours basé sur le vrai total non lues (backend), pas sur la liste tronquée à 30
+    var header=nonLues>0?'<div id="notif-header-count" style="padding:10px 16px 8px;font-size:12px;font-weight:700;color:#1E90FF;background:#f0f7ff;border-bottom:2px solid #1E90FF20">'+nonLues+' notification'+(nonLues>1?'s':'')+' non lue'+(nonLues>1?'s':'')+(nonLues>nlu.length?' (sur les '+nlu.length+' affichées)':'')+'</div>':'';
+    el.innerHTML=header+html;
     // Ne pas marquer automatiquement — seulement au clic individuel ou "Tout lire"
     // Le compteur reste exact et ne se remet pas à zéro à l'ouverture
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
@@ -2487,9 +2490,12 @@ async function marquerToutLuAgent(){
       var t=el.querySelector('.notif-title');if(t)t.style.fontWeight='500';
       var iconBox=el.querySelector('[style*="dbeafe"]');if(iconBox)iconBox.style.background='#f3f4f6';
     });
-    // Masquer le header compteur
-    var hdr=document.querySelector('#sh-notifs-list > div[style*="1E90FF"]');
+    // Masquer le header compteur et le séparateur "Non lues" (tout est lu maintenant)
+    var hdr=document.getElementById('notif-header-count');
     if(hdr)hdr.style.display='none';
+    document.querySelectorAll('#sh-notifs-list > div').forEach(function(d){
+      if(d.textContent==='Non lues')d.style.display='none';
+    });
   }catch(e){}
 }
 
