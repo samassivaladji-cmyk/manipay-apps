@@ -9269,6 +9269,39 @@ async function chargerGainsSysteme(){
       });
       h+='</div>';
     }
+    // Gains par operation detailles par role (Agent, Client, Master, Mini-Master)
+    var parRoleType=util.parRoleType||[];
+    if(parRoleType.length){
+      var roles4=['agent','client','master','mini_master'];
+      var typeLabels={'depot_agent':'Depot','retrait_agent':'Retrait','parrainage':'Parrainage','paiement_marchand':'Paiement','gain_plateforme_retrait':'Gain retrait','gain_plateforme_paiement_marchand':'Gain paiement'};
+      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
+      h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128200; Gains par type d\'operation</div>';
+      roles4.forEach(function(role){
+        var col3=roleCol[role]||'#9ca3af';
+        var rowsRole=parRoleType.filter(function(x){return x.role===role;});
+        if(!rowsRole.length)return;
+        var totalRole=rowsRole.reduce(function(s,x){return s+(x.total||0);},0);
+        var roleN=role==='mini_master'?'Mini-Master':role.charAt(0).toUpperCase()+role.slice(1);
+        h+='<div style="margin-bottom:16px;padding:12px;background:'+col3+'11;border-radius:12px">';
+        h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+        h+='<span style="padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;background:'+col3+'22;color:'+col3+'">'+roleN+'</span>';
+        h+='<span style="font-size:14px;font-weight:800;color:'+col3+'">'+F(totalRole)+'</span></div>';
+        rowsRole.forEach(function(row){
+          var label=typeLabels[row.type_commission]||(row.type_commission||'').replace(/_/g,' ');
+          var pct3=totalRole>0?Math.min(100,Math.round(row.total/totalRole*100)):0;
+          h+='<div style="margin-bottom:8px">';
+          h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">';
+          h+='<span style="font-size:11px;font-weight:600;color:#374151">'+label+'</span>';
+          h+='<span style="font-size:11px;font-weight:800;color:'+col3+'">'+F(row.total||0)+'</span></div>';
+          h+='<div style="display:flex;align-items:center;gap:6px">';
+          h+='<div style="flex:1;background:#e5e7eb;border-radius:99px;height:6px"><div style="background:'+col3+';height:6px;border-radius:99px;width:'+pct3+'%"></div></div>';
+          h+='<span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+row.nb+' op.</span></div>';
+          h+='</div>';
+        });
+        h+='</div>';
+      });
+      h+='</div>';
+    }
     h+='</div>'; // fin page util
 
     wrap.innerHTML=h;
