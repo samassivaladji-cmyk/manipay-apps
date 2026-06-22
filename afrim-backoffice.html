@@ -9119,48 +9119,56 @@ async function chargerGainsSysteme(){
     var uP=util.periodes||{};
     var roleCol={agent:'#f59e0b',client:'#22c55e',master:'#a78bfa',mini_master:'#60a5fa',business:'#f97316',superviseur:'#6b7280',backoffice:'#1e293b'};
 
-    // Onglet actif par defaut
-    var tabAP='mc-tab-ap', tabUtil='mc-tab-util';
-
     var h='';
     // ── Onglets navigation
     h+='<div style="display:flex;border-radius:14px;background:#f3f4f6;padding:4px;gap:4px;margin-bottom:16px">';
-    h+='<button id="mc-tab-ap" onclick="mcShowTab(\'ap\')" style="flex:1;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#7c3aed;color:#fff">&#128200; Gains AFRIM PAY</button>';
-    h+='<button id="mc-tab-util" onclick="mcShowTab(\'util\')" style="flex:1;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280">&#128101; Gains Utilisateurs</button>';
+    h+='<button id="mc-tab-ap" onclick="mcShowTab(\'ap\')" style="flex:1;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#7c3aed;color:#fff">&#128200; AFRIM PAY</button>';
+    h+='<button id="mc-tab-util" onclick="mcShowTab(\'util\')" style="flex:1;border:none;border-radius:11px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:#6b7280">&#128101; Utilisateurs</button>';
     h+='</div>';
 
-    // ══════════ PAGE AFRIM PAY ══════════
+    // ══ PAGE AFRIM PAY ══
     h+='<div id="mc-page-ap">';
-    // Solde principal
     h+='<div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:20px;padding:20px;margin-bottom:14px;color:#fff">';
-    h+='<div style="font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Solde compte AFRIM PAY</div>';
+    h+='<div style="font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Solde AFRIM PAY</div>';
     h+='<div style="font-size:32px;font-weight:800;margin-bottom:4px">'+F(ap.solde||0)+'</div>';
-    h+='<div style="font-size:11px;opacity:.7">Fonds accumulés sur toutes les opérations</div>';
+    h+='<div style="font-size:11px;opacity:.7">Fonds accumulés — toutes opérations</div>';
     h+='<button id="mc-btn-virer-afrim" style="margin-top:14px;width:100%;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#128184; Virer ces fonds</button>';
     h+='</div>';
-    // Gains par période
+    // Gains AP par période avec comparatif
     h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-    h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128197; Gains AFRIM PAY par période</div>';
+    h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128197; Gains AFRIM PAY</div>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
-    h+=mcPeriodCard("Aujourd'hui", apP.aujourdhui);
-    h+=mcPeriodCard('Cette semaine', apP.semaine);
-    h+=mcPeriodCard('Ce mois', apP.mois);
-    h+=mcPeriodCard('Cette année', apP.annee);
+    h+=mcPeriodCardV2("Aujourd'hui",apP.aujourdhui,'#7c3aed');
+    h+=mcPeriodCardV2('Cette semaine',apP.semaine,'#7c3aed');
+    h+=mcPeriodCardV2('Ce mois',apP.mois,'#7c3aed');
+    h+=mcPeriodCardV2('Cette année',apP.annee,'#7c3aed');
     h+='</div>';
     h+='<div style="background:#f5f3ff;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
     h+='<div style="font-size:12px;font-weight:700;color:#7c3aed">Total depuis toujours</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#7c3aed">'+F((apP.total||{}).total||0)+'</div>';
+    h+='<div><div style="font-size:16px;font-weight:800;color:#7c3aed">'+F((apP.total||{}).total||0)+'</div>';
+    h+='<div style="font-size:10px;color:#9ca3af;text-align:right">'+((apP.total||{}).nb||0)+' opérations</div></div>';
     h+='</div></div>';
-    // Gains par type
+    // Courbe AP ce mois
+    if(ap.courbe&&ap.courbe.length){
+      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
+      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Évolution ce mois</div>';
+      h+='<canvas id="mc-chart-ap" height="180"></canvas>';
+      h+='</div>';
+    }
+    // Par type
     if(ap.parType&&ap.parType.length){
       h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Détail par type d\'opération</div>';
+      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Détail par opération</div>';
       ap.parType.forEach(function(g){
         var label=(g.type_commission||'').replace(/gain_plateforme_/g,'').replace(/_/g,' ');
-        h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div><div style="font-size:12px;font-weight:700;text-transform:capitalize">'+label+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+g.nb+' opération(s)</div></div>';
-        h+='<div style="font-size:14px;font-weight:800;color:#7c3aed">+'+F(g.total||0)+'</div></div>';
+        var pct=ap.periodes&&ap.periodes.total&&ap.periodes.total.total?(g.total/((apP.total||{}).total||1)*100):0;
+        h+='<div style="padding:10px 0;border-bottom:1px solid #f9fafb">';
+        h+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+        h+='<div style="font-size:12px;font-weight:700;text-transform:capitalize">'+label+'</div>';
+        h+='<div style="font-size:13px;font-weight:800;color:#7c3aed">'+F(g.total||0)+'</div></div>';
+        h+='<div style="background:#f3f4f6;border-radius:99px;height:5px"><div style="background:#7c3aed;height:5px;border-radius:99px;width:'+Math.min(100,pct).toFixed(1)+'%"></div></div>';
+        h+='<div style="font-size:10px;color:#9ca3af;margin-top:3px">'+g.nb+' opération(s)</div>';
+        h+='</div>';
       });
       h+='</div>';
     }
@@ -9172,53 +9180,53 @@ async function chargerGainsSysteme(){
         var d=v.date_creation?new Date(v.date_creation).toLocaleDateString('fr-FR'):'';
         h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f9fafb">';
         h+='<div><div style="font-size:12px;font-weight:700">'+(v.description||v.reference||'Virement')+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+d+' &middot; '+v.reference+'</div></div>';
+        h+='<div style="font-size:10px;color:var(--m)">'+d+'</div></div>';
         h+='<div style="font-size:13px;font-weight:800;color:var(--r)">-'+F(v.montant||0)+'</div></div>';
       });
       h+='</div>';
     }
     h+='</div>'; // fin page ap
 
-    // ══════════ PAGE UTILISATEURS ══════════
+    // ══ PAGE UTILISATEURS ══
     h+='<div id="mc-page-util" style="display:none">';
-    // Total global
+    // Total
     h+='<div style="background:linear-gradient(135deg,#1e293b,#334155);border-radius:20px;padding:20px;margin-bottom:14px;color:#fff">';
-    h+='<div style="font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Total gains tous utilisateurs</div>';
+    h+='<div style="font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:6px">Total gains versés aux utilisateurs</div>';
     h+='<div style="font-size:32px;font-weight:800">'+F((uP.total||{}).total||0)+'</div>';
     h+='</div>';
-    // Périodes utilisateurs
+    // Périodes avec comparatif
     h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-    h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128197; Gains versés aux utilisateurs</div>';
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
-    h+=mcPeriodCard("Aujourd'hui", uP.aujourdhui);
-    h+=mcPeriodCard('Cette semaine', uP.semaine);
-    h+=mcPeriodCard('Ce mois', uP.mois);
-    h+=mcPeriodCard('Cette année', uP.annee);
+    h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128197; Gains versés par période</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    h+=mcPeriodCardV2("Aujourd'hui",uP.aujourdhui,'#f59e0b');
+    h+=mcPeriodCardV2('Cette semaine',uP.semaine,'#f59e0b');
+    h+=mcPeriodCardV2('Ce mois',uP.mois,'#f59e0b');
+    h+=mcPeriodCardV2('Cette année',uP.annee,'#f59e0b');
     h+='</div></div>';
+    // Courbe utilisateurs ce mois
+    if(util.courbe&&util.courbe.length){
+      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
+      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Évolution ce mois</div>';
+      h+='<canvas id="mc-chart-util" height="180"></canvas>';
+      h+='</div>';
+    }
     // Par rôle
     if(util.parRole&&util.parRole.length){
+      var totalRoles=util.parRole.reduce(function(s,x){return s+(x.total||0);},0);
       h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
       h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128101; Par rôle</div>';
       util.parRole.forEach(function(r2){
         var col=roleCol[r2.role]||'#9ca3af';
-        h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f9fafb">';
+        var pct=totalRoles>0?(r2.total/totalRoles*100):0;
+        h+='<div style="padding:10px 0;border-bottom:1px solid #f9fafb">';
+        h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
         h+='<div style="display:flex;align-items:center;gap:8px">';
         h+='<span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:'+col+'22;color:'+col+'">'+r2.role+'</span>';
-        h+='<div><div style="font-size:11px;color:var(--m)">'+r2.nb_beneficiaires+' pers. &middot; '+r2.nb_commissions+' ops</div></div></div>';
+        h+='<span style="font-size:10px;color:var(--m)">'+r2.nb_beneficiaires+' pers.</span></div>';
         h+='<div style="font-size:13px;font-weight:800;color:'+col+'">'+F(r2.total||0)+'</div></div>';
-      });
-      h+='</div>';
-    }
-    // Par type de commission
-    if(util.parType&&util.parType.length){
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Par type de commission</div>';
-      util.parType.forEach(function(t2){
-        var label=(t2.type_commission||'').replace(/_/g,' ');
-        h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div><div style="font-size:12px;font-weight:700;text-transform:capitalize">'+label+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+t2.nb+' opération(s)</div></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:var(--y2)">'+F(t2.total||0)+'</div></div>';
+        h+='<div style="background:#f3f4f6;border-radius:99px;height:5px"><div style="background:'+col+';height:5px;border-radius:99px;width:'+Math.min(100,pct).toFixed(1)+'%"></div></div>';
+        h+='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+r2.nb_commissions+' commissions versées</div>';
+        h+='</div>';
       });
       h+='</div>';
     }
@@ -9228,26 +9236,30 @@ async function chargerGainsSysteme(){
       h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#127942; Top 10 gagnants</div>';
       util.top10.forEach(function(u2,i){
         var col=roleCol[u2.role]||'#9ca3af';
+        var medal=i===0?'&#129351;':i===1?'&#129352;':i===2?'&#129353;':null;
         h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(i<3?'#fbbf24':'#f3f4f6')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:'+(i<3?'#92400e':'#6b7280')+'">'+(i+1)+'</div>';
-        h+='<div style="flex:1"><div style="font-size:13px;font-weight:700">'+(u2.prenom||'')+' '+(u2.nom||'')+'</div>';
+        h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(i<3?'#fbbf24':'#f3f4f6')+';display:flex;align-items:center;justify-content:center;font-size:'+(i<3?'14':'12')+'px;font-weight:800;color:'+(i<3?'#92400e':'#6b7280')+'">'+(medal||(i+1))+'</div>';
+        h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u2.prenom||'')+' '+(u2.nom||'')+'</div>';
         h+='<div style="font-size:10px;color:var(--m)">'+(u2.telephone||'')+' &middot; <span style="color:'+col+'">'+u2.role+'</span> &middot; '+u2.nb_commissions+' ops</div></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:var(--y2)">'+F(u2.total_gains||0)+'</div></div>';
+        h+='<div style="font-size:13px;font-weight:800;color:var(--y2);white-space:nowrap">'+F(u2.total_gains||0)+'</div></div>';
       });
       h+='</div>';
     }
-    // Dernières commissions
-    if(util.dernieres&&util.dernieres.length){
+    // Par type commission
+    if(util.parType&&util.parType.length){
+      var totalType=util.parType.reduce(function(s,x){return s+(x.total||0);},0);
       h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128338; Dernières commissions versées</div>';
-      util.dernieres.forEach(function(c2){
-        var col=roleCol[c2.role]||'#9ca3af';
-        var d=c2.date_calcul?new Date(c2.date_calcul).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+new Date(c2.date_calcul).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-        var label=(c2.type_commission||'').replace(/_/g,' ');
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+(c2.prenom||'')+' '+(c2.nom||'')+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+d+' &middot; <span style="text-transform:capitalize">'+label+'</span></div></div>';
-        h+='<div style="font-size:12px;font-weight:800;color:'+col+'">+'+F(c2.montant||0)+'</div></div>';
+      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#127991; Types de commission</div>';
+      util.parType.forEach(function(t2){
+        var label=(t2.type_commission||'').replace(/_/g,' ');
+        var pct2=totalType>0?(t2.total/totalType*100):0;
+        h+='<div style="padding:10px 0;border-bottom:1px solid #f9fafb">';
+        h+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+        h+='<div style="font-size:12px;font-weight:700;text-transform:capitalize">'+label+'</div>';
+        h+='<div style="font-size:13px;font-weight:800;color:var(--y2)">'+F(t2.total||0)+'</div></div>';
+        h+='<div style="background:#f3f4f6;border-radius:99px;height:5px"><div style="background:var(--y);height:5px;border-radius:99px;width:'+Math.min(100,pct2).toFixed(1)+'%"></div></div>';
+        h+='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+t2.nb+' versement(s)</div>';
+        h+='</div>';
       });
       h+='</div>';
     }
@@ -9255,9 +9267,71 @@ async function chargerGainsSysteme(){
 
     wrap.innerHTML=h;
     document.getElementById('mc-btn-virer-afrim').onclick=function(){ouvrirVirerAfrimPay(ap.solde||0);};
+
+    // Dessiner courbes avec Chart.js (déjà chargé dans la page)
+    setTimeout(function(){
+      mcDrawChart('mc-chart-ap', ap.courbe||[], '#7c3aed');
+      mcDrawChart('mc-chart-util', util.courbe||[], '#f59e0b');
+    }, 50);
+
   }catch(e){
     wrap.innerHTML='<div style="color:var(--r);padding:12px;font-size:12px">Erreur: '+e.message+'</div>';
   }
+}
+
+function mcPeriodCardV2(label, data, col){
+  var d=data||{};
+  var vs=d.vs;
+  var arrow=vs===null?'':vs>0?'&#8679; +'+vs+'%':vs<0?'&#8681; '+vs+'%':'=0%';
+  var arrowCol=vs===null?'#9ca3af':vs>0?'#22c55e':vs<0?'#ef4444':'#9ca3af';
+  return '<div style="background:#f9fafb;border-radius:12px;padding:14px">'
+    +'<div style="font-size:10px;color:var(--m);font-weight:700;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'
+    +'<div style="font-size:20px;font-weight:800;color:'+col+'">'+F(d.total||0)+'</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'
+    +'<div style="font-size:10px;color:#9ca3af">'+(d.nb||0)+' ops</div>'
+    +(vs!==null?'<div style="font-size:10px;font-weight:700;color:'+arrowCol+'">'+arrow+'</div>':'')
+    +'</div></div>';
+}
+
+function mcDrawChart(canvasId, rows, color){
+  var canvas=document.getElementById(canvasId);
+  if(!canvas||!rows.length)return;
+  // Construire les données pour les 30 jours du mois
+  var dataMap={};
+  rows.forEach(function(r){dataMap[r.jour.substring(0,10)]=r.total;});
+  var now=new Date();
+  var labels=[], vals=[];
+  for(var i=0;i<now.getDate();i++){
+    var d=new Date(now.getFullYear(),now.getMonth(),i+1);
+    var key=d.toISOString().substring(0,10);
+    labels.push((i+1)+'');
+    vals.push(dataMap[key]||0);
+  }
+  if(typeof Chart==='undefined')return;
+  new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        data:vals,
+        borderColor:color,
+        backgroundColor:color+'22',
+        borderWidth:2,
+        pointRadius:3,
+        pointBackgroundColor:color,
+        fill:true,
+        tension:.3
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:9}}},
+        y:{grid:{color:'#f3f4f6'},ticks:{font:{size:9},callback:function(v){return v>=1000?(v/1000).toFixed(0)+'k':v;}}}
+      }
+    }
+  });
 }
 
 function mcPeriodCard(label, data){
