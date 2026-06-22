@@ -9065,38 +9065,7 @@ async function chargerMonCompte(){
       h+='<div id="mc-gains-systeme-wrap"><div style="padding:20px;text-align:center"><div class="spin"></div></div></div>';
     }
 
-    // ── Actions
-    var btnS='background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:14px;text-align:left;cursor:pointer;font-family:inherit;width:100%;display:block';
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-    h+='<button id="mc-btn-transfert" style="'+btnS+'"><div style="font-size:18px;margin-bottom:4px">&#128228;</div><div style="font-size:12px;font-weight:700">Transferer</div><div style="font-size:10px;color:var(--m)">vers tout compte</div></button>';
-    h+='<button id="mc-btn-infos" style="'+btnS+'"><div style="font-size:18px;margin-bottom:4px">&#9999;&#65039;</div><div style="font-size:12px;font-weight:700">Modifier infos</div><div style="font-size:10px;color:var(--m)">nom, prenom</div></button>';
-    h+='<button id="mc-btn-pin" style="'+btnS+'"><div style="font-size:18px;margin-bottom:4px">&#128272;</div><div style="font-size:12px;font-weight:700">Changer PIN</div><div style="font-size:10px;color:var(--m)">securite</div></button>';
-    h+='<button id="mc-btn-kyc" style="'+btnS+'"><div style="font-size:18px;margin-bottom:4px">&#128211;</div><div style="font-size:12px;font-weight:700">Mettre KYC</div><div style="font-size:10px;color:var(--m)">selfie, CNI</div></button>';
-    h+='</div>';
-
-    // ── Historique transactions personnelles
-    if(txs.length){
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:10px">Dernieres transactions</div>';
-      txs.slice(0,5).forEach(function(tx){
-        var dStr=tx.createdAt||tx.date_creation||'';
-        var d=dStr?new Date(dStr).toLocaleDateString('fr-FR'):'';
-        var signe=(tx.type==='depot'||tx.type==='transfert_recu')?'+':'-';
-        var col=(signe==='+')?'var(--g)':'var(--r)';
-        var typ=(tx.type||'').replace(/_/g,' ');
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div style="flex:1"><div style="font-size:12px;font-weight:700">'+typ+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+d+'</div></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:'+col+'">'+signe+' '+F(tx.montant||0)+'</div></div>';
-      });
-      h+='</div>';
-    }
-
     body.innerHTML=h;
-    document.getElementById('mc-btn-transfert').onclick=function(){ouvrirTransfertBO();};
-    document.getElementById('mc-btn-infos').onclick=function(){ouvrirModifInfosBO();};
-    document.getElementById('mc-btn-pin').onclick=function(){openSh('change-pin');rstPin();};
-    document.getElementById('mc-btn-kyc').onclick=function(){openSh('mc-kyc');};
 
     // Charger les gains système en parallele si Super BO
     if(_isSuperBO) chargerGainsSysteme();
@@ -9200,117 +9169,87 @@ async function chargerGainsSysteme(){
 
     // ── GRAPHIQUE COMPARATIF INTERACTIF ──
     // Récupérer les rôles présents dans les données
+    var ROLES_COURBE=['agent','client','master','mini_master'];
     var rolesDispos=['tous'];
     var rolesData={};
     if(util.courbeParRole){
       util.courbeParRole.forEach(function(row){
+        if(!ROLES_COURBE.includes(row.role))return; // exclure superviseur et autres
         if(!rolesData[row.role])rolesData[row.role]=[];
         rolesData[row.role].push(row);
       });
-      Object.keys(rolesData).forEach(function(role){if(!rolesDispos.includes(role))rolesDispos.push(role);});
+      ROLES_COURBE.forEach(function(role){if(rolesData[role])rolesDispos.push(role);});
     }
     window._mcRolesData=rolesData;
     window._mcRoleCol=roleCol;
     window._mcRoleLabel={agent:'Agent',client:'Client',master:'Master',mini_master:'Mini-M.',business:'Business',superviseur:'Superv.',tous:'Tous'};
 
+    // Préparer données par rôle + type d'opération
+    var ROLES_COURBE=['agent','client','master','mini_master'];
+    var rolesData={};
+    if(util.courbeParRole){
+      util.courbeParRole.forEach(function(row){
+        if(!ROLES_COURBE.includes(row.role))return;
+        if(!rolesData[row.role])rolesData[row.role]=[];
+        rolesData[row.role].push(row);
+      });
+    }
+    // Préparer données par rôle + type_commission pour le filtre par opération
+    var rolesTypeData={};
+    if(util.parRoleType){
+      util.parRoleType.forEach(function(row){
+        var key=row.role+'|'+row.type_commission;
+        if(!rolesTypeData[key])rolesTypeData[key]=[];
+      });
+    }
+    // courbeParRoleType vient du backend (à ajouter)
+    var courbeParRoleType=(util.courbeParRoleType)||[];
+    var rolesTypeMap={};
+    courbeParRoleType.forEach(function(row){
+      var key=row.role+'|'+row.type_commission;
+      if(!rolesTypeMap[key])rolesTypeMap[key]=[];
+      rolesTypeMap[key].push(row);
+    });
+    window._mcRolesData=rolesData;
+    window._mcRolesTypeMap=rolesTypeMap;
+    window._mcRoleCol=roleCol;
+    window._mcRoleLabel={agent:'Agent',client:'Client',master:'Master',mini_master:'Mini-M.',tous:'Tous'};
+
+    // ── Graphique comparatif interactif
     h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-    h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128202; Courbes comparatives</div>';
+    h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128202; Courbes comparatives</div>';
     // Chips rôles
-    h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Rôles</div>';
+    h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Rôle</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="mc-chips-role">';
-    rolesDispos.forEach(function(role,i){
-      var col=roleCol[role]||'#f59e0b';
+    ['tous','agent','client','master','mini_master'].forEach(function(role,i){
+      var col3=roleCol[role]||'#f59e0b';
       var active=i===0;
-      h+='<button onclick="mcUpdateChart(\'role\',\''+role+'\')" data-role="'+role+'" style="padding:6px 12px;border-radius:99px;border:1.5px solid '+(active?col:'#e5e7eb')+';background:'+(active?col+'22':'#fff')+';color:'+(active?col:'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+(window._mcRoleLabel&&window._mcRoleLabel[role]||role)+'</button>';
+      var lbl={tous:'Tous',agent:'Agent',client:'Client',master:'Master',mini_master:'Mini-M.'}[role]||role;
+      h+='<button onclick="mcUpdateChart(\'role\',\''+role+'\')" data-role="'+role+'" style="padding:6px 14px;border-radius:99px;border:1.5px solid '+(active?col3:'#e5e7eb')+';background:'+(active?col3+'22':'#fff')+';color:'+(active?col3:'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+lbl+'</button>';
+    });
+    h+='</div>';
+    // Chips type d'opération
+    h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Type d\'opération</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="mc-chips-type">';
+    [['tous','Tous'],['depot_agent','Dépôt'],['retrait_agent','Retrait'],['parrainage','Parrainage'],['transfert','Transfert']].forEach(function(t,i){
+      var active=i===0;
+      h+='<button onclick="mcUpdateChart(\'type\',\''+t[0]+'\')" data-type="'+t[0]+'" style="padding:6px 14px;border-radius:99px;border:1.5px solid '+(active?'#0ea5e9':'#e5e7eb')+';background:'+(active?'#e0f2fe':'#fff')+';color:'+(active?'#0369a1':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+t[1]+'</button>';
     });
     h+='</div>';
     // Chips période
-    h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;margin-bottom:6px">Période</div>';
-    h+='<div style="display:flex;gap:6px;margin-bottom:14px" id="mc-chips-periode">';
-    [["7","7 jours"],["30","Ce mois"],["90","3 mois"],["365","Année"]].forEach(function(p,i){
+    h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Période</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="mc-chips-periode">';
+    [['7','7 jours'],['30','Ce mois'],['90','3 mois'],['365','Année']].forEach(function(p,i){
       var active=i===1;
-      h+='<button onclick="mcUpdateChart(\'periode\',\''+p[0]+'\')" data-periode="'+p[0]+'" style="padding:6px 12px;border-radius:99px;border:1.5px solid '+(active?'#1e293b':'#e5e7eb')+';background:'+(active?'#1e293b':'#fff')+';color:'+(active?'#fff':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+p[1]+'</button>';
+      h+='<button onclick="mcUpdateChart(\'periode\',\''+p[0]+'\')" data-periode="'+p[0]+'" style="padding:6px 14px;border-radius:99px;border:1.5px solid '+(active?'#1e293b':'#e5e7eb')+';background:'+(active?'#1e293b':'#fff')+';color:'+(active?'#fff':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+p[1]+'</button>';
     });
     h+='</div>';
     h+='<canvas id="mc-chart-util" height="200"></canvas>';
     h+='<div id="mc-chart-legende" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>';
     h+='</div>';
 
-    // Par rôle (barres)
-    if(util.parRole&&util.parRole.length){
-      var totalRoles=util.parRole.reduce(function(s,x){return s+(x.total||0);},0);
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128101; Répartition par rôle</div>';
-      util.parRole.forEach(function(r2){
-        var col2=roleCol[r2.role]||'#9ca3af';
-        var pct2=totalRoles>0?Math.min(100,(r2.total/totalRoles*100)).toFixed(1):0;
-        h+='<div style="padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-        h+='<div style="display:flex;align-items:center;gap:8px"><span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:'+col2+'22;color:'+col2+'">'+r2.role+'</span>';
-        h+='<span style="font-size:10px;color:var(--m)">'+r2.nb_beneficiaires+' pers.</span></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:'+col2+'">'+F(r2.total||0)+'</div></div>';
-        h+='<div style="background:#f3f4f6;border-radius:99px;height:6px"><div style="background:'+col2+';height:6px;border-radius:99px;width:'+pct2+'%"></div></div>';
-        h+='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+pct2+'% · '+r2.nb_commissions+' opérations</div></div>';
-      });
-      h+='</div>';
-    }
-    // Top 10
-    if(util.top10&&util.top10.length){
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#127942; Top 10 gagnants</div>';
-      util.top10.forEach(function(u2,i){
-        var col2=roleCol[u2.role]||'#9ca3af';
-        var medal=i===0?'&#129351;':i===1?'&#129352;':i===2?'&#129353;':null;
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(i<3?'#fbbf24':'#f3f4f6')+';display:flex;align-items:center;justify-content:center;font-size:'+(i<3?'14':'12')+'px;font-weight:800;color:'+(i<3?'#92400e':'#6b7280')+'">'+(medal||(i+1))+'</div>';
-        h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u2.prenom||'')+' '+(u2.nom||'')+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+(u2.telephone||'')+' &middot; <span style="color:'+col2+'">'+u2.role+'</span> &middot; '+u2.nb_commissions+' ops</div></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:var(--y2);white-space:nowrap">'+F(u2.total_gains||0)+'</div></div>';
-      });
-      h+='</div>';
-    }
-    // Gains par operation detailles par role (Agent, Client, Master, Mini-Master)
-    var parRoleType=util.parRoleType||[];
-    if(parRoleType.length){
-      var roles4=['agent','client','master','mini_master'];
-      var typeLabels={'depot_agent':'Depot','retrait_agent':'Retrait','parrainage':'Parrainage','paiement_marchand':'Paiement','gain_plateforme_retrait':'Gain retrait','gain_plateforme_paiement_marchand':'Gain paiement'};
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128200; Gains par type d\'operation</div>';
-      roles4.forEach(function(role){
-        var col3=roleCol[role]||'#9ca3af';
-        var rowsRole=parRoleType.filter(function(x){return x.role===role;});
-        if(!rowsRole.length)return;
-        var totalRole=rowsRole.reduce(function(s,x){return s+(x.total||0);},0);
-        var roleN=role==='mini_master'?'Mini-Master':role.charAt(0).toUpperCase()+role.slice(1);
-        h+='<div style="margin-bottom:16px;padding:12px;background:'+col3+'11;border-radius:12px">';
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-        h+='<span style="padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;background:'+col3+'22;color:'+col3+'">'+roleN+'</span>';
-        h+='<span style="font-size:14px;font-weight:800;color:'+col3+'">'+F(totalRole)+'</span></div>';
-        rowsRole.forEach(function(row){
-          var label=typeLabels[row.type_commission]||(row.type_commission||'').replace(/_/g,' ');
-          var pct3=totalRole>0?Math.min(100,Math.round(row.total/totalRole*100)):0;
-          h+='<div style="margin-bottom:8px">';
-          h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">';
-          h+='<span style="font-size:11px;font-weight:600;color:#374151">'+label+'</span>';
-          h+='<span style="font-size:11px;font-weight:800;color:'+col3+'">'+F(row.total||0)+'</span></div>';
-          h+='<div style="display:flex;align-items:center;gap:6px">';
-          h+='<div style="flex:1;background:#e5e7eb;border-radius:99px;height:6px"><div style="background:'+col3+';height:6px;border-radius:99px;width:'+pct3+'%"></div></div>';
-          h+='<span style="font-size:10px;color:#9ca3af;white-space:nowrap">'+row.nb+' op.</span></div>';
-          h+='</div>';
-        });
-        h+='</div>';
-      });
-      h+='</div>';
-    }
-    h+='</div>'; // fin page util
-
-    wrap.innerHTML=h;
-    document.getElementById('mc-btn-virer-afrim').onclick=function(){ouvrirVirerAfrimPay(ap.solde||0);};
-
-    // Dessiner courbes initiales
     setTimeout(function(){
-      mcDrawChart('mc-chart-ap', ap.courbe||[], '#7c3aed', 30);
-      mcUpdateChart('init','init'); // dessiner graphique comparatif initial
+      mcUpdateChart('init','init');
     }, 80);
 
   }catch(e){
@@ -9318,15 +9257,16 @@ async function chargerGainsSysteme(){
   }
 }
 
-var _mcSelRole='tous', _mcSelJours=30, _mcChartUtil=null;
+var _mcSelRole='tous', _mcSelJours=30, _mcSelType='tous', _mcChartUtil=null;
 
 function mcUpdateChart(type, val){
+  var roleCol=window._mcRoleCol||{};
+  var roleLabel=window._mcRoleLabel||{};
   if(type==='role'){
     _mcSelRole=val;
-    // Mettre à jour les chips rôles
     document.querySelectorAll('#mc-chips-role button').forEach(function(btn){
       var r=btn.getAttribute('data-role');
-      var col=(window._mcRoleCol&&window._mcRoleCol[r])||'#f59e0b';
+      var col=(roleCol[r])||'#f59e0b';
       var active=r===val;
       btn.style.borderColor=active?col:'#e5e7eb';
       btn.style.background=active?col+'22':'#fff';
@@ -9340,33 +9280,51 @@ function mcUpdateChart(type, val){
       btn.style.background=active?'#1e293b':'#fff';
       btn.style.color=active?'#fff':'#6b7280';
     });
+  } else if(type==='type'){
+    _mcSelType=val;
+    document.querySelectorAll('#mc-chips-type button').forEach(function(btn){
+      var active=btn.getAttribute('data-type')===val;
+      btn.style.borderColor=active?'#0ea5e9':'#e5e7eb';
+      btn.style.background=active?'#e0f2fe':'#fff';
+      btn.style.color=active?'#0369a1':'#6b7280';
+    });
   }
 
+  var ROLES_COURBE=['agent','client','master','mini_master'];
   var rolesData=window._mcRolesData||{};
-  var roleCol=window._mcRoleCol||{};
-  var roleLabel=window._mcRoleLabel||{};
+  var rolesTypeMap=window._mcRolesTypeMap||{};
+
+  // Dates
   var now=new Date();
   var debut=new Date(now); debut.setDate(debut.getDate()-_mcSelJours); debut.setHours(0,0,0,0);
 
-  // Construire les labels (jours)
+  // Labels
   var labels=[];
   for(var i=0;i<_mcSelJours;i++){
     var d=new Date(debut); d.setDate(d.getDate()+i);
     if(_mcSelJours<=30) labels.push(d.getDate()+'');
     else if(_mcSelJours<=90) labels.push(d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}));
-    else labels.push(d.toLocaleDateString('fr-FR',{month:'short'}));
+    else labels.push(d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}));
   }
-  // Si > 30 jours, agréger par semaine ou mois
-  // Pour simplifier : on reste en jours pour <=90, sinon on garde les labels
 
   // Rôles à afficher
-  var rolesToShow = _mcSelRole==='tous' ? Object.keys(rolesData) : [_mcSelRole];
+  var rolesToShow=_mcSelRole==='tous'?ROLES_COURBE.filter(function(r){return rolesData[r];}):([_mcSelRole].filter(function(r){return ROLES_COURBE.includes(r);}));
 
   var datasets=rolesToShow.map(function(role){
-    var col=roleCol[role]||'#9ca3af';
-    var rows=rolesData[role]||[];
+    var col=(roleCol[role])||'#9ca3af';
+    var lbl=(roleLabel[role])||role;
+
+    // Choisir la source de données selon le type sélectionné
+    var rows;
+    if(_mcSelType==='tous'){
+      rows=rolesData[role]||[];
+    } else {
+      rows=rolesTypeMap[role+'|'+_mcSelType]||[];
+    }
+
     var dataMap={};
     rows.forEach(function(row){dataMap[String(row.jour).substring(0,10)]=row.total;});
+
     var vals=[];
     for(var i=0;i<_mcSelJours;i++){
       var d=new Date(debut); d.setDate(d.getDate()+i);
@@ -9374,11 +9332,11 @@ function mcUpdateChart(type, val){
       vals.push(dataMap[key]||0);
     }
     return {
-      label:roleLabel[role]||role,
+      label:lbl,
       data:vals,
       borderColor:col,
       backgroundColor:col+'22',
-      borderWidth:2,
+      borderWidth:2.5,
       pointRadius:_mcSelJours<=30?3:1,
       pointBackgroundColor:col,
       fill:rolesToShow.length===1,
@@ -9388,8 +9346,9 @@ function mcUpdateChart(type, val){
 
   var canvas=document.getElementById('mc-chart-util');
   if(!canvas)return;
-  if(_mcChartUtil){_mcChartUtil.destroy(); _mcChartUtil=null;}
+  if(_mcChartUtil){_mcChartUtil.destroy();_mcChartUtil=null;}
   if(typeof Chart==='undefined')return;
+
   _mcChartUtil=new Chart(canvas,{
     type:'line',
     data:{labels:labels,datasets:datasets},
@@ -9401,17 +9360,17 @@ function mcUpdateChart(type, val){
         tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('fr-FR')+' FCFA';}}}
       },
       scales:{
-        x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:12}},
+        x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:15}},
         y:{grid:{color:'#f3f4f6'},ticks:{font:{size:9},callback:function(v){return v>=1000?(v/1000).toFixed(0)+'k':v;}}}
       }
     }
   });
 
-  // Légende manuelle
+  // Légende
   var leg=document.getElementById('mc-chart-legende');
   if(leg){
     leg.innerHTML=datasets.map(function(ds){
-      return '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:3px;background:'+ds.borderColor+'"></div><span style="font-size:11px;color:#374151">'+ds.label+'</span></div>';
+      return '<div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:4px;border-radius:2px;background:'+ds.borderColor+'"></div><span style="font-size:11px;color:#374151;font-weight:600">'+ds.label+'</span></div>';
     }).join('');
   }
 }
