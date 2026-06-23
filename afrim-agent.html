@@ -2387,14 +2387,11 @@ async function ouvrirNotifs(){
     var r=await get('/notifications?limit=30'+tel);
     var list=(r.data&&r.data.notifications)||[];
     var nonLues=Number(r.data&&r.data.nonLues||0);
-    // Le badge reflète toujours le vrai total non lues (backend), même si la liste affichée est vide ou tronquée
-    _agentNotifCount=nonLues;
-    _majBadgeAgent(nonLues);
     if(!list.length){
       el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m)"><div style="font-size:42px;margin-bottom:12px">🔔</div><div style="font-size:15px;font-weight:700">Aucune notification</div></div>';
       return;
     }
-    // Séparer lues / non lues (sur les 30 notifications chargées, pour l'affichage uniquement)
+    // Séparer lues / non lues
     var nlu=list.filter(function(n){return !n.lu;});
     var lu=list.filter(function(n){return n.lu;});
     var sorted=nlu.concat(lu);
@@ -2410,12 +2407,9 @@ async function ouvrirNotifs(){
       var fw=n.lu?'500':'700';
       // Petit point rouge en haut à droite pour non lues
       var badge=n.lu?'':'<div class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-top:3px"></div>';
-      // Séparateur "NON LUES" / "LUES" pour bien distinguer les deux groupes
+      // Séparateur "LUES"
       var sep='';
-      if(n===sorted[0]&&nlu.length>0){
-        sep='<div style="padding:8px 16px 6px;font-size:11px;font-weight:700;color:#1E90FF;text-transform:uppercase;letter-spacing:.06em;background:#f0f7ff;border-bottom:1px solid #dbeafe">Non lues</div>';
-      }
-      if(n.lu&&!luSepDone&&lu.length>0){
+      if(n.lu&&!luSepDone&&lu.length>0&&nlu.length>0){
         luSepDone=true;
         sep='<div style="padding:8px 16px 6px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;background:#f9fafb;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">Lues</div>';
       }
@@ -2433,9 +2427,12 @@ async function ouvrirNotifs(){
           '</div>'+
         '</div>';
     }).join('');
-    // En-tête : toujours basé sur le vrai total non lues (backend), pas sur la liste tronquée à 30
-    var header=nonLues>0?'<div id="notif-header-count" style="padding:10px 16px 8px;font-size:12px;font-weight:700;color:#1E90FF;background:#f0f7ff;border-bottom:2px solid #1E90FF20">'+nonLues+' notification'+(nonLues>1?'s':'')+' non lue'+(nonLues>1?'s':'')+(nonLues>nlu.length?' (sur les '+nlu.length+' affichées)':'')+'</div>':'';
-    el.innerHTML=header+html;
+    // En-tête compteur non lues
+    var header=nlu.length>0?'<div style="padding:10px 16px 8px;font-size:12px;font-weight:700;color:#1E90FF;background:#f0f7ff;border-bottom:2px solid #1E90FF20">'+nlu.length+' notification'+(nlu.length>1?'s':'')+' non lue'+(nlu.length>1?'s':'')+'</div>':'';
+    el.innerHTML=header+html;;
+    // Mettre à jour le compteur en temps réel
+    _agentNotifCount=nonLues;
+    _majBadgeAgent(nonLues);
     // Ne pas marquer automatiquement — seulement au clic individuel ou "Tout lire"
     // Le compteur reste exact et ne se remet pas à zéro à l'ouverture
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
@@ -2490,12 +2487,9 @@ async function marquerToutLuAgent(){
       var t=el.querySelector('.notif-title');if(t)t.style.fontWeight='500';
       var iconBox=el.querySelector('[style*="dbeafe"]');if(iconBox)iconBox.style.background='#f3f4f6';
     });
-    // Masquer le header compteur et le séparateur "Non lues" (tout est lu maintenant)
-    var hdr=document.getElementById('notif-header-count');
+    // Masquer le header compteur
+    var hdr=document.querySelector('#sh-notifs-list > div[style*="1E90FF"]');
     if(hdr)hdr.style.display='none';
-    document.querySelectorAll('#sh-notifs-list > div').forEach(function(d){
-      if(d.textContent==='Non lues')d.style.display='none';
-    });
   }catch(e){}
 }
 
@@ -2691,11 +2685,11 @@ function calcSopRet(){
   var amt=Number(document.getElementById('sop-ret-amt').value)||0;
   var btn=document.getElementById('sop-ret-btn1');
   if(amt>0){
-    var taux=amt<=50000?0.009:amt<=200000?0.008:0.007;
+    var taux=0.01;
     var frais=Math.round(amt*taux);var comm=Math.round(frais*0.35);var total=amt+frais;
-    document.getElementById('sop-ret-frais').textContent=F(frais)+' FCFA';
-    document.getElementById('sop-ret-comm').textContent='+'+F(comm)+' FCFA';
-    document.getElementById('sop-ret-total').textContent=F(total)+' FCFA';
+    document.getElementById('sop-ret-frais').textContent=F(frais);
+    document.getElementById('sop-ret-comm').textContent='+'+F(comm);
+    document.getElementById('sop-ret-total').textContent=F(total);
     document.getElementById('sop-ret-calc').style.display='';
     btn.disabled=false;btn.style.opacity='1';
   }else{document.getElementById('sop-ret-calc').style.display='none';btn.disabled=true;btn.style.opacity='.4';}
@@ -2821,19 +2815,13 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <div style="padding:0 16px 24px">
       <div style="font-size:13px;color:#6b7280;margin-bottom:16px">Frais de retrait appliqu&#233;s aux clients selon le montant :</div>
 
-      <!-- Tableau paliers — source server.js ligne 975/1054 -->
+      <!-- Tableau paliers — source server.js TAUX_RETRAIT=1% fixe -->
       <div style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#f9fafb;padding:10px 14px;font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e7eb">
-          <div>Tranche retrait</div><div style="text-align:center">Frais</div><div style="text-align:right">Comm. agent</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:11px 14px;font-size:12px;border-bottom:1px solid #f3f4f6;background:#fff">
-          <div style="color:#374151;font-weight:600">0 – 50 000</div><div style="text-align:center;color:#dc2626;font-weight:700">0,9%</div><div style="text-align:right;color:#16a34a;font-weight:700">35% des frais</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:11px 14px;font-size:12px;border-bottom:1px solid #f3f4f6;background:#f9fafb">
-          <div style="color:#374151;font-weight:600">50 001 – 200 000</div><div style="text-align:center;color:#dc2626;font-weight:700">0,8%</div><div style="text-align:right;color:#16a34a;font-weight:700">35% des frais</div>
+          <div>Retrait</div><div style="text-align:center">Frais client</div><div style="text-align:right">Comm. agent</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:11px 14px;font-size:12px;background:#fff">
-          <div style="color:#374151;font-weight:600">&gt; 200 000</div><div style="text-align:center;color:#dc2626;font-weight:700">0,7%</div><div style="text-align:right;color:#16a34a;font-weight:700">35% des frais</div>
+          <div style="color:#374151;font-weight:600">Tout montant</div><div style="text-align:center;color:#dc2626;font-weight:700">1%</div><div style="text-align:right;color:#16a34a;font-weight:700">35% des frais</div>
         </div>
       </div>
 
@@ -2842,7 +2830,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
         <div style="background:#f0fdf4;padding:10px 14px;font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #bbf7d0">D&#233;p&#244;t client</div>
         <div style="padding:12px 14px;font-size:12px;color:#374151;background:#fff">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Frais client</span><span style="color:#16a34a;font-weight:700">Gratuit</span></div>
-          <div style="display:flex;justify-content:space-between"><span>Commission agent</span><span style="color:#16a34a;font-weight:700">0,2% du montant</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Commission agent</span><span style="color:#16a34a;font-weight:700">0,3% du montant</span></div>
         </div>
       </div>
 

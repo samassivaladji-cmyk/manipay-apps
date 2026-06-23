@@ -305,7 +305,7 @@ function setTab(t){
   <div class="sh">
     <div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Dépôt Client</div><div style="color:var(--m);font-size:12px">Commission 0,2% versée par AFRIM PAY</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
-    <div class="info info-g">✅ Le dépôt est gratuit pour le client. Vous recevez 0,2% du montant versé par AFRIM PAY.</div>
+    <div class="info info-g">✅ Le dépôt est gratuit pour le client. Vous recevez 0,3% du montant versé par AFRIM PAY.</div>
     <div id="dep-s1">
       <div id="dep-err1" class="info info-r" style="display:none"></div>
       <span class="lbl">Numéro du client</span>
@@ -349,7 +349,7 @@ function setTab(t){
   <div class="sh">
     <div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">Vous recevez 35% des frais</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
-    <div class="info info-a">💰 Taux dégressif : 0,9% ≤50k · 0,8% ≤200k · 0,7% >200k. Vous recevez 35% des frais.</div>
+    <div class="info info-a">💰 Frais de retrait : 1% fixe. Vous recevez 35% des frais.</div>
     <div id="ret-s1">
       <div id="ret-err1" class="info info-r" style="display:none"></div>
       <span class="lbl">Numéro du client</span>
@@ -575,7 +575,7 @@ function calcDep(){
 
 function calcRet(){
   var v=Number(document.getElementById('ret-amt').value),ok=v>0;
-  var taux=v<=50000?0.009:v<=200000?0.008:0.007;
+  var taux=0.01;
   var frais=Math.round(v*taux),gain=Math.round(frais*0.35);
   document.getElementById('ret-recap').style.display=ok?'':'none';
   if(ok)document.getElementById('ret-recap').innerHTML='<div class="srow"><span style="color:var(--m);font-size:13px">Retrait</span><span style="font-size:13px;font-weight:700">'+F(v)+'</span></div><div class="srow"><span style="color:var(--m);font-size:13px">Frais ('+Math.round(taux*100*10)/10+'%)</span><span style="font-size:13px;font-weight:700">'+F(frais)+'</span></div><div class="srow"><span style="color:var(--m);font-size:13px">Total débité client</span><span style="font-size:13px;font-weight:700">'+F(v+frais)+'</span></div><div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-size:13px">Votre commission</span><span style="color:var(--a);font-size:16px;font-weight:800;font-family:monospace">+'+F(gain)+'</span></div>';
@@ -604,7 +604,7 @@ async function doRetrait(){
   document.getElementById('ret-s2').style.display='none';document.getElementById('ret-loading').style.display='';
   try{
     var r=await post('/transactions/withdraw',{telephone:opClients.ret.tel,montant:amt});
-    var taux=amt<=50000?0.009:amt<=200000?0.008:0.007;var frais=Math.round(amt*taux);var gain=Math.round(frais*0.35);
+    var taux=0.01;var frais=Math.round(amt*taux);var gain=Math.round(frais*0.35);
     document.getElementById('ret-loading').style.display='none';document.getElementById('ret-success').style.display='';
     document.getElementById('ret-succ-txt').textContent=F(amt)+' remis à '+opClients.ret.tel;
     document.getElementById('ret-succ-gain').textContent='Commission : +'+F(gain);

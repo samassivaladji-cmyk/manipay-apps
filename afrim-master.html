@@ -295,7 +295,7 @@ body{min-height:100vh;background:var(--bg);font-family:-apple-system,BlinkMacSys
   <div class="sh"><div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">Vous recevez 35% des frais</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
     <div class="sh-body">
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;font-weight:500">Taux degressif : 0,9% jusqu a 50k · 0,8% jusqu a 200k · 0,7% au-dela. Vous recevez 35% des frais.</div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;font-weight:500">Frais de retrait : 1% fixe. Vous recevez 35% des frais.</div>
       <div id="ret-s1">
         <div id="ret-err1" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
         <label class="lbl">Numero du client</label>
@@ -871,7 +871,7 @@ function calcDep(){
 
 function calcRet(){
   var v=Number(document.getElementById('ret-amt').value),ok=v>0;
-  var taux=v<=50000?0.009:v<=200000?0.008:0.007;
+  var taux=0.01;
   var frais=Math.round(v*taux),gain=Math.round(frais*0.35);
   var recap=document.getElementById('ret-recap');recap.style.display=ok?'':'none';
   if(ok)recap.innerHTML='<div class="srow"><span style="color:var(--m);font-size:13px">Retrait</span><span style="font-weight:700">'+F(v)+'</span></div>'
@@ -903,7 +903,7 @@ async function doRetrait(){
   document.getElementById('ret-s2').style.display='none';document.getElementById('ret-loading').style.display='';
   try{
     var r=await apiPost('/transactions/withdraw',{telephone:opClients.ret.tel,montant:amt});
-    var taux=amt<=50000?0.009:amt<=200000?0.008:0.007;var frais=Math.round(amt*taux);var gain=Math.round(frais*0.35);
+    var taux=0.01;var frais=Math.round(amt*taux);var gain=Math.round(frais*0.35);
     document.getElementById('ret-loading').style.display='none';document.getElementById('ret-success').style.display='';
     document.getElementById('ret-succ-txt').textContent=F(amt)+' remis a '+opClients.ret.tel;
     document.getElementById('ret-succ-gain').textContent='Commission : +'+F(gain);
