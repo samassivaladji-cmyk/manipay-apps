@@ -328,7 +328,7 @@ function setTab(t){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <button onclick="ouvrirDepot()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px">↓</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">D&#233;p&#244;t Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission 0,2%</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">D&#233;p&#244;t Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission 0,3%</div></div>
       </button>
       <button onclick="ouvrirRetrait()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px">↑</div>
@@ -517,7 +517,7 @@ function setTab(t){
 <div class="sh-ov" id="sh-depot">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">D&#233;p&#244;t Client</div><div style="color:var(--m);font-size:12px">Commission 0,2% du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">D&#233;p&#244;t Client</div><div style="color:var(--m);font-size:12px">Commission 0,3% du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
     <div id="dep-err1" class="info info-r" style="display:none"></div>
     <div id="dep-s1">
       <span class="lbl">Numéro client</span>
@@ -924,7 +924,7 @@ function setAmt(op,v){document.getElementById(op+'-amt').value=v;op==='dep'?calc
 function calcDep(){
   var amt=Number(document.getElementById('dep-amt').value)||0;
   if(!amt){document.getElementById('dep-calc').style.display='none';return;}
-  var comm=Math.round(amt*0.002);
+  var comm=Math.round(amt*0.003);
   document.getElementById('dep-comm').textContent='+'+F(comm);
   document.getElementById('dep-calc').style.display='';
 }
@@ -2632,7 +2632,7 @@ function calcSopDep(){
   var amt=Number(document.getElementById('sop-dep-amt').value)||0;
   var btn=document.getElementById('sop-dep-btn');
   if(amt>0){
-    var comm=Math.round(amt*0.002);
+    var comm=Math.round(amt*0.003);
     document.getElementById('sop-dep-comm').textContent='+'+F(comm)+' FCFA';
     document.getElementById('sop-dep-calc').style.display='';
     btn.disabled=false;btn.style.opacity='1';
@@ -2777,7 +2777,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <div style="display:flex;flex-direction:column;gap:10px">
       <button onclick="ouvrirDepotAvecClient()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;flex-shrink:0">↓</div>
-        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un D&#233;p&#244;t</div><div style="font-size:11px;color:var(--m)">Commission 0,2% du montant</div></div>
+        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un D&#233;p&#244;t</div><div style="font-size:11px;color:var(--m)">Commission 0,3% du montant</div></div>
       </button>
       <button onclick="ouvrirRetraitAvecClient()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px;flex-shrink:0">↑</div>
@@ -2870,7 +2870,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       </button>
       <div>
         <div style="font-size:18px;font-weight:800;color:#111">D&#233;p&#244;t Client</div>
-        <div style="font-size:12px;color:#6b7280">Commission 0,2% du montant</div>
+        <div style="font-size:12px;color:#6b7280">Commission 0,3% du montant</div>
       </div>
     </div>
   </div>
@@ -2907,7 +2907,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <!-- Calcul commission -->
     <div id="sop-dep-calc" style="display:none;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:24px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="color:#6b7280;font-size:13px">Commission agent (0,2%)</span>
+        <span style="color:#6b7280;font-size:13px">Commission agent (0,3%)</span>
         <span style="color:#16a34a;font-weight:800;font-size:15px" id="sop-dep-comm">—</span>
       </div>
     </div>
