@@ -1236,6 +1236,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="display:flex;gap:0;overflow-x:auto;margin-top:6px">
       <button id="rt-tab-liste" onclick="setRtTab('liste')" style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--y2);border-bottom:2px solid var(--y);white-space:nowrap">📋 Liste complète</button>
       <button id="rt-tab-sans" onclick="setRtTab('sans')" style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📣 Sans filleul</button>
+      <button id="rt-tab-nonratt" onclick="setRtTab('nonratt')" style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⏳ Non rattachés <span id="rt-nonratt-badge" style="display:none;background:#dc2626;color:#fff;border-radius:99px;font-size:9px;padding:1px 6px;margin-left:3px"></span></button>
     </div>
   </div>
 
@@ -1258,6 +1259,14 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px" id="rt-sans-chips"></div>
     <div id="rt-sans-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- PANNEAU 4 : NON RATTACHÉS (parrainé mais sans rattachement actif) -->
+  <div id="rt-panel-nonratt" style="display:none;padding:12px 16px 100px">
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#991b1b">
+      ⚠️ Ces utilisateurs ont un parrain mais n'ont pas encore effectué de dépôt ou transfert ≥500 FCFA. Aucune commission parrainage ne sera versée tant qu'ils ne sont pas rattachés.
+    </div>
+    <div id="rt-nonratt-list"><div style="padding:40px;text-align:center"><div class="spin"></div></div></div>
   </div>
 </div>
 
@@ -3915,16 +3924,76 @@ async function confirmerRattacherManuel(){
 var _rtActiveTab='liste';
 function setRtTab(tab){
   _rtActiveTab=tab;
-  ['liste','sans'].forEach(function(t){
+  ['liste','sans','nonratt'].forEach(function(t){
     var btn=document.getElementById('rt-tab-'+t),panel=document.getElementById('rt-panel-'+t),a=t===tab;
     if(btn){btn.style.color=a?'var(--y2)':'#6b7280';btn.style.borderBottomColor=a?'var(--y)':'transparent';}
     if(panel)panel.style.display=a?'':'none';
   });
   if(tab==='sans') chargerSansFilleul();
+  else if(tab==='nonratt') chargerNonRattaches();
 }
 function refreshRtActiveTab(){
   if(_rtActiveTab==='liste') chargerRattachements();
   else if(_rtActiveTab==='sans') chargerSansFilleul();
+  else if(_rtActiveTab==='nonratt') chargerNonRattaches();
+}
+
+// ── Non rattachés (parrainés sans rattachement actif) ──
+var nonRattachesData=[];
+async function chargerNonRattaches(){
+  var el=document.getElementById('rt-nonratt-list');
+  el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/admin/rattachements/non-rattaches');
+    nonRattachesData=r.data.utilisateurs||[];
+    // Mettre à jour le badge
+    var badge=document.getElementById('rt-nonratt-badge');
+    if(badge){
+      if(nonRattachesData.length>0){badge.textContent=nonRattachesData.length;badge.style.display='inline';}
+      else badge.style.display='none';
+    }
+    renderNonRattaches(nonRattachesData);
+  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+}
+function renderNonRattaches(list){
+  var el=document.getElementById('rt-nonratt-list');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun parrainé en attente de rattachement ✅</div>';return;}
+  el.innerHTML='';
+  list.forEach(function(u){
+    var cU=ROLE_C[u.role]||'#888';
+    var cP=ROLE_C[u.parrainRole]||'#888';
+    var div=document.createElement('div');
+    div.style.cssText='background:#fff;border:1px solid #fecaca;border-radius:14px;padding:14px 16px;margin-bottom:8px';
+    div.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      +'<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:#fef2f2;color:#dc2626">⏳ En attente</span>'
+      +'<span style="font-size:10px;color:#9ca3af">Inscrit le '+FD(u.createdAt)+'</span></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:9px;color:#9ca3af;font-weight:700;text-transform:uppercase">Parrain</div>'
+      +'<div style="font-size:13px;font-weight:700">'+(u.parrainPrenom||'')+' '+(u.parrainNom||'')+' <span style="font-size:9px;padding:1px 6px;border-radius:99px;background:'+cP+'22;color:'+cP+'">'+u.parrainRole+'</span></div>'
+      +'<div style="font-size:11px;color:#6b7280">'+u.parrainTelephone+'</div></div>'
+      +'<div style="color:#fca5a5;font-size:18px">→</div>'
+      +'<div style="flex:1;min-width:0;text-align:right">'
+      +'<div style="font-size:9px;color:#9ca3af;font-weight:700;text-transform:uppercase">Parrainé</div>'
+      +'<div style="font-size:13px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+' <span style="font-size:9px;padding:1px 6px;border-radius:99px;background:'+cU+'22;color:'+cU+'">'+u.role+'</span></div>'
+      +'<div style="font-size:11px;color:#6b7280">'+u.telephone+'</div></div>'
+      +'</div>';
+    // Bouton rattacher manuellement
+    if(perm('rattach_action')||isSuperAdmin()){
+      var btn=document.createElement('button');
+      btn.style.cssText='width:100%;margin-top:10px;background:#fef3c7;color:#92400e;border:1.5px solid #fde68a;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+      btn.textContent='Rattacher maintenant';
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        document.getElementById('rtm-filleul-tel').value=u.telephone;
+        document.getElementById('rtm-parrain-tel').value=u.parrainTelephone;
+        document.getElementById('rtm-err').style.display='none';
+        openSh('rattacher-manuel');
+      });
+      div.appendChild(btn);
+    }
+    el.appendChild(div);
+  });
 }
 
 // ── Sans filleul (relance commerciale) ──
