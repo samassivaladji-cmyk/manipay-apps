@@ -9436,15 +9436,10 @@ async function chargerGainsSysteme(){
     h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
     h+='<div style="font-size:13px;font-weight:800;margin-bottom:14px">&#128197; Gains AFRIM PAY par période</div>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
-    // Ratio net/brut pour les périodes
-    var totalBrut=(apP.total||{}).total||0;
-    var ratioNet=totalBrut>0?netAfrim/totalBrut:0;
-    function netPeriod(p){return Math.round(((p&&p.total)||0)*ratioNet);}
-
-    h+=mcPeriodCardV2("Aujourd'hui",{total:netPeriod(apP.aujourdhui),nb:(apP.aujourdhui||{}).nb||0},'#7c3aed');
-    h+=mcPeriodCardV2('Cette semaine',{total:netPeriod(apP.semaine),nb:(apP.semaine||{}).nb||0},'#7c3aed');
-    h+=mcPeriodCardV2('Ce mois',{total:netPeriod(apP.mois),nb:(apP.mois||{}).nb||0},'#7c3aed');
-    h+=mcPeriodCardV2('Cette année',{total:netPeriod(apP.annee),nb:(apP.annee||{}).nb||0},'#7c3aed');
+    h+=mcPeriodCardV2("Aujourd'hui",apP.aujourdhui,'#7c3aed');
+    h+=mcPeriodCardV2('Cette semaine',apP.semaine,'#7c3aed');
+    h+=mcPeriodCardV2('Ce mois',apP.mois,'#7c3aed');
+    h+=mcPeriodCardV2('Cette année',apP.annee,'#7c3aed');
     h+='</div>';
     h+='<div style="background:#f5f3ff;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
     h+='<div style="font-size:12px;font-weight:700;color:#7c3aed">Total depuis toujours</div>';
@@ -9952,6 +9947,7 @@ async function confirmerVirerAfrimPay(){
     toast('✅ Virement de '+F(montant)+' effectué');
     closeSh('mc-virer-afrim');
     chargerGainsSysteme();
+    chargerMonCompte();
   }catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
