@@ -328,11 +328,11 @@ function setTab(t){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <button onclick="ouvrirDepot()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px">↓</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">D&#233;p&#244;t Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission 0,3%</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">D&#233;p&#244;t Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission journalière</div></div>
       </button>
       <button onclick="ouvrirRetrait()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px">↑</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#c2410c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">35% des frais</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#c2410c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission journalière</div></div>
       </button>
       <button onclick="openSh('inscription');setInsType('client')" style="background:var(--s);border:1px solid rgba(245,158,11,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:var(--a);font-size:24px">👤</div>
@@ -517,7 +517,7 @@ function setTab(t){
 <div class="sh-ov" id="sh-depot">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">D&#233;p&#244;t Client</div><div style="color:var(--m);font-size:12px">Commission 0,3% du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">D&#233;p&#244;t Client</div><div style="color:var(--m);font-size:12px">Commission journalière du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
     <div id="dep-err1" class="info info-r" style="display:none"></div>
     <div id="dep-s1">
       <span class="lbl">Numéro client</span>
@@ -574,7 +574,7 @@ function setTab(t){
 <div class="sh-ov" id="sh-retrait">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">35% des frais de retrait</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">Commission journalière par volume</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
     <div id="ret-err1" class="info info-r" style="display:none"></div>
     <div id="ret-s1">
       <span class="lbl">Numéro client</span>
@@ -924,7 +924,7 @@ function setAmt(op,v){document.getElementById(op+'-amt').value=v;op==='dep'?calc
 function calcDep(){
   var amt=Number(document.getElementById('dep-amt').value)||0;
   if(!amt){document.getElementById('dep-calc').style.display='none';return;}
-  var comm=Math.round(amt*0.003);
+  var comm=0; // Commission journalière, pas par transaction
   document.getElementById('dep-comm').textContent='+'+F(comm);
   document.getElementById('dep-calc').style.display='';
 }
@@ -1332,13 +1332,13 @@ async function chargerCommissions(){
     var virements=results[1].data||[];
 
     // Commissions actuelles = statut 'verse' (non encore virées)
-    var allDepRet=all.filter(function(c){return c.type_commission==='depot_agent'||c.type_commission==='retrait_agent';});
+    var allDepRet=all.filter(function(c){return c.type_commission==='commission_journaliere'||c.type_commission==='parrainage';});
     var disponible=allDepRet.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
 
     // Commissions sur la période sélectionnée (toutes, peu importe statut)
     var comms=allDepRet.filter(function(c){return new Date(c.date_calcul||0)>=d1;});
-    var depC=comms.filter(function(c){return c.type_commission==='depot_agent';});
-    var retC=comms.filter(function(c){return c.type_commission==='retrait_agent';});
+    var depC=comms.filter(function(c){return c.type_commission==='commission_journaliere';});
+    var retC=comms.filter(function(c){return false;});
     var tDep=depC.reduce(function(s,c){return s+Number(c.montant||0);},0);
     var tRet=retC.reduce(function(s,c){return s+Number(c.montant||0);},0);
     var tTotal=tDep+tRet;
@@ -1410,7 +1410,7 @@ async function chargerCommissions(){
       h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucune commission sur cette p&#233;riode</div>';
     } else {
       comms.slice(0,30).forEach(function(c){
-        var isD=c.type_commission==='depot_agent';
+        var isD=c.type_commission==='commission_journaliere';
         var col=isD?'#22c55e':'#f97316';
         var d=new Date(c.date_calcul||0);
         var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -1887,10 +1887,10 @@ function renderStatTab(){
 
   } else if(statTab==='comm'){
     var vol=d.comm.vol,nb=d.comm.list.length;
-    var tDep=d.comm.list.filter(function(c){return c.type_commission==='depot_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var tRet=d.comm.list.filter(function(c){return c.type_commission==='retrait_agent';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
-    var nbD=d.comm.list.filter(function(c){return c.type_commission==='depot_agent';}).length;
-    var nbR=d.comm.list.filter(function(c){return c.type_commission==='retrait_agent';}).length;
+    var tDep=d.comm.list.filter(function(c){return c.type_commission==='commission_journaliere';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var tRet=d.comm.list.filter(function(c){return false;}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var nbD=d.comm.list.filter(function(c){return c.type_commission==='commission_journaliere';}).length;
+    var nbR=d.comm.list.filter(function(c){return false;}).length;
     h+='<div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">COMMISSIONS</div>'
       +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
@@ -1954,7 +1954,7 @@ async function chargerStats(){
     var trfRecPeriod=filterTx(txTrf,d1).filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===cid;});
 
     var commPeriodData=allComms.filter(function(c){
-      return (c.type_commission==='depot_agent'||c.type_commission==='retrait_agent')&&new Date(c.date_calcul||0)>=d1;
+      return (c.type_commission==='commission_journaliere'||c.type_commission==='parrainage')&&new Date(c.date_calcul||0)>=d1;
     });
     var gainsPeriodData=allComms.filter(function(c){
       return c.type_commission==='commission_parrain'&&new Date(c.date_calcul||0)>=d1;
@@ -2632,7 +2632,7 @@ function calcSopDep(){
   var amt=Number(document.getElementById('sop-dep-amt').value)||0;
   var btn=document.getElementById('sop-dep-btn');
   if(amt>0){
-    var comm=Math.round(amt*0.003);
+    var comm=0; // Commission journalière, pas par transaction
     document.getElementById('sop-dep-comm').textContent='+'+F(comm)+' FCFA';
     document.getElementById('sop-dep-calc').style.display='';
     btn.disabled=false;btn.style.opacity='1';
@@ -2777,11 +2777,11 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <div style="display:flex;flex-direction:column;gap:10px">
       <button onclick="ouvrirDepotAvecClient()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;flex-shrink:0">↓</div>
-        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un D&#233;p&#244;t</div><div style="font-size:11px;color:var(--m)">Commission 0,3% du montant</div></div>
+        <div><div style="font-size:14px;font-weight:700;color:#15803d">Effectuer un D&#233;p&#244;t</div><div style="font-size:11px;color:var(--m)">Commission journalière du montant</div></div>
       </button>
       <button onclick="ouvrirRetraitAvecClient()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px;flex-shrink:0">↑</div>
-        <div><div style="font-size:14px;font-weight:700;color:#c2410c">Effectuer un Retrait</div><div style="font-size:11px;color:var(--m)">35% des frais de retrait</div></div>
+        <div><div style="font-size:14px;font-weight:700;color:#c2410c">Effectuer un Retrait</div><div style="font-size:11px;color:var(--m)">Commission journalière par volume</div></div>
       </button>
       <button onclick="ouvrirTransfertAvecClient()" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;font-family:inherit;text-align:left">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px;flex-shrink:0">⇄</div>
@@ -2813,30 +2813,44 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       <button class="sh-x" onclick="document.getElementById('sh-paliers').classList.remove('on')">&#10005;</button>
     </div>
     <div style="padding:0 16px 24px">
-      <div style="font-size:13px;color:#6b7280;margin-bottom:16px">Frais de retrait appliqu&#233;s aux clients selon le montant :</div>
+      <div style="font-size:13px;color:#6b7280;margin-bottom:16px">Frais clients + votre commission journalière selon volume :</div>
 
-      <!-- Tableau paliers — source server.js TAUX_RETRAIT=1% fixe -->
-      <div style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#f9fafb;padding:10px 14px;font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e7eb">
-          <div>Retrait</div><div style="text-align:center">Frais client</div><div style="text-align:right">Comm. agent</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:11px 14px;font-size:12px;background:#fff">
-          <div style="color:#374151;font-weight:600">Tout montant</div><div style="text-align:center;color:#dc2626;font-weight:700">1%</div><div style="text-align:right;color:#16a34a;font-weight:700">35% des frais</div>
-        </div>
+      <!-- Frais retrait client -->
+      <div style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:14px">
+        <div style="background:#fef3c7;padding:10px 14px;font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #fde68a">Retrait client — Frais 1% fixe</div>
+        <div style="padding:11px 14px;font-size:12px;background:#fff;color:#374151">Le client paie 1% du montant retiré. Votre commission est basée sur votre volume journalier total (voir ci-dessous).</div>
       </div>
 
-      <!-- D&#233;p&#244;t -->
-      <div style="margin-top:16px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
-        <div style="background:#f0fdf4;padding:10px 14px;font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #bbf7d0">D&#233;p&#244;t client</div>
-        <div style="padding:12px 14px;font-size:12px;color:#374151;background:#fff">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Frais client</span><span style="color:#16a34a;font-weight:700">Gratuit</span></div>
-          <div style="display:flex;justify-content:space-between"><span>Commission agent</span><span style="color:#16a34a;font-weight:700">0,3% du montant</span></div>
+      <!-- Dépôt -->
+      <div style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:14px">
+        <div style="background:#f0fdf4;padding:10px 14px;font-size:11px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #bbf7d0">Dépôt client — Gratuit</div>
+        <div style="padding:11px 14px;font-size:12px;background:#fff;color:#374151">Le dépôt est gratuit pour le client. Le dépôt compte dans votre volume journalier.</div>
+      </div>
+
+      <!-- Grille commissions journalières -->
+      <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:8px">📊 Grille commissions journalières (volume dépôts + retraits)</div>
+      <div style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
+        <div style="display:grid;grid-template-columns:1fr 1fr;background:#f9fafb;padding:9px 14px;font-size:10px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e7eb">
+          <div>Volume journalier</div><div style="text-align:right">Commission</div>
         </div>
+        ${[
+          ['1 – 9 999','75 F'],['10 000 – 99 999','300 F'],['100 000 – 249 999','700 F'],
+          ['250 000 – 499 999','1 200 F'],['500 000 – 999 999','2 000 F'],
+          ['1 000 000 – 1 499 999','3 000 F'],['1 500 000 – 1 999 999','3 800 F'],
+          ['2 000 000 – 2 499 999','4 500 F'],['2 500 000 – 2 999 999','5 200 F'],
+          ['3 000 000 – 3 499 999','5 900 F'],['3 500 000 – 3 999 999','6 600 F'],
+          ['4 000 000 – 4 499 999','7 400 F'],['4 500 000 – 4 999 999','8 200 F'],
+          ['5 000 000 – 5 999 999','9 500 F'],['6 000 000 – 6 999 999','11 000 F'],
+          ['7 000 000 – 7 999 999','12 500 F'],['8 000 000 – 8 999 999','14 000 F'],
+          ['9 000 000 – 9 999 999','15 500 F'],['10 000 000 – 14 999 999','20 000 F'],
+          ['15 000 000 – 19 999 999','26 000 F'],['20 000 000 – 24 999 999','33 000 F'],
+          ['25 000 000 – 29 999 999','40 000 F'],['≥ 30 000 000','50 000 F']
+        ].map(function(r,i){return '<div style="display:grid;grid-template-columns:1fr 1fr;padding:9px 14px;font-size:11px;background:'+(i%2===0?'#fff':'#f9fafb')+';border-bottom:1px solid #f3f4f6"><div style="color:#374151;font-weight:500">'+r[0]+'</div><div style="text-align:right;color:#16a34a;font-weight:700">'+r[1]+'</div></div>';}).join('')}
       </div>
 
       <!-- Rappel plafonds KYC -->
       <div style="margin-top:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:12px;color:#92400e">
-        <div style="font-weight:800;margin-bottom:6px">&#128274; Plafonds KYC clients</div>
+        <div style="font-weight:800;margin-bottom:6px">&#128274; Plafonds KYC clients (gains parrainage)</div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>KYC 1</span><span style="font-weight:700">20 000 F/mois</span></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>KYC 2</span><span style="font-weight:700">50 000 F/mois</span></div>
         <div style="display:flex;justify-content:space-between"><span>KYC 3</span><span style="font-weight:700">100 000 F/mois</span></div>
@@ -2870,7 +2884,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       </button>
       <div>
         <div style="font-size:18px;font-weight:800;color:#111">D&#233;p&#244;t Client</div>
-        <div style="font-size:12px;color:#6b7280">Commission 0,3% du montant</div>
+        <div style="font-size:12px;color:#6b7280">Commission journalière du montant</div>
       </div>
     </div>
   </div>
@@ -2907,7 +2921,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <!-- Calcul commission -->
     <div id="sop-dep-calc" style="display:none;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:24px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="color:#6b7280;font-size:13px">Commission agent (0,3%)</span>
+        <span style="color:#6b7280;font-size:13px">Commission dépôt</span>
         <span style="color:#16a34a;font-weight:800;font-size:15px" id="sop-dep-comm">—</span>
       </div>
     </div>
@@ -2951,7 +2965,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       </button>
       <div>
         <div style="font-size:18px;font-weight:800;color:#111">Retrait Client</div>
-        <div style="font-size:12px;color:#6b7280">35% des frais de retrait</div>
+        <div style="font-size:12px;color:#6b7280">Commission journalière par volume</div>
       </div>
     </div>
   </div>

@@ -9390,7 +9390,7 @@ async function chargerGainsSysteme(){
     // ══ PAGE AFRIM PAY ══
     var pnl=ap.pnl||{};
     var gainsB=(pnl.gains_retrait||0)+(pnl.gains_paiement||0);
-    var deductions=(pnl.bonus_depot_agent||0)+(pnl.commissions_parrain||0);
+    var deductions=(pnl.bonus_commission_journaliere||0)+(pnl.commissions_parrain||0);
     var totalVirements = ap.totalVirements || 0;
     var netAfrim=Math.max(0, gainsB - deductions - totalVirements);
 
@@ -9413,7 +9413,7 @@ async function chargerGainsSysteme(){
     h+='<div style="font-size:13px;font-weight:800;color:#7c3aed">+'+F(gainsB)+'</div></div>';
     // Déductions
     h+='<div style="font-size:10px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">- Charges (versements)</div>';
-    h+=pnlLigne('Bonus dépôts agents (0,3%)',pnl.bonus_depot_agent||0,pnl.bonus_depot_nb||0,'#ef4444','-');
+    h+=pnlLigne('Commissions journalières agents',pnl.bonus_commission_journaliere||0,pnl.bonus_depot_nb||0,'#ef4444','-');
     h+=pnlLigne('Commissions parrainage',pnl.commissions_parrain||0,pnl.commissions_parrain_nb||0,'#ef4444','-');
     h+='<div style="display:flex;justify-content:space-between;padding:8px 0;margin-bottom:10px;border-top:2px solid #ef444422">';
     h+='<div style="font-size:12px;font-weight:800;color:#ef4444">Sous-total charges</div>';
@@ -9576,7 +9576,7 @@ async function chargerGainsSysteme(){
     // Chips type d'opération
     h+='<div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Type d\'opération</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="mc-chips-type">';
-    [['tous','Tous'],['depot_agent','Dépôt'],['retrait_agent','Retrait'],['parrainage','Parrainage'],['transfert','Transfert']].forEach(function(t,i){
+    [['tous','Tous'],['commission_journaliere','Dépôt'],['commission_journaliere','Retrait'],['parrainage','Parrainage'],['transfert','Transfert']].forEach(function(t,i){
       var active=i===0;
       h+='<button onclick="mcUpdateChart(\'type\',\''+t[0]+'\')" data-type="'+t[0]+'" style="padding:6px 14px;border-radius:99px;border:1.5px solid '+(active?'#0ea5e9':'#e5e7eb')+';background:'+(active?'#e0f2fe':'#fff')+';color:'+(active?'#0369a1':'#6b7280')+';font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+t[1]+'</button>';
     });
@@ -9738,7 +9738,7 @@ function mcUpdateChart(type, val){
   // Chiffres résumés : total par rôle sur la période sélectionnée
   var chiffresEl=document.getElementById('mc-chart-chiffres');
   if(chiffresEl){
-    var typeLabels={'tous':'Toutes ops','depot_agent':'Dépôt','retrait_agent':'Retrait','parrainage':'Parrainage','transfert':'Transfert'};
+    var typeLabels={'tous':'Toutes ops','commission_journaliere':'Dépôt','commission_journaliere':'Retrait','parrainage':'Parrainage','transfert':'Transfert'};
     var typeLabel=typeLabels[_mcSelType]||_mcSelType;
     var periodeLabel=_mcSelJours===7?'7 jours':_mcSelJours===30?'Ce mois':_mcSelJours===90?'3 mois':'Cette année';
     chiffresEl.innerHTML=datasets.map(function(ds){
