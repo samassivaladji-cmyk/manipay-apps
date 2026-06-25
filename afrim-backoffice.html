@@ -1207,23 +1207,12 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 <!-- SHEET VIRER AFRIM PAY -->
 <div class="sh-ov" id="sh-mc-virer-afrim">
   <div class="sh"><div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Virer fonds AFRIM PAY</div><div style="color:var(--m);font-size:12px">Vers compte Super BO ou autre utilisateur</div></div><button class="sh-x" onclick="closeSh('mc-virer-afrim')">&#10005;</button></div>
+    <div class="sh-top"><div><div class="sh-title">Virer fonds AFRIM PAY</div><div style="color:var(--m);font-size:12px">Retrait depuis le compte plateforme</div></div><button class="sh-x" onclick="closeSh('mc-virer-afrim')">&#10005;</button></div>
     <div class="sh-body">
       <div id="mc-virer-afrim-err" style="display:none;background:#fef2f2;color:var(--r);padding:10px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
       <div style="background:#f5f3ff;border-radius:14px;padding:14px;margin-bottom:16px">
-        <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">RÉSULTAT NET DISPONIBLE</div>
+        <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">SOLDE AFRIM PAY DISPONIBLE</div>
         <div style="font-size:22px;font-weight:800;color:#7c3aed" id="mc-virer-afrim-solde">--</div>
-      </div>
-      <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase">Destinataire</label>
-      <div style="margin:6px 0 14px">
-        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-          <button onclick="setVirerAfrimDest('superbo')" id="vir-dest-superbo" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #7c3aed;background:#7c3aed;color:#fff">Moi (Super BO)</button>
-          <button onclick="setVirerAfrimDest('autre')" id="vir-dest-autre" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Autre utilisateur</button>
-        </div>
-        <div id="vir-dest-autre-wrap" style="display:none">
-          <input class="inp" id="mc-virer-afrim-tel" type="tel" placeholder="Téléphone du destinataire" style="margin-bottom:6px" oninput="rechercherDestVirerAfrim(this.value)"/>
-          <div id="mc-virer-afrim-dest-info" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px;font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px"></div>
-        </div>
       </div>
       <label style="font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase">Montant (FCFA)</label>
       <input class="inp" id="mc-virer-afrim-montant" type="number" placeholder="Ex: 50000" style="margin:6px 0 14px"/>
@@ -9402,7 +9391,8 @@ async function chargerGainsSysteme(){
     var pnl=ap.pnl||{};
     var gainsB=(pnl.gains_retrait||0)+(pnl.gains_paiement||0);
     var deductions=(pnl.bonus_depot_agent||0)+(pnl.commissions_parrain||0);
-    var netAfrim=Math.max(0, gainsB - deductions);
+    var totalVirements = ap.totalVirements || 0;
+    var netAfrim=Math.max(0, gainsB - deductions - totalVirements);
 
     h+='<div id="mc-page-ap">';
     h+='<div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:20px;padding:20px;margin-bottom:14px;color:#fff">';
@@ -9480,18 +9470,30 @@ async function chargerGainsSysteme(){
       });
       h+='</div>';
     }
+    // Historique virements — toujours affiché avec total
+    h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    h+='<div style="font-size:13px;font-weight:800">&#128196; Historique virements</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--r)">Total viré : '+F(totalVirements)+'</div>';
+    h+='</div>';
     if(ap.virements&&ap.virements.length){
-      h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
-      h+='<div style="font-size:13px;font-weight:800;margin-bottom:12px">&#128196; Historique virements</div>';
       ap.virements.forEach(function(v){
-        var dv=v.date_creation?new Date(v.date_creation).toLocaleDateString('fr-FR'):'';
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f9fafb">';
-        h+='<div><div style="font-size:12px;font-weight:700">'+(v.description||v.reference||'Virement')+'</div>';
-        h+='<div style="font-size:10px;color:var(--m)">'+dv+'</div></div>';
-        h+='<div style="font-size:13px;font-weight:800;color:var(--r)">-'+F(v.montant||0)+'</div></div>';
+        var dv=v.date_creation?new Date(v.date_creation).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+        var dest='';
+        if(v.dest_prenom||v.dest_nom) dest=(v.dest_prenom||'')+' '+(v.dest_nom||'')+' <span style="font-size:9px;background:#f3f4f6;border-radius:4px;padding:1px 5px;font-weight:700">'+(v.dest_role||'')+'</span>';
+        else dest='Super BO (moi)';
+        h+='<div style="padding:10px 0;border-bottom:1px solid #f9fafb">';
+        h+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        h+='<div><div style="font-size:12px;font-weight:700">→ '+dest+'</div>';
+        h+='<div style="font-size:10px;color:var(--m);margin-top:2px">'+(v.description||v.reference||'Virement AFRIM PAY')+'</div>';
+        h+='<div style="font-size:10px;color:#9ca3af">'+dv+'</div></div>';
+        h+='<div style="font-size:13px;font-weight:800;color:var(--r);flex-shrink:0;margin-left:8px">-'+F(v.montant||0)+'</div>';
+        h+='</div></div>';
       });
-      h+='</div>';
+    } else {
+      h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucun virement effectué</div>';
     }
+    h+='</div>';
     h+='</div>';
 
     // ══ PAGE UTILISATEURS ══
@@ -9894,44 +9896,7 @@ function ouvrirVirerAfrimPay(soldDisp){
   document.getElementById('mc-virer-afrim-montant').value='';
   document.getElementById('mc-virer-afrim-desc').value='';
   document.getElementById('mc-virer-afrim-err').style.display='none';
-  var info=document.getElementById('mc-virer-afrim-dest-info');
-  if(info) info.style.display='none';
-  var tel=document.getElementById('mc-virer-afrim-tel');
-  if(tel) tel.value='';
-  window._virerAfrimDestId=null;
-  setVirerAfrimDest('superbo');
   openSh('mc-virer-afrim');
-}
-var _virerAfrimMode='superbo';
-function setVirerAfrimDest(mode){
-  _virerAfrimMode=mode;
-  var bSup=document.getElementById('vir-dest-superbo');
-  var bAut=document.getElementById('vir-dest-autre');
-  var wrap=document.getElementById('vir-dest-autre-wrap');
-  if(bSup){bSup.style.background=mode==='superbo'?'#7c3aed':'#fff';bSup.style.color=mode==='superbo'?'#fff':'#374151';bSup.style.borderColor=mode==='superbo'?'#7c3aed':'#e5e7eb';}
-  if(bAut){bAut.style.background=mode==='autre'?'#7c3aed':'#fff';bAut.style.color=mode==='autre'?'#fff':'#374151';bAut.style.borderColor=mode==='autre'?'#7c3aed':'#e5e7eb';}
-  if(wrap) wrap.style.display=mode==='autre'?'':'none';
-  if(mode==='superbo') window._virerAfrimDestId=null;
-}
-var _virerSearchTimer=null;
-function rechercherDestVirerAfrim(tel){
-  window._virerAfrimDestId=null;
-  var info=document.getElementById('mc-virer-afrim-dest-info');
-  if(info){info.style.display='none';info.style.background='#f0fdf4';info.style.borderColor='#86efac';info.style.color='#15803d';}
-  if(tel.length<8) return;
-  clearTimeout(_virerSearchTimer);
-  _virerSearchTimer=setTimeout(async function(){
-    try{
-      var r=await apiGet('/admin/users/search?telephone='+tel);
-      var u=(r.data&&r.data.users&&r.data.users[0])||null;
-      if(u&&['master','mini_master','agent','business','client'].includes(u.role)){
-        window._virerAfrimDestId=u.id;
-        if(info){info.textContent='✅ '+u.prenom+' '+u.nom+' ('+u.role+') — '+u.telephone;info.style.display='';}
-      }else{
-        if(info){info.textContent='❌ Introuvable ou rôle non autorisé';info.style.background='#fef2f2';info.style.borderColor='#fecaca';info.style.color='#dc2626';info.style.display='';}
-      }
-    }catch(e){if(info){info.textContent='Erreur: '+e.message;info.style.display='';}}
-  },500);
 }
 async function confirmerVirerAfrimPay(){
   var montant=Number(document.getElementById('mc-virer-afrim-montant').value);
@@ -9939,15 +9904,12 @@ async function confirmerVirerAfrimPay(){
   var errEl=document.getElementById('mc-virer-afrim-err');
   errEl.style.display='none';
   if(!montant||montant<=0){errEl.textContent='Montant invalide';errEl.style.display='';return;}
-  if(_virerAfrimMode==='autre'&&!window._virerAfrimDestId){errEl.textContent='Sélectionnez un destinataire valide';errEl.style.display='';return;}
+  if(!desc){errEl.textContent='Motif obligatoire';errEl.style.display='';return;}
   try{
-    var body={montant:montant,description:desc||'Virement AFRIM PAY'};
-    if(_virerAfrimMode==='autre'&&window._virerAfrimDestId) body.destinataireId=window._virerAfrimDestId;
-    await apiPost('/admin/afrim-pay/virer',body);
-    toast('✅ Virement de '+F(montant)+' effectué');
+    await apiPost('/admin/afrim-pay/virer',{montant:montant,description:desc});
+    toast('Virement de '+F(montant)+' enregistre');
     closeSh('mc-virer-afrim');
     chargerGainsSysteme();
-    chargerMonCompte();
   }catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
