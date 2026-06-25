@@ -887,11 +887,10 @@ function onTelInput(op){
 }
 
 function scanPourOp(op){
+  if(!window._sopClient) window._sopClient={dep:null,ret:null};
   ouvrirPopupQR(function(tel){
-    // Mettre le numéro et identifier directement
     document.getElementById(op+'-tel').value=tel;
     onTelInput(op);
-    // S'assurer que le bon sheet est ouvert
     var shId=op==='dep'?'depot':'retrait';
     if(!document.getElementById('sh-'+shId).classList.contains('on')){
       openSh(shId);
@@ -909,9 +908,11 @@ async function identClient(op){
     var arr=Array.isArray(r.data)?r.data:[r.data];
     if(!arr.length||!arr[0]){throw new Error('Client introuvable');}
     var u=arr[0];opClients[op]=u;
+    if(!window._sopClient) window._sopClient={dep:null,ret:null};
+    window._sopClient[op]=u;
     // Fermer le sheet et ouvrir le screen plein écran
-    if(op==='dep'){closeSh('depot');ouvrirScreenDepot(u);}
-    else if(op==='ret'){closeSh('retrait');ouvrirScreenRetrait(u);}
+    if(op==='dep'){closeSh('depot');setTimeout(function(){ouvrirScreenDepot(u);},150);}
+    else if(op==='ret'){closeSh('retrait');setTimeout(function(){ouvrirScreenRetrait(u);},150);}
   }catch(e){
     document.getElementById(op+'-err1').textContent=e.message;
     document.getElementById(op+'-err1').style.display='';
@@ -2980,14 +2981,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
         <input class="inp" id="sop-ret-amt" type="number" inputmode="decimal" placeholder="0" oninput="calcSopRet()" style="font-size:28px;font-weight:800;padding:16px 70px 16px 16px;border-radius:14px"/>
         <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#f97316;font-size:13px;font-weight:700;pointer-events:none">FCFA</span>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-        <button class="chip" onclick="setSopAmt('ret',1000)">1K</button>
-        <button class="chip" onclick="setSopAmt('ret',2000)">2K</button>
-        <button class="chip" onclick="setSopAmt('ret',5000)">5K</button>
-        <button class="chip" onclick="setSopAmt('ret',10000)">10K</button>
-        <button class="chip" onclick="setSopAmt('ret',20000)">20K</button>
-        <button class="chip" onclick="setSopAmt('ret',50000)">50K</button>
-      </div>
+
       <div id="sop-ret-calc" style="display:none;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#6b7280;font-size:13px">Frais de retrait (1%)</span><span style="font-weight:700;font-size:13px" id="sop-ret-frais">—</span></div>
         <div style="display:flex;justify-content:space-between;border-top:1px solid #f3f4f6;padding-top:8px"><span style="font-weight:700;font-size:13px">Total d&#233;bit&#233;</span><span style="font-weight:800;font-size:14px;color:#dc2626" id="sop-ret-total">—</span></div>
