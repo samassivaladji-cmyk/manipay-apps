@@ -958,9 +958,8 @@ function calcRet(){
   var amt=Number(document.getElementById('ret-amt').value)||0;
   if(!amt){document.getElementById('ret-calc').style.display='none';return;}
   var frais=Math.round(amt*0.01);
-  var comm=Math.round(frais*0.35);
   document.getElementById('ret-frais').textContent=F(frais);
-  document.getElementById('ret-comm').textContent='+'+F(comm);
+  document.getElementById('ret-comm').textContent='Commission journalière';
   document.getElementById('ret-net').textContent=F(amt);
   document.getElementById('ret-calc').style.display='';
 }
