@@ -1429,8 +1429,8 @@ async function chargerCommissions(){
         +(palierActuel
           ?'<div style="background:rgba(0,0,0,.1);border-radius:99px;height:7px;margin-bottom:6px"><div style="background:#d97706;border-radius:99px;height:7px;width:'+progPct+'%;transition:width .4s"></div></div>'
            +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">'
-           +'<span>Palier actuel : +'+F(palierActuel.comm)+' FCFA</span>'
-           +(palierSuivant?'<span>Prochain : +'+F(palierSuivant.comm)+' FCFA (-'+F(resteProchain)+' restants)</span>':'<span>✅ Palier max atteint</span>')
+           +'<span>Palier actuel : +'+F(palierActuel.comm)+'</span>'
+           +(palierSuivant?'<span>Prochain : +'+F(palierSuivant.comm)+' (-'+F(resteProchain)+' restants)</span>':'<span>✅ Palier max atteint</span>')
            +'</div>'
           :'<div style="font-size:11px;color:#92400e;opacity:.7">Aucune opération ce jour — premier palier à partir de 500 FCFA de volume</div>'
         )
@@ -1442,7 +1442,7 @@ async function chargerCommissions(){
       return '<div style="flex:1;min-width:calc(50% - 5px);background:rgba(0,0,0,.18);border-radius:12px;padding:12px 10px;text-align:center">'
         +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+label+'</div>'
         +'<div style="font-size:16px;font-weight:900">'+F(val)+'</div>'
-        +'<div style="font-size:8px;opacity:.5;margin-top:1px">FCFA</div>'
+        +'<div style="font-size:8px;opacity:.5;margin-top:1px"></div>'
         +'</div>';
     }
     h+='<div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:18px;padding:16px 18px;margin-bottom:14px;color:#fff">'
@@ -1455,7 +1455,7 @@ async function chargerCommissions(){
       +'</div>'
       +'<div style="padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">'
       +'<div style="font-size:10px;opacity:.8">Total depuis toujours</div>'
-      +'<div style="font-size:14px;font-weight:800">'+F(tTotalAll)+' FCFA</div>'
+      +'<div style="font-size:14px;font-weight:800">'+F(tTotalAll)+'</div>'
       +'</div>'
     +'</div>';
 
@@ -2732,7 +2732,7 @@ async function doSopDepot(){
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-dep-ok-txt').textContent='Dépôt de '+F(amt)+' FCFA pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('sop-dep-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent)+' FCFA':'';
+    document.getElementById('sop-dep-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
     document.getElementById('sop-dep-ok-ref').textContent=d.reference||'';
     rafraichir();S('s-op-depot-ok');
   }catch(e){
@@ -2768,8 +2768,8 @@ function calcSopRet(){
   if(amt>0){
     var taux=0.01;
     var frais=Math.round(amt*taux);var total=amt+frais;
-    document.getElementById('sop-ret-frais').textContent=F(frais)+' FCFA';
-    document.getElementById('sop-ret-total').textContent=F(total)+' FCFA';
+    document.getElementById('sop-ret-frais').textContent=F(frais);
+    document.getElementById('sop-ret-total').textContent=F(total);
     document.getElementById('sop-ret-calc').style.display='';
     btn.disabled=false;btn.style.opacity='1';
   }else{document.getElementById('sop-ret-calc').style.display='none';btn.disabled=true;btn.style.opacity='.4';}
@@ -2817,7 +2817,7 @@ async function confirmerOTPSop(){
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' FCFA pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent)+' FCFA':'';
+    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
     document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
     rafraichir();S('s-op-retrait-ok');
   }catch(e){
