@@ -877,32 +877,8 @@ async function doInscrire(){
 // ══ OPÉRATIONS DÉPÔT / RETRAIT ════════════════════════════════════
 var opClients={dep:null,ret:null};
 
-function ouvrirDepot(){
-  closeSh('choix-op');
-  ouvrirPopupQR(function(tel){
-    (async function(){
-      try{
-        var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-        var arr=Array.isArray(r.data)?r.data:[r.data];
-        if(!arr.length||!arr[0])throw new Error('Client introuvable');
-        ouvrirScreenDepot(arr[0]);
-      }catch(e){T(e.message,true);}
-    })();
-  });
-}
-function ouvrirRetrait(){
-  closeSh('choix-op');
-  ouvrirPopupQR(function(tel){
-    (async function(){
-      try{
-        var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-        var arr=Array.isArray(r.data)?r.data:[r.data];
-        if(!arr.length||!arr[0])throw new Error('Client introuvable');
-        ouvrirScreenRetrait(arr[0]);
-      }catch(e){T(e.message,true);}
-    })();
-  });
-}
+function ouvrirDepot(){rstOp('dep');openSh('depot');}
+function ouvrirRetrait(){rstOp('ret');openSh('retrait');}
 
 function onTelInput(op){
   var v=document.getElementById(op+'-tel').value.replace(/\D/g,'');
