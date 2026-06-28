@@ -1686,7 +1686,7 @@ async function chargerGains(){
     // ── Comment gagner ──
     h+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:12px;margin-bottom:14px;font-size:12px;color:#166534">'
       +'<div style="font-weight:800;margin-bottom:4px">💡 Comment gagner ?</div>'
-      +'<div>Parrainez des contacts. D&#233;p&#244;t ou transfert ≥500 FCFA = rattach&#233;s &#224; vie. Vous recevez <strong>10% des frais</strong> de leurs retraits/paiements.</div>'
+      +'<div>Parrainez des contacts. D&#233;p&#244;t ou transfert ≥500 FCFA = rattach&#233;s &#224; vie. Vous recevez <strong>5% des frais</strong> de leurs retraits/paiements.</div>'
     +'</div>';
 
     // ── Historique gains parrainage ──
@@ -2158,7 +2158,7 @@ async function doChangePin(){
   document.getElementById('change-pin-form').style.display='none';
   document.getElementById('change-pin-loading').style.display='';
   try{
-    await post('/auth/change-pin',{oldPin,newPin});
+    await post('/users/change-pin',{oldPin,newPin});
     document.getElementById('change-pin-loading').style.display='none';
     document.getElementById('change-pin-success').style.display='';
   }catch(e){
@@ -2192,7 +2192,7 @@ function showLogoutConfirm(){
       <div style="width:48px;height:4px;background:#e5e7eb;border-radius:4px;margin:0 auto 28px"></div>
       <div style="font-size:32px;margin-bottom:12px">👋</div>
       <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:8px">Déconnexion</div>
-      <div style="font-size:14px;color:#6b7280;margin-bottom:28px">Êtes-vous sûr de vouloir quitter l'application ? Vos données sont sauvegardées.</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:28px">Êtes-vous sûr de vouloir quitter l'application ?</div>
       <div style="display:flex;gap:12px">
         <button onclick="document.getElementById('logout-overlay').remove()" style="flex:1;padding:16px;border-radius:14px;border:1.5px solid #e5e7eb;background:#f9fafb;font-size:15px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit">Annuler</button>
         <button onclick="document.getElementById('logout-overlay').remove();logout(true)" style="flex:1;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);font-size:15px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Se déconnecter</button>

@@ -1650,7 +1650,7 @@ async function chargerCommissions(){
     // Comment gagner
     +'<div style="background:#fefce8;border:1px solid #fde68a;border-radius:14px;padding:14px;margin-bottom:14px">'
     +'<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">Comment gagner ?</div>'
-    +'<div style="font-size:11px;color:#a16207;line-height:1.7">Parrainez des contacts. Ils font un <b>dépôt ou reçoivent un transfert</b> ≥500 FCFA = rattachés à vie.<br>À chaque <b>retrait ou paiement</b> de votre filleul → <b>10% des frais</b> pour vous.</div>'
+    +'<div style="font-size:11px;color:#a16207;line-height:1.7">Parrainez des contacts. Ils font un <b>dépôt ou reçoivent un transfert</b> ≥500 FCFA = rattachés à vie.<br>À chaque <b>retrait ou paiement</b> de votre filleul → <b>5% des frais</b> pour vous.</div>'
     +'</div>'
     // Détail historique
     +'<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">DÉTAIL CE MOIS</div>'
@@ -1659,7 +1659,7 @@ async function chargerCommissions(){
   el.innerHTML=h;
 
   try{
-    var resp=await fetch(API+'/commissions?type=commission_parrain&userId='+(u.id||'')+'&limit=500',{headers:{Authorization:'Bearer '+(G.token||'')}});
+    var resp=await fetch(API+'/commissions?type=parrainage&userId='+(u.id||'')+'&limit=500',{headers:{Authorization:'Bearer '+(G.token||'')}});
     var rd=await resp.json();if(!resp.ok)throw new Error(rd.message||'Erreur');
     var comms=rd.data||[];
     var now=new Date();
