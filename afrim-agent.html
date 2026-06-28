@@ -1389,7 +1389,7 @@ async function chargerCommissions(){
     var tSemaine=sumPeriode('semaine');
     var tMois=sumPeriode('mois');
     var tAnnee=sumPeriode('annee');
-    var tTotalAll=all.filter(function(c){return c.type_commission==='commission_journaliere';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var tTotalAll=all.filter(function(c){return c.type_commission==='commission_journaliere';}).reduce(function(s,c){return s+Number(c.montant_original||c.montant||0);},0);
     // Pour le détail on garde la période sélectionnée
     var comms=allDepRet.filter(function(c){return new Date(c.date_calcul||0)>=debutPeriode(commPeriod==='day'?'hier':commPeriod);});
     var h='';
@@ -1582,15 +1582,15 @@ async function chargerGains(){
     var disponible=gainsParr.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
 
     var dAuj=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    var dSem=new Date(now);dSem.setDate(dSem.getDate()-dSem.getDay());dSem.setHours(0,0,0,0);
+    var dSem=new Date(now);var _jourSem=dSem.getDay();dSem.setDate(dSem.getDate()+(_jourSem===0?-6:1-_jourSem));dSem.setHours(0,0,0,0);
     var dMois=new Date(now.getFullYear(),now.getMonth(),1);
     var dAn=new Date(now.getFullYear(),0,1);
 
-    function sumG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){return s+Number(c.montant||0);},0);}
+    function sumG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){return s+Number(c.montant_original||c.montant||0);},0);}
     function nbG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).length;}
 
     var tAuj=sumG(dAuj),tSem=sumG(dSem),tMois=sumG(dMois),tAn=sumG(dAn);
-    var tTotal=gainsParr.reduce(function(s,c){return s+Number(c.montant||0);},0);
+    var tTotal=gainsParr.reduce(function(s,c){return s+Number(c.montant_original||c.montant||0);},0);
 
     var codeParrainage=(me.codeParrainage||'').replace(/\s+/g,'').replace(/-/g,'');
     var h='';
