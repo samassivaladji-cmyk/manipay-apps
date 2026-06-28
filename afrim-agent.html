@@ -1992,11 +1992,8 @@ function renderStatTab(){
     h+='<div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">COMMISSIONS</div>'
       +'<div style="font-size:32px;font-weight:900">'+F(vol)+'</div>'
-      +'<div style="display:flex;gap:12px;margin-top:8px">'
-      +'<div><div style="font-size:14px;font-weight:800">'+F(tDep)+'</div><div style="font-size:9px;opacity:.7">D&#233;p&#244;ts ('+nbD+')</div></div>'
-      +'<div style="width:1px;background:rgba(255,255,255,.25)"></div>'
-      +'<div><div style="font-size:14px;font-weight:800">'+F(tRet)+'</div><div style="font-size:9px;opacity:.7">Retraits ('+nbR+')</div></div>'
-      +'</div></div>';
+      +'<div style="font-size:12px;opacity:.8;margin-top:6px">Commission journali&#232;re par volume — '+nb+' enregistrement(s)</div>'
+      +'</div>';
     h+=drawCourbe(d.comm.courbe,'val','#d97706','Commissions');
 
   } else if(statTab==='gains'){
@@ -2071,7 +2068,7 @@ async function chargerStats(){
     });
 
     function sumTx(list){return list.reduce(function(s,t){return s+Number(t.montant||0);},0);}
-    function sumComm(list){return list.reduce(function(s,c){return s+Number(c.montant||0);},0);}
+    function sumComm(list){return list.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);}
 
     // Construire courbe selon période
     function getLabel(date,p){
