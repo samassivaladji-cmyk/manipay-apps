@@ -152,7 +152,7 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
         </div>
         <!-- 4 boutons sur une seule ligne au milieu -->
         <div style="display:flex;gap:7px;padding:12px 0;align-items:center">
-          <button onclick="ouvrirScanner(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <button onclick="ouvrirPopupQR(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#000"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#000"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#000"/></svg>
             <span style="font-size:11px;font-weight:800;color:#000;white-space:nowrap">Scanner QR</span>
           </button>
@@ -336,87 +336,8 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
 
 <!-- SHEETS OPÉRATIONS (Dépôt/Retrait/Transfert/Inscription) -->
 <!-- SHEET DEPOT CLIENT -->
-<div class="sh-ov" id="sh-depot">
-  <div class="sh">
-    <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Dépôt Client</div><div style="color:var(--m);font-size:12px">Commission journalière du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
-    <div id="dep-s1">
-      <div class="info info-a" style="font-size:12px">💡 Saisissez le numéro ou scannez le QR du client</div>
-      <div id="dep-err" class="info info-r" style="display:none"></div>
-      <span class="lbl">Numéro du client</span>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <input class="inp" id="dep-tel" type="tel" placeholder="+225 07 XX XX XX" oninput="calcDep()" style="flex:1"/>
-        <button onclick="scannerPourOp('dep')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
-      </div>
-      <span class="lbl">Montant (FCFA)</span>
-      <div style="position:relative;margin-bottom:14px"><input class="inp" id="dep-amt" type="number" placeholder="0" oninput="calcDep()" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
-      <div id="dep-calc" style="display:none;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px">
-        <div class="srow"><span style="color:var(--m);font-size:13px">Montant déposé</span><span id="dep-montant" style="font-weight:800;font-size:14px"></span></div>
-        <div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Commission agent</span><span style="color:var(--a);font-weight:700;font-size:13px">Journalière</span></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="flex:1" onclick="closeSh('depot');rstOp('dep')">Annuler</button>
-        <button class="btn btn-a" id="dep-btn-valider" style="flex:2;opacity:.4" disabled onclick="doDepot()">Valider le dépôt</button>
-      </div>
-    </div>
-    <div id="dep-s2" style="display:none">
-      <div id="dep-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:var(--a)"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
-      <div id="dep-success" style="display:none;text-align:center;padding:28px 0">
-        <div style="width:72px;height:72px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px;color:#fff">✓</div>
-        <div style="font-size:22px;font-weight:800;margin-bottom:6px">Dépôt effectué !</div>
-        <div id="dep-succ-txt" style="color:var(--m);font-size:13px;margin-bottom:22px"></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-a" style="flex:1" onclick="rstOp('dep')">Nouveau</button><button class="btn btn-ghost" style="flex:1" onclick="closeSh('depot');rstOp('dep');rafraichir()">Fermer</button></div>
-      </div>
-      <div id="dep-err2" class="info info-r" style="display:none"></div>
-    </div>
-  </div>
-</div>
 
 <!-- SHEET RETRAIT CLIENT -->
-<div class="sh-ov" id="sh-retrait">
-  <div class="sh">
-    <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">Commission journalière par volume</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
-    <div id="ret-s1">
-      <div id="ret-err" class="info info-r" style="display:none"></div>
-      <span class="lbl">Numéro du client</span>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <input class="inp" id="ret-tel" type="tel" placeholder="+225 07 XX XX XX" oninput="calcRet()" style="flex:1"/>
-        <button onclick="scannerPourOp('ret')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
-      </div>
-      <span class="lbl">Montant souhaité (FCFA)</span>
-      <div style="position:relative;margin-bottom:14px"><input class="inp" id="ret-amt" type="number" placeholder="0" oninput="calcRet()" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
-      <div id="ret-calc" style="display:none;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px">
-        <div class="srow"><span style="color:var(--m);font-size:13px">Frais de retrait (1%)</span><span id="ret-frais" style="font-weight:700"></span></div>
-        <div class="srow"><span style="color:var(--m);font-size:13px">Total débité client</span><span id="ret-total" style="font-weight:800;color:var(--r)"></span></div>
-        <div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Commission agent</span><span style="color:var(--a);font-weight:700">Journalière</span></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="flex:1" onclick="closeSh('retrait');rstOp('ret')">Annuler</button>
-        <button class="btn btn-o" id="ret-btn-valider" style="flex:2;opacity:.4" disabled onclick="doRetrait()">Valider</button>
-      </div>
-    </div>
-    <div id="ret-s2" style="display:none">
-      <div id="ret-otp-section" style="display:none">
-        <div class="info info-a">📲 Un code OTP a été envoyé au client</div>
-        <span class="lbl">Code OTP client</span>
-        <input class="inp" id="ret-otp" type="text" placeholder="6 chiffres" style="margin-bottom:14px;letter-spacing:.3em;font-size:20px;text-align:center"/>
-        <div id="ret-err2" class="info info-r" style="display:none"></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" style="flex:1" onclick="rstOp('ret')">← Retour</button>
-          <button class="btn btn-o" style="flex:2" onclick="confirmerOTP()">Confirmer</button>
-        </div>
-      </div>
-      <div id="ret-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:#f97316"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
-      <div id="ret-success" style="display:none;text-align:center;padding:28px 0">
-        <div style="width:72px;height:72px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px;color:#fff">✓</div>
-        <div style="font-size:22px;font-weight:800;margin-bottom:6px">Retrait validé !</div>
-        <div id="ret-succ-txt" style="color:var(--m);font-size:13px;margin-bottom:22px"></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-o" style="flex:1" onclick="rstOp('ret')">Nouveau</button><button class="btn btn-ghost" style="flex:1" onclick="closeSh('retrait');rstOp('ret');rafraichir()">Fermer</button></div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- SHEET TRANSFERT -->
 <div class="sh-ov" id="sh-transfert">
@@ -428,7 +349,9 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
     <span class="lbl">Numéro destinataire</span>
     <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="trf-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1"/>
-        <button onclick="scannerPourTrf()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
+        <button onclick="scannerPourTrf()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 12px;cursor:pointer;height:48px;display:flex;align-items:center" title="Scanner QR">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="var(--a)"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="var(--a)"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="var(--a)"/></svg>
+        </button>
       </div>
     <span class="lbl">Montant (FCFA)</span>
     <div style="position:relative;margin-bottom:14px"><input class="inp" id="trf-amt" type="number" placeholder="0" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
@@ -1129,143 +1052,8 @@ function setTab(t){
 
 
 <!-- SHEET DEPOT -->
-<div class="sh-ov" id="sh-depot">
-  <div class="sh">
-    <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">D&#233;p&#244;t Client</div><div style="color:var(--m);font-size:12px">Commission journalière du montant</div></div><button class="sh-x" onclick="closeSh('depot');rstOp('dep')">✕</button></div>
-    <div id="dep-err1" class="info info-r" style="display:none"></div>
-    <div id="dep-s1">
-      <span class="lbl">Numéro client</span>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <input class="inp" id="dep-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="onTelInput('dep')"/>
-        <button id="dep-qr" onclick="scanPourOp('dep')" title="Scanner QR" style="background:#25D366;border:none;border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:49px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
-        <button id="dep-ok" onclick="identClient('dep')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4;min-width:52px">OK</button>
-      </div>
-    </div>
-    <div id="dep-s2" style="display:none">
-      <div id="dep-recap" style="display:none;background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:40px;height:40px;border-radius:50%;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#25D366" id="dep-av">?</div>
-          <div><div style="font-weight:700" id="dep-cname">—</div><div style="color:var(--m);font-size:12px" id="dep-ctel">—</div></div>
-          <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(34,197,94,.1);color:#16a34a" id="dep-kyc">—</div>
-        </div>
-      </div>
-      <div id="dep-err2" class="info info-r" style="display:none"></div>
-      <span class="lbl">Montant (FCFA)</span>
-      <div style="position:relative;margin-bottom:8px;overflow:hidden;border-radius:12px">
-        <input class="inp" id="dep-amt" type="number" placeholder="0" oninput="calcDep()" style="padding-right:60px"/>
-        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#25D366;font-size:12px;font-weight:700;pointer-events:none">FCFA</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button class="chip" onclick="setAmt('dep',1000)">1K</button>
-        <button class="chip" onclick="setAmt('dep',2000)">2K</button>
-        <button class="chip" onclick="setAmt('dep',5000)">5K</button>
-        <button class="chip" onclick="setAmt('dep',10000)">10K</button>
-        <button class="chip" onclick="setAmt('dep',20000)">20K</button>
-      </div>
-      <div id="dep-calc" style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:14px;display:none">
-        <div class="srow"><span style="color:var(--m);font-size:13px">Commission agent</span><span style="color:var(--g);font-weight:800;font-size:14px" id="dep-comm">—</span></div>
-      </div>
-    </div>
-    <div id="dep-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:#22c55e"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
-    <div id="dep-success" style="display:none;text-align:center;padding:28px 0">
-      <div style="width:72px;height:72px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:34px;color:#fff">✓</div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:6px">D&#233;p&#244;t validé !</div>
-      <div id="dep-succ-txt" style="color:var(--m);font-size:13px;margin-bottom:4px"></div>
-      <div id="dep-succ-gain" style="color:#25D366;font-size:14px;font-weight:700;margin-bottom:4px"></div>
-      <div id="dep-succ-ref" style="color:var(--d);font-size:11px;font-family:monospace;margin-bottom:22px"></div>
-      <div style="display:flex;gap:8px"><button class="btn btn-g" style="flex:1" onclick="rstOp('dep')">Nouveau</button><button class="btn btn-ghost" style="flex:1" onclick="closeSh('depot');rstOp('dep');rafraichir()">Fermer</button></div>
-    </div>
-    <div id="dep-btn-valider" style="display:none">
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="flex:1" onclick="rstOp('dep')">← Retour</button>
-        <button class="btn btn-g" style="flex:2" onclick="doDepot()">Valider le dépôt</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- SHEET RETRAIT -->
-<div class="sh-ov" id="sh-retrait">
-  <div class="sh">
-    <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Retrait Client</div><div style="color:var(--m);font-size:12px">Commission journalière par volume</div></div><button class="sh-x" onclick="closeSh('retrait');rstOp('ret')">✕</button></div>
-    <div id="ret-err1" class="info info-r" style="display:none"></div>
-    <div id="ret-s1">
-      <span class="lbl">Numéro client</span>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <input class="inp" id="ret-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="onTelInput('ret')"/>
-        <button onclick="scanPourOp('ret')" title="Scanner QR" style="background:#25D366;border:none;border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:49px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg></button>
-        <button id="ret-ok" onclick="identClient('ret')" disabled style="padding:12px 18px;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:13px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;opacity:.4;min-width:52px">OK</button>
-      </div>
-    </div>
-    <div id="ret-s2" style="display:none">
-      <div id="ret-recap" style="display:none;background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:40px;height:40px;border-radius:50%;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#f97316" id="ret-av">?</div>
-          <div><div style="font-weight:700" id="ret-cname">—</div><div style="color:var(--m);font-size:12px" id="ret-ctel">—</div></div>
-          <div style="margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(249,115,22,.1);color:#ea580c" id="ret-kyc">—</div>
-        </div>
-        <div class="srow"><span style="color:var(--m);font-size:13px">Solde client</span><span style="color:#25D366;font-weight:700" id="ret-csolde">—</span></div>
-      </div>
-      <div id="ret-err2" class="info info-r" style="display:none"></div>
-      <span class="lbl">Montant (FCFA)</span>
-      <div style="position:relative;margin-bottom:8px;overflow:hidden;border-radius:12px">
-        <input class="inp" id="ret-amt" type="number" placeholder="0" oninput="calcRet()" style="padding-right:60px"/>
-        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#25D366;font-size:12px;font-weight:700;pointer-events:none">FCFA</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button class="chip" onclick="setAmt('ret',1000)">1K</button>
-        <button class="chip" onclick="setAmt('ret',2000)">2K</button>
-        <button class="chip" onclick="setAmt('ret',5000)">5K</button>
-        <button class="chip" onclick="setAmt('ret',10000)">10K</button>
-        <button class="chip" onclick="setAmt('ret',20000)">20K</button>
-      </div>
-      <div id="ret-calc" style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:14px;display:none">
-        <div class="srow"><span style="color:var(--m);font-size:13px">Frais de retrait</span><span style="font-weight:700;font-size:14px" id="ret-frais">—</span></div>
-        <div class="srow"><span style="color:var(--m);font-size:13px">Commission agent</span><span style="color:var(--g);font-weight:800;font-size:14px" id="ret-comm">Journalière</span></div>
-        <div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Client recevra</span><span style="font-weight:800" id="ret-net">—</span></div>
-      </div>
-    </div>
-    <div id="ret-loading" style="display:none;text-align:center;padding:32px 0"><div class="spin" style="width:36px;height:36px;border-width:3px;border-top-color:#f97316"></div><div style="color:var(--m);font-size:13px;margin-top:12px">Traitement...</div></div>
-
-    <!-- Section OTP retrait -->
-    <div id="ret-otp-section" style="display:none;padding:0 4px">
-      <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px">
-        <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
-        <div id="ret-otp-info" style="font-size:12px;color:#92400e;margin-bottom:8px;text-align:center"></div>
-        <div id="ret-otp-recap" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:14px;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px"></div>
-        <div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:center">Saisissez le code OTP communiqu&#233; par le client :</div>
-        <input id="ret-otp-input" type="number" inputmode="numeric" placeholder="&#9679; &#9679; &#9679; &#9679;" style="width:100%;border:2px solid #fbbf24;border-radius:10px;padding:14px;font-size:28px;font-weight:900;text-align:center;outline:none;color:#111;box-sizing:border-box;letter-spacing:.3em"/>
-        <div id="ret-otp-err" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;text-align:center"></div>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn btn-ghost" style="flex:1" onclick="rstOpOTP(this)">Annuler</button>
-          <button id="ret-otp-btn" class="btn btn-o" style="flex:2" onclick="confirmerRetraitOTP(this)">Confirmer</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="ret-success" style="display:none;text-align:center;padding:20px 0">
-      <div style="width:60px;height:60px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;color:#fff">✓</div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:10px">Retrait valid&#233; !</div>
-      <div id="ret-succ-txt" style="color:var(--m);font-size:13px;margin-bottom:8px"></div>
-      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px;margin:0 auto 10px;text-align:left;max-width:280px">
-        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--m)">Montant retir&#233;</span><span id="ret-succ-montant" style="font-weight:700"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-top:1px solid #fed7aa"><span style="color:var(--m)">Frais</span><span id="ret-succ-frais" style="font-weight:700;color:#dc2626"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-top:1px solid #fed7aa;font-weight:800"><span>Total d&#233;bit&#233;</span><span id="ret-succ-total" style="color:#dc2626"></span></div>
-      </div>
-      <div id="ret-succ-gain" style="color:#25D366;font-size:13px;font-weight:700;margin-bottom:4px"></div>
-      <div id="ret-succ-ref" style="color:var(--d);font-size:11px;font-family:monospace;margin-bottom:18px"></div>
-      <div style="display:flex;gap:8px"><button class="btn btn-o" style="flex:1" onclick="rstOp('ret')">Nouveau</button><button class="btn btn-ghost" style="flex:1" onclick="closeSh('retrait');rstOp('ret');rafraichir()">Fermer</button></div>
-    </div>
-    <div id="ret-btn-valider" style="display:none">
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="flex:1" onclick="rstOp('ret')">← Retour</button>
-        <button class="btn btn-o" style="flex:2" onclick="doRetrait()">Valider le retrait</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- SHEET TRANSFERT -->
 <div class="sh-ov" id="sh-transfert">
@@ -1492,8 +1280,8 @@ async function doInscrire(){
 // ══ OPÉRATIONS DÉPÔT / RETRAIT ════════════════════════════════════
 var opClients={dep:null,ret:null};
 
-function ouvrirDepot(){rstOp('dep');openSh('depot');}
-function ouvrirRetrait(){rstOp('ret');openSh('retrait');}
+function ouvrirDepot(){_opEnCours='dep';var t=document.getElementById('saisie-op-titre');if(t)t.textContent='Dépôt Client';openSh('saisie-op');}
+function ouvrirRetrait(){_opEnCours='ret';var t=document.getElementById('saisie-op-titre');if(t)t.textContent='Retrait Client';openSh('saisie-op');}
 
 function onTelInput(op){
   var v=document.getElementById(op+'-tel').value.replace(/\D/g,'');
@@ -3723,6 +3511,28 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
   </div>
 </div>
 
+
+
+<!-- SHEET SAISIE NUMÉRO CLIENT -->
+<div class="sh-ov" id="sh-saisie-op">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top">
+      <div><div class="sh-title" id="saisie-op-titre">Opération</div><div style="color:var(--m);font-size:12px">Saisissez le numéro ou scannez le QR</div></div>
+      <button class="sh-x" onclick="closeSh('saisie-op')">✕</button>
+    </div>
+    <div id="saisie-op-err" class="info info-r" style="display:none"></div>
+    <span class="lbl">Numéro du client</span>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input class="inp" id="saisie-op-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1"/>
+      <button onclick="scannerPourSaisie()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="var(--a)"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="var(--a)"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="var(--a)"/></svg>
+      </button>
+    </div>
+    <div id="saisie-op-loading" style="display:none;text-align:center;padding:12px"><div class="spin"></div></div>
+    <button class="btn btn-a" onclick="validerSaisieOp()">Continuer →</button>
+  </div>
+</div>
 
 <!-- SHEET CHOIX OPÉRATION APRÈS SCAN -->
 <div class="sh-ov" id="sh-choix-op-scan">
