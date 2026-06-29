@@ -152,7 +152,7 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
         </div>
         <!-- 4 boutons sur une seule ligne au milieu -->
         <div style="display:flex;gap:7px;padding:12px 0;align-items:center">
-          <button onclick="ouvrirPopupQR(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <button onclick="ouvrirScanner(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#000"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#000"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#000"/></svg>
             <span style="font-size:11px;font-weight:800;color:#000;white-space:nowrap">Scanner QR</span>
           </button>
@@ -2660,8 +2660,49 @@ function scannerPourTrf(){
   });
 }
 
-function ouvrirScanner(callback){ouvrirPopupQR(callback);}
-function fermerScanner(){fermerPopupQR();}
+function ouvrirScanner(callback){
+  _qrCallback=callback;
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.style.position='fixed';inp.style.top='-9999px';
+  document.body.appendChild(inp);
+  inp.onchange=function(){
+    if(!inp.files||!inp.files[0]){
+      try{document.body.removeChild(inp);}catch(e){}
+      return;
+    }
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');
+        // Redimensionner si trop grand
+        var MAX=1024;
+        var w=img.width,h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+        if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        c.width=w;c.height=h;
+        var ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        var d=ctx.getImageData(0,0,w,h);
+        var code=jsQR(d.data,d.width,d.height,{inversionAttempts:'attemptBoth'});
+        try{document.body.removeChild(inp);}catch(e){}
+        if(code&&code.data){
+          var raw=code.data;
+          var tel=raw.includes('|')?raw.split('|')[0]:raw;
+          var cb=_qrCallback;_qrCallback=null;
+          if(typeof cb==='function') cb(tel.trim());
+        } else {
+          T('QR non reconnu. Rapprochez-vous et réessayez.',true);
+        }
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(inp.files[0]);
+  };
+  inp.click();
+}
+function fermerScanner(){_qrCallback=null;}
 function ouvrirPopupQR(callback){
   _qrCallback=callback||null;
   var popup=document.getElementById('wave-qr-popup');
