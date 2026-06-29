@@ -211,7 +211,7 @@ function setTab(t){
         </div>
         <!-- 4 boutons sur une seule ligne au milieu -->
         <div style="display:flex;gap:7px;padding:12px 0;align-items:center">
-          <button onclick="ouvrirPopupQR(function(tel){T('QR: '+tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <button onclick="ouvrirScanner(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#000"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#000"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#000"/></svg>
             <span style="font-size:11px;font-weight:800;color:#000;white-space:nowrap">Scanner QR</span>
           </button>
@@ -775,6 +775,19 @@ function setTab(t){
     </div>
   </div>
 </div>
+
+<!-- SHEET NOTIFICATIONS -->
+<div class="sh-ov" id="sh-notifs-mm">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top">
+      <div><div class="sh-title">Notifications 🔔</div></div>
+      <button class="sh-x" onclick="closeSh('notifs-mm')">✕</button>
+    </div>
+    <div id="notifs-mm-list" style="padding-bottom:20px"></div>
+  </div>
+</div>
+
 <!-- SCANNER QR -->
 <div id="qr-scan-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <div style="color:#fff;font-size:16px;font-weight:700;margin-bottom:16px">Scanner le QR client</div>
@@ -1041,30 +1054,8 @@ async function chargerFlux(){
 }
 
 // ══ DÉPÔT / RETRAIT ══════════════════════════════
-function ouvrirDepot(){
-  ouvrirPopupQR(function(tel){
-    (async function(){
-      try{
-        var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-        var arr=Array.isArray(r.data)?r.data:[r.data];
-        if(!arr.length||!arr[0])throw new Error('Client introuvable');
-        ouvrirScreenDepot(arr[0]);
-      }catch(e){T(e.message,true);}
-    })();
-  });
-}
-function ouvrirRetrait(){
-  ouvrirPopupQR(function(tel){
-    (async function(){
-      try{
-        var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-        var arr=Array.isArray(r.data)?r.data:[r.data];
-        if(!arr.length||!arr[0])throw new Error('Client introuvable');
-        ouvrirScreenRetrait(arr[0]);
-      }catch(e){T(e.message,true);}
-    })();
-  });
-}
+function ouvrirDepot(){rstOp('dep');openSh('depot');}
+function ouvrirRetrait(){rstOp('ret');openSh('retrait');}
 
 function calcDep(){
   var amt=Number(document.getElementById('dep-amt').value)||0;
@@ -1815,20 +1806,10 @@ function genererQR(){
 }
 
 function ouvrirPopupQR(callback){
-  _qrCallback=callback||null;
-  var popup=document.getElementById('wave-qr-popup');
-  popup.classList.add('on');
-  wqrTab('scan');
-  genererQR();
+  ouvrirScanner(callback||function(){});
 }
-
 function fermerPopupQR(){
-  var popup=document.getElementById('wave-qr-popup');
-  popup.classList.remove('on');
-  var video=document.getElementById('wqr-video');
-  if(video&&video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});video.srcObject=null;}
-  if(window._scanAnimFrame){cancelAnimationFrame(window._scanAnimFrame);window._scanAnimFrame=null;}
-  // NE PAS nullifier _qrCallback ici — il sera utilisé dans le setTimeout du scanner
+  fermerScanner();
 }
 
       function scanFrame(){
@@ -2275,16 +2256,20 @@ function renderStatTab(){
 
 
 function ouvrirNotifsMM(){
+  openSh('notifs-mm');
+  var el=document.getElementById('notifs-mm-list');
+  if(el)el.innerHTML='<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
   get('/notifications?limit=30').then(function(r){
     var list=r.data||[];
-    var h=list.length?list.map(function(n){
-      return '<div style="padding:12px 0;border-bottom:1px solid #f3f4f6">'
-        +'<div style="font-size:13px;font-weight:600">'+n.titre+'</div>'
+    if(!el)return;
+    el.innerHTML=list.length?list.map(function(n){
+      var lu=n.luePar&&n.luePar.length>0;
+      return '<div style="padding:12px 0;border-bottom:1px solid #f3f4f6;opacity:'+(lu?.6:1)+'">'
+        +'<div style="font-size:13px;font-weight:'+(lu?'500':'700')+'">'+n.titre+'</div>'
         +'<div style="color:#6b7280;font-size:12px;margin-top:2px">'+n.corps+'</div>'
         +'</div>';
     }).join(''):'<div style="text-align:center;padding:32px;color:#6b7280">Aucune notification</div>';
-    T('Notifications chargées');
-  }).catch(function(e){T(e.message,true);});
+  }).catch(function(e){if(el)el.innerHTML='<div class="info info-r">'+e.message+'</div>';});
 }
 var _mmNotifCount=0;
 function pollNotifsMM(){
