@@ -406,7 +406,7 @@ function setTab(t){
       <span class="lbl">Numéro du client</span>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="dep-tel" type="tel" placeholder="+225 07 XX XX XX" oninput="calcDep()" style="flex:1"/>
-        <button onclick="scannerPourOp('dep')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px">📷</button>
+        <button onclick="scannerPourOp('dep')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
       </div>
       <span class="lbl">Montant (FCFA)</span>
       <div style="position:relative;margin-bottom:14px"><input class="inp" id="dep-amt" type="number" placeholder="0" oninput="calcDep()" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
@@ -442,7 +442,7 @@ function setTab(t){
       <span class="lbl">Numéro du client</span>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="ret-tel" type="tel" placeholder="+225 07 XX XX XX" oninput="calcRet()" style="flex:1"/>
-        <button onclick="scannerPourOp('ret')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px">📷</button>
+        <button onclick="scannerPourOp('ret')" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
       </div>
       <span class="lbl">Montant souhaité (FCFA)</span>
       <div style="position:relative;margin-bottom:14px"><input class="inp" id="ret-amt" type="number" placeholder="0" oninput="calcRet()" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
@@ -488,7 +488,7 @@ function setTab(t){
     <span class="lbl">Numéro destinataire</span>
     <div style="display:flex;gap:8px;margin-bottom:14px">
         <input class="inp" id="trf-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1"/>
-        <button onclick="scannerPourTrf()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px">📷</button>
+        <button onclick="scannerPourTrf()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;font-size:18px" title="Scanner QR">📷</button>
       </div>
     <span class="lbl">Montant (FCFA)</span>
     <div style="position:relative;margin-bottom:14px"><input class="inp" id="trf-amt" type="number" placeholder="0" style="padding-right:55px"/><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--a);font-size:12px;font-weight:700">FCFA</span></div>
@@ -1243,40 +1243,47 @@ function scannerPourOp(op){
 
 function ouvrirScanner(callback){
   _scanCallback=callback;
-  var overlay=document.getElementById('qr-scan-overlay');
-  overlay.style.display='flex';
-  var video=document.getElementById('qr-video');
-  var canvas=document.getElementById('qr-canvas');
-  var status=document.getElementById('qr-status');
-  if(status)status.textContent='Pointez sur le QR code du client';
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(stream){
-    _scanStream=stream;
-    video.srcObject=stream;
-    video.play();
-    var ctx=canvas.getContext('2d');
-    (function tick(){
-      if(!_scanStream){return;}
-      if(video.readyState===video.HAVE_ENOUGH_DATA){
-        ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        var code=jsQR(imgData.data,imgData.width,imgData.height);
+  // Méthode universelle Samsung A12 : input file avec capture caméra
+  var inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/*';
+  inp.capture='environment';
+  inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=function(){
+    if(!inp.files||!inp.files[0]){document.body.removeChild(inp);return;}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var c=document.createElement('canvas');
+        c.width=img.width;c.height=img.height;
+        var ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0);
+        var d=ctx.getImageData(0,0,c.width,c.height);
+        var code=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+        document.body.removeChild(inp);
         if(code&&code.data){
           var data=code.data;
           var tel=data.includes('|')?data.split('|')[0]:data;
-          fermerScanner();
           if(_scanCallback)_scanCallback(tel.trim());
-          return;
+        } else {
+          T('QR non reconnu. Réessayez en vous rapprochant.',true);
         }
-      }
-      _scanAnim=requestAnimationFrame(tick);
-    })();
-  }).catch(function(e){fermerScanner();T('Caméra non disponible',true);});
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(inp.files[0]);
+  };
+  inp.onclick=function(){
+    // Si l'utilisateur annule sans choisir photo
+    setTimeout(function(){if(!inp.files||!inp.files.length){try{document.body.removeChild(inp);}catch(e){}}},30000);
+  };
+  inp.click();
 }
 
 function fermerScanner(){
-  if(_scanStream){_scanStream.getTracks().forEach(function(t){t.stop();});_scanStream=null;}
-  if(_scanAnim){cancelAnimationFrame(_scanAnim);_scanAnim=null;}
-  document.getElementById('qr-scan-overlay').style.display='none';
+  // Rien à fermer avec la méthode input file
 }
 
 // ══ QR PROFIL ══════════════════════════════════
