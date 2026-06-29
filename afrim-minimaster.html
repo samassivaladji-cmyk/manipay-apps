@@ -84,6 +84,7 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
 .scr-op.on{display:flex}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -365,7 +366,7 @@ function setTab(t){
   <div style="padding:0 16px 20px">
     <div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MON QR CODE</div>
     <div style="background:#FFE566;border:1px solid #FFE566;border-radius:16px;padding:20px;text-align:center;margin-bottom:20px">
-      <div id="qr-profil-canvas" style="display:flex;justify-content:center;margin-bottom:10px"></div>
+      <div id="qr-profil-canvas-compte" style="display:flex;justify-content:center;margin-bottom:10px"></div>
       <div style="font-size:11px;color:var(--m)">Partagez ce code pour recruter des filleuls</div>
     </div>
     <div style="font-size:10px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">PARAMÈTRES</div>
@@ -801,7 +802,11 @@ function setTab(t){
     <div style="position:absolute;bottom:0;right:0;width:30px;height:30px;border-bottom:3px solid var(--a);border-right:3px solid var(--a);border-radius:0 0 4px 0"></div>
   </div>
   <div id="qr-status" style="color:rgba(255,255,255,.7);font-size:13px;margin-top:14px">Pointez sur le QR code du client</div>
-  <button onclick="fermerScanner()" style="margin-top:20px;padding:12px 32px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif">Annuler</button>
+  <label style="margin-top:12px;padding:10px 24px;background:rgba(37,211,102,.3);border:1px solid rgba(37,211,102,.5);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif;display:block;text-align:center">
+    📷 Photo du QR
+    <input type="file" accept="image/*" style="display:none" onchange="scannerDepuisPhoto(this)">
+  </label>
+  <button onclick="fermerScanner()" style="margin-top:8px;padding:10px 32px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif">Annuler</button>
 </div>
 
 <!-- QR PROFIL OVERLAY -->
@@ -1708,10 +1713,10 @@ function chargerProfil(){
   if(pt)pt.textContent=(u.prenom||'')+' '+(u.nom||'');
   if(tt)tt.textContent=u.telephone||'';
   // QR code profil
-  var canvas=document.getElementById('qr-profil-canvas');
+  var canvas=document.getElementById('qr-profil-canvas-compte');
   if(canvas&&u.telephone){
     canvas.innerHTML='';
-    try{new QRCode(canvas,{text:u.telephone+'|'+(u.prenom||'')+' '+(u.nom||''),width:160,height:160,colorDark:'#005000',colorLight:'#fff'});}catch(e){}
+    try{new QRCode(canvas,{text:u.telephone+'|'+(u.prenom||'')+' '+(u.nom||''),width:160,height:160,colorDark:'#007700',colorLight:'#fff'});}catch(e){}
   }
 }
 
@@ -2282,6 +2287,35 @@ function pollNotifsMM(){
   setTimeout(pollNotifsMM,30000);
 }
 
+
+
+function scannerDepuisPhoto(input){
+  if(!input.files||!input.files[0])return;
+  var file=input.files[0];
+  var img=new Image();
+  var url=URL.createObjectURL(file);
+  img.onload=function(){
+    var c=document.createElement('canvas');
+    c.width=img.width;c.height=img.height;
+    var ctx=c.getContext('2d');
+    ctx.drawImage(img,0,0);
+    var d=ctx.getImageData(0,0,c.width,c.height);
+    var code=jsQR(d.data,d.width,d.height);
+    URL.revokeObjectURL(url);
+    if(code&&code.data){
+      var tel=code.data.includes('|')?code.data.split('|')[0]:code.data;
+      fermerScanner();
+      if(_scanCallback)_scanCallback(tel.trim());
+      if(_scanOp){
+        var depTel=document.getElementById(_scanOp+'-tel');
+        if(depTel){depTel.value=tel.trim();if(_scanOp==='dep')calcDep();else calcRet();}
+      }
+    }else{
+      T('QR non reconnu — réessayez',true);
+    }
+  };
+  img.src=url;
+}
 
 (function init(){
   if(G.token&&G.user&&['mini_master','master','superviseur','admin'].includes(G.user.role)){
