@@ -110,7 +110,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   <div id="wqr-scanner" style="flex:1;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;">
     <button onclick="fermerPopupQR()" style="position:absolute;top:20px;left:20px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:20px;color:#fff">←</button>
     <button id="wqr-flash-btn" onclick="toggleFlash()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:20px">🔦</button>
-    <input type="file" id="wqr-native-input" accept="image/*" style="display:none"/>
+    
     <canvas id="wqr-canvas" style="display:none"></canvas>
     <video id="wqr-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none" autoplay playsinline muted></video>
     <div id="wqr-overlay" style="position:relative;width:240px;height:240px;z-index:2;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.5);border-radius:16px;">
@@ -120,7 +120,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-bottom:3px solid var(--a);border-right:3px solid var(--a);border-radius:0 0 4px 0"></div>
     </div>
     <div id="wqr-scan-msg" style="color:rgba(255,255,255,.7);font-size:13px;margin-top:16px;z-index:2">Chargement caméra...</div>
-    <button onclick="document.getElementById('wqr-native-input').click()" style="position:absolute;bottom:100px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 20px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;z-index:10">📁 Depuis galerie</button>
+    
   </div>
   <div style="background:#fff;display:flex;border-top:1px solid #e5e7eb;">
     <button class="wave-tab-btn on" id="wtab-scan" onclick="wqrTab('scan')">Scanner un code</button>
@@ -2343,41 +2343,6 @@ function toggleFlash(){
   var btn=document.getElementById('wqr-flash-btn');
   if(btn)btn.style.background=_flashOn?'rgba(245,158,11,.4)':'rgba(255,255,255,.15)';
 }
-
-// Galerie QR
-document.addEventListener('DOMContentLoaded',function(){
-  var ni=document.getElementById('wqr-native-input');
-  if(!ni)return;
-  ni.addEventListener('change',function(){
-    if(!this.files||!this.files[0])return;
-    var file=this.files[0];this.value='';
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      var img=new Image();
-      img.onload=function(){
-        var c=document.createElement('canvas');c.width=img.width;c.height=img.height;
-        var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
-        if(window.jsQR){
-          var d=ctx.getImageData(0,0,img.width,img.height);
-          var code=jsQR(d.data,d.width,d.height);
-          if(code&&code.data){
-            var parts=code.data.split('|');var tel=parts[0]||code.data;
-            var cb=_qrCallback;_qrCallback=null;
-            fermerPopupQR();
-            setTimeout(function(){
-              if(typeof cb==='function'){cb(tel,parts);}
-            else afficherChoixOp(tel,parts);
-            },300);
-            return;
-          }
-        }
-        T('QR non reconnu',true);
-      };
-      img.src=ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-});
 
 // ══ AUTO-LOCK (60s background) ════════════════════════════════════
 var _lockTimer=null;var _lockPin='';
