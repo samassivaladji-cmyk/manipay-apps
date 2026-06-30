@@ -2667,7 +2667,14 @@ function scannerPourTrf(){
 function ouvrirScanner(callback){ouvrirPopupQR(callback);}
 function fermerScanner(){fermerPopupQR();}
 
-function fermerScanner(){_qrCallback=null;}
+function afficherChoixOpScan(tel){afficherChoixOp(tel);}
+
+function scannerPourSaisie(){
+  ouvrirPopupQR(function(tel){
+    var el=document.getElementById('saisie-op-tel');
+    if(el){el.value=tel;}
+  });
+}
 function ouvrirPopupQR(callback){
   _qrCallback=callback||null;
   var popup=document.getElementById('wave-qr-popup');
@@ -3500,8 +3507,6 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
   </div>
 </div>
 
-</body>
-</html>
 </div>
 </div>
 
