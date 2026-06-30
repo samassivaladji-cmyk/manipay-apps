@@ -20,7 +20,7 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
 #app{width:100%;max-width:420px;min-height:100vh;margin:0 auto;background:#f5f5f5}
 .scr{display:none;flex-direction:column;min-height:100vh;padding-bottom:88px}
 .scr.on{display:flex}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid var(--b);box-shadow:0 -4px 20px rgba(0,192,0,.1);display:flex;z-index:100;padding:6px 0 20px}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#25D366;border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -4px 20px rgba(0,64,0,.2);display:flex;z-index:100;padding:6px 0 20px}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;transition:color .2s}
 .nb.on{color:#000;font-weight:900}
 .nb svg{width:20px;height:20px}
@@ -304,13 +304,13 @@ function setTab(t){
 </script>
 
 <!-- LOGIN -->
-<div class="scr" id="s-login" style="align-items:center;justify-content:center;padding:40px 22px;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,rgba(245,158,11,.07),transparent 55%)">
+<div class="scr" id="s-login" style="align-items:center;justify-content:center;padding:40px 22px;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,rgba(0,192,0,.07),transparent 55%)">
   <div style="width:100%;max-width:360px;text-align:center">
-    <div style="width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 12px 32px rgba(217,119,6,.25);overflow:hidden;background:#fff"><img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:76px;height:76px;object-fit:contain" alt="AFRIM PAY"/></div>
+    <div style="width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 12px 32px rgba(0,80,0,.25);overflow:hidden;background:#fff"><img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:76px;height:76px;object-fit:contain" alt="AFRIM PAY"/></div>
     <div style="font-size:36px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px">AFRIM PAY</div>
-    <div style="color:var(--m);font-size:13px;margin-bottom:8px">Interface Agent agréé</div>
-    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:28px">
-      <span style="color:#25D366;font-size:11px;font-weight:800;letter-spacing:.14em">ESPACE AGENT</span>
+    <div style="color:var(--m);font-size:13px;margin-bottom:8px">Interface Mini-Master</div>
+    <div style="background:rgba(0,192,0,.1);border:1px solid rgba(0,192,0,.3);border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:28px">
+      <span style="color:#25D366;font-size:11px;font-weight:800;letter-spacing:.14em">🌿 ESPACE MINI-MASTER</span>
     </div>
     <div class="card" style="padding:28px;text-align:left">
       <div id="err-login" class="info info-r" style="display:none"></div>
@@ -347,102 +347,97 @@ function setTab(t){
 
 <!-- HOME -->
 <div class="scr" id="s-home">
-  <!-- HEADER ONDULÉ AGENT -->
-  <div style="position:relative;overflow:hidden;padding-bottom:0;background:#fff;">
-    <!-- SVG fond ondulé vert/jaune/orange/bleu -->
-    <svg viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;width:100%;height:320px;z-index:0;display:block" preserveAspectRatio="none">
-      <defs>
-        <!-- 4 couleurs égales AFRIM PAY Agent -->
-      </defs>
-      <!-- Vert zone haute -->
-      <rect width="420" height="320" fill="#4CAF50"/>
-      <!-- Jaune zone milieu-haute -->
-      <path d="M0,60 C65,38 148,75 238,52 C315,32 385,62 420,44 L420,160 C385,178 308,148 228,172 C148,196 68,162 0,185 Z" fill="#FFD700"/>
-      <!-- Orange zone milieu -->
-      <path d="M0,148 C72,124 158,162 245,140 C325,120 390,152 420,134 L420,248 C390,265 318,238 238,260 C158,282 75,252 0,272 Z" fill="#FF8C00"/>
-      <!-- Bleu zone basse -->
-      <path d="M0,228 C68,208 155,244 242,222 C322,202 388,232 420,215 L420,320 L0,320 Z" fill="#1E90FF"/>
-      <!-- Accent jaune haut droite -->
-      <path d="M285,0 C338,16 392,4 420,22 L420,0 Z" fill="#FFD700"/>
-      <path d="M200,0 C262,18 338,5 420,28 L420,0 L200,0 Z" fill="#FFD700" opacity="0.75"/>
-      <!-- Points décoratifs -->
-      <circle cx="30" cy="60" r="3" fill="rgba(255,255,255,.25)"/>
-      <circle cx="50" cy="80" r="2" fill="rgba(255,255,255,.2)"/>
-      <circle cx="20" cy="95" r="2.5" fill="rgba(255,255,255,.2)"/>
-      <circle cx="65" cy="55" r="2" fill="rgba(255,255,255,.15)"/>
-      <circle cx="40" cy="110" r="2" fill="rgba(255,255,255,.18)"/>
-      <circle cx="380" cy="40" r="3" fill="rgba(255,255,255,.2)"/>
-      <circle cx="395" cy="60" r="2" fill="rgba(255,255,255,.18)"/>
-      <circle cx="370" cy="70" r="2" fill="rgba(255,255,255,.15)"/>
-    </svg>
-
-    <!-- Contenu par-dessus le SVG -->
-    <div style="position:relative;z-index:1;padding:52px 22px 16px">
-      <!-- Logo centré -->
-      <div style="text-align:center;margin-bottom:18px">
-        <img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:110px;height:110px;border-radius:26px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.25);background:#fff;padding:6px" alt="AFRIM PAY"/>
-      </div>
-      <!-- Nom + Solde -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px">
+  <!-- Header -->
+  <div style="background:#25D366;padding:28px 16px 16px;border-radius:0 0 28px 28px;margin-bottom:16px;overflow:hidden">
+    <div style="display:flex;gap:12px">
+      <!-- Colonne gauche : Nom / 4 boutons / Solde -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between">
+        <!-- Nom + Zone -->
         <div>
-          <div style="font-size:22px;font-weight:900;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.3)" id="h-name">—</div>
-          <div style="color:rgba(255,255,255,.8);font-size:11px;margin-top:2px" id="h-zone">—</div>
+          <div style="font-size:18px;font-weight:900;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="h-name">—</div>
+          <div style="font-size:11px;font-weight:700;color:rgba(0,0,0,.6)" id="h-zone">—</div>
         </div>
-        <div style="text-align:right">
-          <div style="color:rgba(255,255,255,.75);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">SOLDE</div>
-          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
-            <div style="font-size:26px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.25)" id="h-solde">—</div>
-            <button id="h-eye" onclick="toggleSolde()" style="background:rgba(255,255,255,.2);border:none;cursor:pointer;padding:4px;border-radius:6px;color:#fff;display:flex;align-items:center;">
-              <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
+        <!-- 4 boutons sur une seule ligne au milieu -->
+        <div style="display:flex;gap:7px;padding:12px 0;align-items:center">
+          <button onclick="ouvrirScanner(function(tel){afficherChoixOpScan(tel);})" title="Scanner" style="background:rgba(0,0,0,.2);border:2px solid rgba(0,0,0,.3);border-radius:12px;height:36px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#000"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#000"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#000"/></svg>
+            <span style="font-size:11px;font-weight:800;color:#000;white-space:nowrap">Scanner QR</span>
+          </button>
+          <button onclick="ouvrirNotifs()" title="Notifications" style="background:rgba(0,0,0,.15);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <div id="h-notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;font-size:7px;font-weight:800;border-radius:99px;padding:1px 3px;min-width:12px;text-align:center">0</div>
+          </button>
+          <button onclick="rafraichir()" title="Actualiser" style="background:rgba(0,0,0,.15);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          </button>
+          <button onclick="openSh('deconnexion')" title="Quitter" style="background:rgba(239,68,68,.25);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+        <!-- Solde -->
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div style="font-size:24px;font-weight:900;color:#000;letter-spacing:-.5px" id="h-solde">—</div>
+          <button onclick="toggleSolde()" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,.5);font-size:14px;padding:0">👁</button>
         </div>
       </div>
-      <!-- Actions rapides -->
-      <div style="display:flex;gap:8px;justify-content:space-between;margin-bottom:0;padding-bottom:16px">
-        <button onclick="ouvrirPopupQR()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:10px 4px;cursor:pointer">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg>
-          <span style="font-size:10px;font-weight:700;color:#fff">Scanner</span>
-        </button>
-        <button onclick="ouvrirNotifs()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:10px 4px;cursor:pointer;position:relative">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <span style="font-size:10px;font-weight:700;color:#fff">Notifs</span>
-          <div id="h-notif-badge" style="display:none;position:absolute;top:5px;right:8px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;border-radius:99px;padding:1px 4px;min-width:14px;text-align:center">0</div>
-        </button>
-        <button onclick="rafraichir()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:10px 4px;cursor:pointer">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          <span style="font-size:10px;font-weight:700;color:#fff">Actualiser</span>
-        </button>
-        <button onclick="logout()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(220,38,38,.25);backdrop-filter:blur(4px);border:1px solid rgba(255,100,100,.4);border-radius:14px;padding:10px 4px;cursor:pointer">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span style="font-size:10px;font-weight:700;color:#fca5a5">Quitter</span>
-        </button>
+      <!-- Colonne droite : Logo uniquement -->
+      <div style="flex-shrink:0;display:flex;align-items:center">
+        <div style="width:110px;height:110px;border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.25)">
+          <img src="https://samassivaladji-cmyk.github.io/afrim-pay-apps/logo.png" style="width:100%;height:100%;object-fit:contain"/>
+        </div>
+      </div>
+    </div>
+    <!-- Agents / Business / Clients -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+      <div style="background:#FFE566;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:#000" id="h-agents">—</div>
+        <div style="font-size:9px;color:#007700;font-weight:800;margin-top:1px">Agents</div>
+      </div>
+      <div style="background:#FFE566;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:#000" id="h-business">—</div>
+        <div style="font-size:9px;color:#007700;font-weight:800;margin-top:1px">Business</div>
+      </div>
+      <div style="background:#FFE566;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:#000" id="h-clients">—</div>
+        <div style="font-size:9px;color:#007700;font-weight:800;margin-top:1px">Clients</div>
       </div>
     </div>
   </div>
-  <div class="sc">
-    <span class="lbl">Op&#233;rations rapides</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      <button onclick="ouvrirDepot()" style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px">↓</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#15803d">D&#233;p&#244;t Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission journalière</div></div>
+  <!-- Opérations rapides -->
+  <div style="padding:16px;margin-bottom:0;background:#fff;border-radius:0">
+    <div style="font-size:11px;font-weight:800;color:#25D366;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">OPÉRATIONS RAPIDES</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <button onclick="ouvrirDepot()" style="background:#fff;border:2px solid #25D366;border-radius:16px;padding:16px 12px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="width:38px;height:38px;border-radius:12px;background:#25D366;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px;color:#fff">↓</div>
+        <div style="font-size:13px;font-weight:700;color:#005000">Dépôt Client</div>
+        <div style="font-size:10px;color:#00C000;margin-top:2px">Commission journalière</div>
       </button>
-      <button onclick="ouvrirRetrait()" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(249,115,22,.12);display:flex;align-items:center;justify-content:center;color:#f97316;font-size:24px">↑</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#c2410c">Retrait Client</div><div style="font-size:10px;color:var(--m);margin-top:2px">Commission journalière</div></div>
-      </button>
-      <button onclick="openSh('inscription');setInsType('client')" style="background:var(--s);border:1px solid rgba(245,158,11,.15);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:24px">👤</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#25D366">Inscrire</div><div style="font-size:10px;color:var(--m);margin-top:2px">Client</div></div>
-      </button>
-      <button onclick="openSh('transfert')" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
-        <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px">⇄</div>
-        <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#1d4ed8">Transfert</div><div style="font-size:10px;color:var(--m);margin-top:2px">Liquidité · Gratuit</div></div>
+      <button onclick="ouvrirRetrait()" style="background:#fff;border:2px solid #f97316;border-radius:16px;padding:16px 12px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="width:38px;height:38px;border-radius:12px;background:#ea580c;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px;color:#fff">↑</div>
+        <div style="font-size:13px;font-weight:700;color:#7c2d12">Retrait Client</div>
+        <div style="font-size:10px;color:#ea580c;margin-top:2px">Commission journalière</div>
       </button>
     </div>
-    <span class="lbl">Transactions récentes</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="openSh('inscription')" style="background:#fff;border:2px solid #FFE566;border-radius:16px;padding:16px 12px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="width:38px;height:38px;border-radius:12px;background:#FFE566;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px;color:#fff">👤</div>
+        <div style="font-size:13px;font-weight:700;color:#713f12">Inscrire</div>
+        <div style="font-size:10px;color:#ca8a04;margin-top:2px">Agent · Client · Business</div>
+      </button>
+      <button onclick="openSh('transfert')" style="background:#fff;border:2px solid #3b82f6;border-radius:16px;padding:16px 12px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="width:38px;height:38px;border-radius:12px;background:#3b82f6;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px;color:#fff">⇄</div>
+        <div style="font-size:13px;font-weight:700;color:#1e3a8a">Transfert</div>
+        <div style="font-size:10px;color:#2563eb;margin-top:2px">Liquidité · Gratuit</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Transactions récentes -->
+  <div style="padding:16px;background:#fff">
+    <div style="font-size:11px;font-weight:800;color:#25D366;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">TRANSACTIONS RÉCENTES</div>
     <div id="h-txns"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div>
   </div>
+
   <nav class="bnav">
     <button class="nb on" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
@@ -480,7 +475,7 @@ function setTab(t){
 
 <!-- COMMISSIONS -->
 <div class="scr" id="s-commissions">
-  <div style="background:linear-gradient(135deg,#b45309,#d97706);padding:52px 22px 16px">
+  <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:52px 22px 16px">
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Commissions 💳</div>
     <div style="color:rgba(255,255,255,.75);font-size:13px">D&#233;p&#244;ts et retraits clients</div>
     <div style="display:flex;gap:5px;margin-top:10px">
@@ -558,7 +553,7 @@ function setTab(t){
 <!-- PROFIL -->
 <div class="scr" id="s-profile">
   <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:28px 22px 24px;text-align:center">
-    <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">ESPACE AGENT</div>
+    <div style="color:rgba(255,255,255,.75);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">ESPACE MINI-MASTER</div>
     <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:3px" id="prof-name-top">—</div>
     <div style="color:rgba(255,255,255,.7);font-size:13px;font-family:monospace;margin-bottom:20px" id="prof-tel-top">—</div>
     <!-- QR Code de l'agent — généré automatiquement -->
@@ -843,6 +838,31 @@ var opClients={dep:null,ret:null};
 function ouvrirDepot(){_opEnCours='dep';var t=document.getElementById('saisie-op-titre');if(t)t.textContent='Dépôt Client';openSh('saisie-op');}
 function ouvrirRetrait(){_opEnCours='ret';var t=document.getElementById('saisie-op-titre');if(t)t.textContent='Retrait Client';openSh('saisie-op');}
 
+async function validerSaisieOp(){
+  var tel=document.getElementById('saisie-op-tel').value.trim();
+  var err=document.getElementById('saisie-op-err');
+  var loading=document.getElementById('saisie-op-loading');
+  err.style.display='none';
+  if(!tel){err.textContent='Numéro requis';err.style.display='';return;}
+  loading.style.display='';
+  try{
+    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+    var arr=Array.isArray(r.data)?r.data:[r.data];
+    if(!arr.length||!arr[0]) throw new Error('Client introuvable');
+    var u=arr[0];
+    loading.style.display='none';
+    closeSh('saisie-op');
+    document.getElementById('saisie-op-tel').value='';
+    setTimeout(function(){
+      if(_opEnCours==='dep') ouvrirScreenDepot(u);
+      else if(_opEnCours==='ret') ouvrirScreenRetrait(u);
+    },150);
+  }catch(e){
+    loading.style.display='none';
+    err.textContent=e.message;err.style.display='';
+  }
+}
+
 function onTelInput(op){
   var v=document.getElementById(op+'-tel').value.replace(/\D/g,'');
   var btn=document.getElementById(op+'-ok');
@@ -1096,6 +1116,19 @@ async function chargerAccueil(){
     G.user=urP.data;
     _ls.set('afrim_user',JSON.stringify(G.user));
   }catch(e){}
+  // Charger compteurs réseau (Agents / Business / Clients rattachés)
+  try{
+    var rRef=await get('/users/'+(G.user&&G.user.id)+'/referrals');
+    var filleuls=(rRef.data&&rRef.data.filleuls)||[];
+    var nbAgents=filleuls.filter(function(f){return f.role==='agent';}).length;
+    var nbBusiness=filleuls.filter(function(f){return f.role==='business';}).length;
+    var nbClients=filleuls.filter(function(f){return f.role==='client'||!f.role;}).length;
+    var elA=document.getElementById('h-agents');if(elA)elA.textContent=nbAgents;
+    var elB=document.getElementById('h-business');if(elB)elB.textContent=nbBusiness;
+    var elC=document.getElementById('h-clients');if(elC)elC.textContent=nbClients;
+  }catch(e3){
+    ['h-agents','h-business','h-clients'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='0';});
+  }
   // Charger txns APRÈS que G.compte est défini
   chargerTxns();
 }
@@ -1379,27 +1412,27 @@ async function chargerCommissions(){
         progPct=Math.min(100,Math.max(0,progPct));
       } else if(palierActuel&&!palierSuivant) progPct=100;
 
-      var retirableAMinuit='<span style="font-size:10px;color:#92400e;background:#fef3c7;border-radius:6px;padding:2px 7px;font-weight:700">🔒 Retirable à minuit</span>';
-      h+='<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:18px;padding:16px 18px;margin-bottom:14px">'
+      var retirableAMinuit='<span style="font-size:10px;color:#005000;background:#F0FBF0;border-radius:6px;padding:2px 7px;font-weight:700">🔒 Retirable à minuit</span>';
+      h+='<div style="background:linear-gradient(135deg,#F0FBF0,#DCF8C6);border:2px solid #00C000;border-radius:18px;padding:16px 18px;margin-bottom:14px">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
         +'<div>'
-        +'<div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em">COMMISSION DU JOUR</div>'
-        +'<div style="font-size:28px;font-weight:900;color:#b45309;line-height:1.1">'+(montantJour>0?'+'+F(montantJour)+' FCFA':'0 FCFA')+'</div>'
+        +'<div style="font-size:10px;font-weight:700;color:#005000;text-transform:uppercase;letter-spacing:.05em">COMMISSION DU JOUR</div>'
+        +'<div style="font-size:28px;font-weight:900;color:#008000;line-height:1.1">'+(montantJour>0?'+'+F(montantJour)+' FCFA':'0 FCFA')+'</div>'
         +'<div style="margin-top:4px">'+retirableAMinuit+'</div>'
         +'</div>'
         +'<div style="text-align:right">'
-        +'<div style="font-size:9px;color:#92400e;opacity:.7">Volume du jour</div>'
-        +'<div style="font-size:14px;font-weight:800;color:#92400e">'+F(volumeJour)+'</div>'
+        +'<div style="font-size:9px;color:#005000;opacity:.7">Volume du jour</div>'
+        +'<div style="font-size:14px;font-weight:800;color:#005000">'+F(volumeJour)+'</div>'
         +'</div>'
         +'</div>'
         // Barre de progression vers palier suivant
         +(palierActuel
-          ?'<div style="background:rgba(0,0,0,.1);border-radius:99px;height:7px;margin-bottom:6px"><div style="background:#d97706;border-radius:99px;height:7px;width:'+progPct+'%;transition:width .4s"></div></div>'
-           +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#92400e">'
+          ?'<div style="background:rgba(0,0,0,.1);border-radius:99px;height:7px;margin-bottom:6px"><div style="background:#00C000;border-radius:99px;height:7px;width:'+progPct+'%;transition:width .4s"></div></div>'
+           +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#005000">'
            +'<span>Palier actuel : +'+F(palierActuel.comm)+'</span>'
            +(palierSuivant?'<span>Prochain : +'+F(palierSuivant.comm)+' (-'+F(resteProchain)+' restants)</span>':'<span>✅ Palier max atteint</span>')
            +'</div>'
-          :'<div style="font-size:11px;color:#92400e;opacity:.7">Aucune opération ce jour — premier palier à partir de 500 FCFA de volume</div>'
+          :'<div style="font-size:11px;color:#005000;opacity:.7">Aucune opération ce jour — premier palier à partir de 500 FCFA de volume</div>'
         )
         +'</div>';
     })();
@@ -1412,7 +1445,7 @@ async function chargerCommissions(){
         +'<div style="font-size:8px;opacity:.5;margin-top:1px"></div>'
         +'</div>';
     }
-    h+='<div style="background:linear-gradient(135deg,#b45309,#d97706);border-radius:18px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+    h+='<div style="background:linear-gradient(135deg,#008000,#00C000);border-radius:18px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:10px;letter-spacing:.05em">MES COMMISSIONS</div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">'
       +caseComm('HIER',tHier)
@@ -1427,10 +1460,10 @@ async function chargerCommissions(){
     +'</div>';
 
     // ── Commissions actuelles (disponibles) ──
-    h+='<div style="background:#fff;border:2px solid #d97706;border-radius:16px;padding:14px 16px;margin-bottom:14px">'
+    h+='<div style="background:#fff;border:2px solid #00C000;border-radius:16px;padding:14px 16px;margin-bottom:14px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center">'
       +'<div>'
-      +'<div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em">COMMISSIONS ACTUELLES</div>'
+      +'<div style="font-size:11px;font-weight:700;color:#005000;text-transform:uppercase;letter-spacing:.05em">COMMISSIONS ACTUELLES</div>'
       +'<div style="font-size:24px;font-weight:900;color:#25D366">'+F(disponible)+'</div>'
       +'<div style="font-size:11px;color:#6b7280;margin-top:2px">En attente de virement</div>'
       +'</div>'
@@ -1455,9 +1488,9 @@ async function chargerCommissions(){
       virements.slice(0,10).forEach(function(v){
         var d=new Date(v.dateCreation||v.date_creation||0);
         var ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-        h+='<div class="tx" style="background:#d977060d;border:1px solid #d9770622">'
+        h+='<div class="tx" style="background:#00C0000d;border:1px solid #00C00022">'
           +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="width:36px;height:36px;border-radius:10px;background:#d9770618;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:16px">💳</div>'
+          +'<div style="width:36px;height:36px;border-radius:10px;background:#00C00018;color:#00C000;display:flex;align-items:center;justify-content:center;font-size:16px">💳</div>'
           +'<div><div style="font-size:13px;font-weight:700">Virement commissions</div><div style="color:var(--m);font-size:11px">'+ds+'</div>'
           +'<div style="color:var(--d);font-size:10px">'+(v.reference||'')+'</div></div></div>'
           +'<div style="color:#22c55e;font-size:14px;font-weight:900;font-family:monospace">+'+F(v.montant)+'</div></div>';
@@ -2896,7 +2929,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
   </div>
 </div>
 
-<!-- SHEET NOTIFICATIONS AGENT -->
+<!-- SHEET NOTIFICATIONS -->
 <div class="sh-ov" id="sh-notifs" onclick="if(event.target===this)this.classList.remove('on')" style="z-index:200">
   <div class="sh" style="max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
     <div class="sh-bar"></div>
@@ -3163,22 +3196,5 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
 
 
 
-<!-- NAVBAR GLOBALE UNIQUE -->
-<nav style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#25D366;border-top:2px solid rgba(0,0,0,.1);box-shadow:0 -4px 20px rgba(0,64,0,.25);display:flex;z-index:9999;padding:6px 0 20px">
-  <button onclick="setTab('home')" id="nb-home" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600" class="nb on">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
-  <button onclick="setTab('flux')" id="nb-flux" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
-  <button onclick="setTab('comm')" id="nb-comm" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Comm.</button>
-  <button onclick="setTab('gains')" id="nb-gains" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Gains</button>
-  <button onclick="setTab('reseau')" id="nb-reseau" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
-  <button onclick="setTab('stats')" id="nb-stats" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
-  <button onclick="setTab('compte')" id="nb-compte" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:5px 0;color:#000;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:900" class="nb">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
-</nav>
 </body>
 </html>
