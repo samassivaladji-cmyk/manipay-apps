@@ -298,6 +298,7 @@ function setTab(t){
   else if(t==='flux'){document.getElementById('s-flux').classList.add('on');chargerHistorique();}
   else if(t==='commissions'){document.getElementById('s-commissions').classList.add('on');chargerCommissions();}
   else if(t==='gains'){document.getElementById('s-gains').classList.add('on');chargerGains();}
+  else if(t==='reseau'){document.getElementById('s-reseau').classList.add('on');chargerReseauTab();}
   else if(t==='stats'){document.getElementById('s-stats').classList.add('on');chargerStats();}
   else if(t==='profile'){document.getElementById('s-profile').classList.add('on');chargerProfil();}
 }
@@ -442,7 +443,7 @@ function setTab(t){
     <button class="nb on" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -466,7 +467,7 @@ function setTab(t){
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb on" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -492,7 +493,7 @@ function setTab(t){
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb on" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -511,7 +512,26 @@ function setTab(t){
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb on" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb on" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
+    <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
+    <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
+  </nav>
+</div>
+
+<!-- RÉSEAU -->
+<div class="scr" id="s-reseau">
+  <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:52px 22px 16px">
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Mon r&#233;seau 🌐</div>
+    <div style="color:rgba(255,255,255,.8);font-size:13px">Agents · Business · Clients rattach&#233;s</div>
+  </div>
+  <div class="sc" style="margin-top:14px" id="reseau-tab-content">
+    <div style="text-align:center;padding:32px"><div class="spin"></div></div>
+  </div>
+  <nav class="bnav">
+    <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
+    <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
+    <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb on" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -544,7 +564,7 @@ function setTab(t){
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb on" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -599,7 +619,7 @@ function setTab(t){
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
     <button class="nb" id="nb-commissions" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Comm.</button>
-    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
+    <button class="nb" id="nb-gains" onclick="setTab('gains')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button><button class="nb" id="nb-reseau" onclick="setTab('reseau')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>Réseau</button>
     <button class="nb" id="nb-stats" onclick="setTab('stats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stats</button>
     <button class="nb on" id="nb-profile" onclick="setTab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Compte</button>
   </nav>
@@ -1120,6 +1140,7 @@ async function chargerAccueil(){
   try{
     var rRef=await get('/users/'+(G.user&&G.user.id)+'/referrals');
     var filleuls=(rRef.data&&rRef.data.filleuls)||[];
+    filleuls=await enrichirRoles(filleuls);
     var nbAgents=filleuls.filter(function(f){return f.role==='agent';}).length;
     var nbBusiness=filleuls.filter(function(f){return f.role==='business';}).length;
     var nbClients=filleuls.filter(function(f){return f.role==='client'||!f.role;}).length;
@@ -1133,6 +1154,19 @@ async function chargerAccueil(){
   chargerTxns();
 }
 async function rafraichir(){await chargerAccueil();}
+
+async function enrichirRoles(filleuls){
+  var results=await Promise.all(filleuls.map(async function(f){
+    if(f.role) return f;
+    try{
+      var r=await get('/users?telephone='+encodeURIComponent(f.telephone)+'&limit=1');
+      var arr=Array.isArray(r.data)?r.data:[r.data];
+      if(arr.length&&arr[0]&&arr[0].role) f.role=arr[0].role;
+    }catch(e){}
+    return f;
+  }));
+  return results;
+}
 
 // ── Son de notification ──
 var _audioCtxA=null;
@@ -2138,18 +2172,39 @@ function ouvrirInfos(){
   openSh('infos');
 }
 
-async function chargerReseau(){
-  var el=document.getElementById('reseau-list');
+async function chargerReseauTab(){
+  var el=document.getElementById('reseau-tab-content');
+  if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
   try{
-    var r=await get('/users/'+G.user.id+'/referrals');
+    var results=await Promise.all([
+      get('/users/'+G.user.id+'/referrals'),
+      get('/commissions?limit=1000')
+    ]);
+    var r=results[0];
     var list=r.data.filleuls||[];
-    var h='<div style="padding:0 0 12px"><div class="srow"><span style="color:var(--m);font-size:13px">Filleuls total</span><span style="color:#25D366;font-size:16px;font-weight:800">'+list.length+'</span></div><div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Gains parrainage</span><span style="color:#25D366;font-size:16px;font-weight:800;font-family:monospace">'+F(r.data.totalGains)+'</span></div></div>';
-    if(list.length){list.forEach(function(f){h+='<div class="tx" style="background:var(--s);border:1px solid var(--b)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:14px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div><div style="font-size:13px;font-weight:600">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+f.telephone+'</div></div></div><div style="color:var(--d);font-size:11px">'+FD(f.dateCreation)+'</div></div>';});}
+    list=await enrichirRoles(list);
+    var nbAgents=list.filter(function(f){return f.role==='agent';}).length;
+    var nbBusiness=list.filter(function(f){return f.role==='business';}).length;
+    var nbClients=list.filter(function(f){return f.role==='client'||!f.role;}).length;
+    // Gains parrainage uniquement (≠ commissions journalières dépôt/retrait)
+    var allComms=results[1].data||[];
+    var gainsParr=allComms.filter(function(c){return c.type_commission==='parrainage'||c.type_commission==='commission_parrain';});
+    var totalGainsParrainage=gainsParr.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);
+    var h='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">'
+      +'<div style="background:var(--s);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:20px;font-weight:900;color:#25D366">'+nbAgents+'</div><div style="font-size:10px;color:var(--m);margin-top:2px;font-weight:700">Agents</div></div>'
+      +'<div style="background:var(--s);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:20px;font-weight:900;color:#25D366">'+nbBusiness+'</div><div style="font-size:10px;color:var(--m);margin-top:2px;font-weight:700">Business</div></div>'
+      +'<div style="background:var(--s);border-radius:14px;padding:14px 8px;text-align:center"><div style="font-size:20px;font-weight:900;color:#25D366">'+nbClients+'</div><div style="font-size:10px;color:var(--m);margin-top:2px;font-weight:700">Clients</div></div>'
+    +'</div>';
+    h+='<div style="padding:0 0 12px"><div class="srow"><span style="color:var(--m);font-size:13px">Filleuls total</span><span style="color:#25D366;font-size:16px;font-weight:800">'+list.length+'</span></div><div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Gains parrainage</span><span style="color:#25D366;font-size:16px;font-weight:800;font-family:monospace">'+F(totalGainsParrainage)+'</span></div></div>';
+    if(list.length){list.forEach(function(f){
+      var roleLabel=f.role==='agent'?'agent':f.role==='business'?'business':f.role==='mini_master'?'mini-master':'client';
+      var badge='<span style="font-size:9px;font-weight:700;color:#25D366;background:rgba(0,192,0,.12);border-radius:8px;padding:2px 7px;margin-left:6px;text-transform:uppercase">'+roleLabel+'</span>';
+      h+='<div class="tx" style="background:var(--s);border:1px solid var(--b)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(0,192,0,.12);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:14px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div><div style="font-size:13px;font-weight:600">'+(f.prenom||'')+' '+(f.nom||'')+badge+'</div><div style="color:var(--m);font-size:11px">'+f.telephone+'</div></div></div><div style="color:var(--d);font-size:11px">'+FD(f.dateCreation)+'</div></div>';
+    });}
     else h+='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucun filleul pour l\'instant</div>';
     el.innerHTML=h;
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
-  openSh('reseau');
 }
 
 async function doChangePin(){
