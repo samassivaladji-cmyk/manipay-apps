@@ -1434,6 +1434,27 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
+<!-- SHEET MODIFIER COMPTE (nom / prénom) -->
+<div class="sh-ov" id="sh-edit-user">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Modifier le compte</div><div style="color:var(--m);font-size:12px">Corriger nom / prénom</div></div><button class="sh-x" onclick="closeSh('edit-user')">✕</button></div>
+    <div class="sh-body">
+      <input type="hidden" id="eu-id"/>
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;color:var(--m);font-weight:700;margin-bottom:6px">Prénom</div>
+        <input id="eu-prenom" type="text" style="width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;color:var(--m);font-weight:700;margin-bottom:6px">Nom</div>
+        <input id="eu-nom" type="text" style="width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+      </div>
+      <div id="eu-err" style="color:var(--r);font-size:12px;margin-bottom:10px;display:none"></div>
+      <button onclick="sauvegarderEditUser()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET INSCRIPTION -->
 <div class="sh-ov" id="sh-inscription">
   <div class="sh">
@@ -2288,6 +2309,7 @@ function voirU(id){
   }
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
@@ -4497,6 +4519,7 @@ function voirU(id){
   }
   if(perm('rembourser'))mkBtn('Rembourser dernier transfert','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){toast('Remboursement bientot disponible');});
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
@@ -4506,6 +4529,30 @@ function voirU(id){
     closeSh('user');openSh('confirm-delete');
   });
   openSh('user');
+}
+
+function ouvrirEditUser(u){
+  document.getElementById('eu-id').value=u.id;
+  document.getElementById('eu-prenom').value=u.prenom||'';
+  document.getElementById('eu-nom').value=u.nom||'';
+  document.getElementById('eu-err').style.display='none';
+  closeSh('user');
+  openSh('edit-user');
+}
+async function sauvegarderEditUser(){
+  var id=document.getElementById('eu-id').value;
+  var prenom=document.getElementById('eu-prenom').value.trim();
+  var nom=document.getElementById('eu-nom').value.trim();
+  var errEl=document.getElementById('eu-err');errEl.style.display='none';
+  if(!prenom||!nom){errEl.textContent='Prénom et nom sont requis';errEl.style.display='';return;}
+  try{
+    await apiPatch('/admin/users/'+id+'/info',{prenom:prenom,nom:nom});
+    toast('Compte mis à jour');
+    closeSh('edit-user');
+    var u=usersData.find(function(x){return x.id===id;});
+    if(u){u.prenom=prenom;u.nom=nom;}
+    try{ renderU(usersData); }catch(e){}
+  }catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
 async function activerAvecKyc(clientId,niveauKyc){
