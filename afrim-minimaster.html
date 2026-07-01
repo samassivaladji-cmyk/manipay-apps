@@ -1640,9 +1640,11 @@ async function chargerGains(){
     var virements=results[2].data||[];
     var now=new Date();
 
-    // GAINS = commission_parrain (parrainage) + commission réseau (agents/business rattachés)
+    // GAINS = commission_parrain (parrainage) + commission réseau (agents retraits + business paiements)
     var gainsParr=comms.filter(function(c){return c.type_commission==='parrainage'||c.type_commission==='commission_parrain';});
-    var gainsReseau=comms.filter(function(c){return c.type_commission==='reseau_mini_master_retrait'||c.type_commission==='reseau_mini_master_paiement';});
+    var gainsAgents=comms.filter(function(c){return c.type_commission==='reseau_mini_master_retrait';});
+    var gainsBusiness=comms.filter(function(c){return c.type_commission==='reseau_mini_master_paiement';});
+    var gainsReseau=gainsAgents.concat(gainsBusiness);
     var gainsTous=gainsParr.concat(gainsReseau);
     // Gains actuels = statut 'verse' (non encore virés), toutes sources confondues
     var disponible=gainsTous.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
@@ -1661,70 +1663,44 @@ async function chargerGains(){
     var codeParrainage=(me.codeParrainage||'').replace(/\s+/g,'').replace(/-/g,'');
     var h='';
 
-    // ── Carte résumé périodes ──
+    // ── Carte 1 : Parrainage (vert) ──
     h+='<div style="background:linear-gradient(135deg,var(--a2),#25D366);border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MES GAINS — PARRAINAGE</div>'
+      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🤝 MES GAINS — PARRAINAGE</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tAuj)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAuj)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tSem)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dSem)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tMois)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dMois)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tAn)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAn)+' ops</div>'
-        +'</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div><div style="font-size:17px;font-weight:900">'+F(tAuj)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAuj)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div><div style="font-size:17px;font-weight:900">'+F(tSem)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dSem)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div><div style="font-size:17px;font-weight:900">'+F(tMois)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dMois)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div><div style="font-size:17px;font-weight:900">'+F(tAn)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAn)+' ops</div></div>'
       +'</div>'
-      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">'
-        +'<div style="font-size:10px;opacity:.8">Total depuis toujours</div>'
-        +'<div style="font-size:14px;font-weight:800">'+F(tTotal)+'</div>'
-      +'</div>'
+      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;opacity:.8">Total depuis toujours</div><div style="font-size:14px;font-weight:800">'+F(tTotal)+'</div></div>'
     +'</div>';
 
-    // ── Carte résumé périodes RÉSEAU (agents/business rattachés) ──
-    function sumR(d1){return gainsReseau.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);}
-    function nbR(d1){return gainsReseau.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).length;}
-    var rAuj=sumR(dAuj),rSem=sumR(dSem),rMois=sumR(dMois),rAn=sumR(dAn);
-    var rTotal=gainsReseau.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);
-    h+='<div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MES GAINS — RÉSEAU AGENTS · BUSINESS</div>'
+    // ── Carte 2 : Agents — retraits (orange) ──
+    function sumA(list,d1){return list.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);}
+    function nbA(list,d1){return list.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).length;}
+    var aTotal=gainsAgents.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);
+    h+='<div style="background:linear-gradient(135deg,#c2410c,#f97316);border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🔶 MES GAINS — AGENTS (Retraits · 1%)</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(rAuj)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbR(dAuj)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(rSem)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbR(dSem)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(rMois)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbR(dMois)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(rAn)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbR(dAn)+' ops</div>'
-        +'</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsAgents,dAuj))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsAgents,dAuj)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsAgents,dSem))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsAgents,dSem)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsAgents,dMois))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsAgents,dMois)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsAgents,dAn))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsAgents,dAn)+' ops</div></div>'
       +'</div>'
-      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">'
-        +'<div style="font-size:10px;opacity:.8">Total depuis toujours · 1% retrait + 1% paiement</div>'
-        +'<div style="font-size:14px;font-weight:800">'+F(rTotal)+'</div>'
+      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;opacity:.8">Total depuis toujours · 1% des retraits agents</div><div style="font-size:14px;font-weight:800">'+F(aTotal)+'</div></div>'
+    +'</div>';
+
+    // ── Carte 3 : Business — paiements marchands (violet) ──
+    var bTotal=gainsBusiness.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);
+    h+='<div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🏪 MES GAINS — BUSINESS (Paiements · 1%)</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsBusiness,dAuj))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsBusiness,dAuj)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsBusiness,dSem))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsBusiness,dSem)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsBusiness,dMois))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsBusiness,dMois)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div><div style="font-size:17px;font-weight:900">'+F(sumA(gainsBusiness,dAn))+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbA(gainsBusiness,dAn)+' ops</div></div>'
       +'</div>'
+      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;opacity:.8">Total depuis toujours · 1% des paiements business</div><div style="font-size:14px;font-weight:800">'+F(bTotal)+'</div></div>'
     +'</div>';
 
     // ── Gains actuels (disponibles) ──
