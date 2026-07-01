@@ -2392,56 +2392,53 @@ async function logout(force){
   S('s-login');
 }
 
-// ══ Statistiques agents ══
-var _agStatPeriod='month';
-var _agStatType='depot';
-var _agStatId=null;
+// ══ Statistiques comparatives agents ══
+var _agStatPeriod='week';
+var _agStatType='retrait';
 var _agStatCache={};
+var _AG_COLORS=['#25D366','#f97316','#3b82f6','#8b5cf6','#ef4444','#eab308','#06b6d4','#ec4899','#14b8a6','#f43f5e'];
 
 async function renderAgentsStats(){
   var el=document.getElementById('rn-agent-content');
   var agents=getAgents();
   if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent dans votre réseau</div>';return;}
-  if(!_agStatId)_agStatId=agents[0].id;
-  _renderAgentsStatsUI(el,agents);
+  _drawAgStatShell(el,agents);
 }
 
-function _renderAgentsStatsUI(el,agents){
-  // Sélecteur d'agent
-  var selOpts=agents.map(function(a){return '<option value="'+a.id+'"'+(a.id===_agStatId?' selected':'')+'>'+((a.prenom||'')+' '+(a.nom||'')).trim()+'</option>';}).join('');
-  // Boutons période
+function _drawAgStatShell(el,agents){
   var periods=[['day','Auj.'],['yesterday','Hier'],['week','Semaine'],['month','Mois'],['year','Année']];
-  var pBtns=periods.map(function(p){
-    var on=p[0]===_agStatPeriod;
-    return '<button onclick="setAgStatPeriod(\''+p[0]+'\')" style="padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;'+(on?'background:#25D366;color:#fff;border:1px solid #25D366':'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)')+'">'+p[1]+'</button>';
-  }).join('');
-  // Boutons type
-  var types=[['depot','↓ Dépôts','#22c55e'],['retrait','↑ Retraits','#f97316'],['trfEnv','→ Trf. envoyés','#3b82f6'],['trfRec','← Trf. reçus','#60a5fa'],['solde','💰 Solde','#25D366']];
-  var tBtns=types.map(function(t){
-    var on=t[0]===_agStatType;
-    return '<button onclick="setAgStatType(\''+t[0]+'\')" style="padding:7px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;'+(on?'background:'+t[2]+';color:#fff;border:1px solid '+t[2]:'background:#fff;color:#6b7280;border:1px solid #e5e7eb')+'">'+t[1]+'</button>';
-  }).join('');
-
+  var pBtns=periods.map(function(p){var on=p[0]===_agStatPeriod;return '<button onclick="setAgStatPeriod(\''+p[0]+'\')" style="padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;'+(on?'background:#25D366;color:#fff;border:1px solid #25D366':'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)')+'">'+p[1]+'</button>';}).join('');
+  var types=[['depot','↓ Dépôts'],['retrait','↑ Retraits'],['trfEnv','→ Trf. envoyés'],['trfRec','← Trf. reçus'],['solde','💰 Solde']];
+  var tBtns=types.map(function(t){var on=t[0]===_agStatType;var col=_typeColor(t[0]);return '<button onclick="setAgStatType(\''+t[0]+'\')" style="padding:7px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;'+(on?'background:'+col+';color:#fff;border:1px solid '+col:'background:#fff;color:#6b7280;border:1px solid #e5e7eb')+'">'+t[1]+'</button>';}).join('');
+  // Légende agents
+  var legend=agents.slice(0,10).map(function(a,i){return '<div style="display:flex;align-items:center;gap:5px;white-space:nowrap"><div style="width:10px;height:10px;border-radius:3px;background:'+_AG_COLORS[i%_AG_COLORS.length]+';flex-shrink:0"></div><div style="font-size:11px;color:#374151;overflow:hidden;text-overflow:ellipsis;max-width:90px">'+(a.prenom||'')+'</div></div>';}).join('');
   el.innerHTML=''
     +'<div style="background:linear-gradient(135deg,var(--a2),#25D366);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
-      +'<select id="agstat-sel" onchange="setAgStatAgent(this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:none;font-size:13px;font-weight:700;font-family:inherit;background:#fff;margin-bottom:10px">'+selOpts+'</select>'
+      +'<div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:8px">Comparaison agents · '+agents.length+' agent(s)</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+pBtns+'</div>'
     +'</div>'
-    +'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch">'+tBtns+'</div>'
+    +'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px">'+tBtns+'</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+legend+'</div>'
     +'<div id="agstat-content"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>';
-
-  _chargerAgStatData();
+  _chargerAgStatData(agents);
 }
 
-function setAgStatAgent(id){_agStatId=id;_chargerAgStatData();}
-function setAgStatPeriod(p){_agStatPeriod=p;_renderAgentsStatsUI(document.getElementById('rn-agent-content'),getAgents());}
-function setAgStatType(t){_agStatType=t;_renderAgentStatChart();}
+function _typeColor(t){
+  if(t==='depot')return '#22c55e';
+  if(t==='retrait')return '#f97316';
+  if(t==='trfEnv')return '#3b82f6';
+  if(t==='trfRec')return '#60a5fa';
+  return '#25D366';
+}
 
-async function _chargerAgStatData(){
-  if(!_agStatId)return;
-  var cacheKey=_agStatId+'_'+_agStatPeriod;
-  if(_agStatCache[cacheKey]){_renderAgentStatChart();return;}
-  document.getElementById('agstat-content').innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+function setAgStatPeriod(p){_agStatPeriod=p;_agStatCache={};renderAgentsStats();}
+function setAgStatType(t){_agStatType=t;_renderAgStatChart(getAgents());}
+
+async function _chargerAgStatData(agents){
+  var cacheKey=_agStatPeriod;
+  if(_agStatCache[cacheKey]){_renderAgStatChart(agents);return;}
+  var el=document.getElementById('agstat-content');
+  if(el)el.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
   try{
     var now=new Date();
     function debutPeriod(p){
@@ -2455,118 +2452,153 @@ async function _chargerAgStatData(){
     var d2=null;
     if(_agStatPeriod==='yesterday'){var y=new Date(now);y.setDate(y.getDate()-1);y.setHours(23,59,59,999);d2=y;}
 
-    var results=await Promise.all([
-      get('/transactions?limit=2000&type=depot&userId='+_agStatId),
-      get('/transactions?limit=2000&type=retrait&userId='+_agStatId),
-      get('/transactions?limit=1000&type=transfert&userId='+_agStatId),
-    ]);
-    // On récupère aussi le solde via network-stats
-    var nsRes=await get('/users/'+_agStatId+'/network-stats');
-    var solde=nsRes.data.isOwner?nsRes.data.solde:null;
-
-    function filterTx(list){
-      return list.filter(function(t){
-        var d=new Date(t.dateCreation||t.date_creation||0);
-        return d>=d1&&(!d2||d<=d2);
-      });
-    }
-    var txDep=results[0].data||[];
-    var txRet=results[1].data||[];
-    var txTrf=results[2].data||[];
-
-    // Filtrer par période
-    var depP=filterTx(txDep),retP=filterTx(txRet);
-    var trfAll=filterTx(txTrf);
-
     function getLabel(date){
-      var d=new Date(date);
-      var p=_agStatPeriod;
+      var d=new Date(date);var p=_agStatPeriod;
       if(p==='day'||p==='yesterday')return d.getHours()+'h';
-      if(p==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];return j[d.getDay()];}
-      if(p==='year'){var m=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];return m[d.getMonth()];}
+      if(p==='week'){return['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()];}
+      if(p==='year')return['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'][d.getMonth()];
       return d.getDate()+'';
     }
-
-    function buildCrb(items){
-      var map={};
-      items.forEach(function(t){var k=getLabel(t.dateCreation||t.date_creation||0);if(!map[k])map[k]={label:k,val:0};map[k].val+=Number(t.montant||0);});
-      var ordered=[];
+    function getAllLabels(){
       var p=_agStatPeriod;
-      if(p==='day'||p==='yesterday'){for(var h=0;h<24;h++)ordered.push(map[h+'h']||{label:h+'h',val:0});}
-      else if(p==='week'){['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].forEach(function(j){ordered.push(map[j]||{label:j,val:0});});}
-      else if(p==='year'){['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'].forEach(function(m){ordered.push(map[m]||{label:m,val:0});});}
-      else{var n=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();for(var i=1;i<=n;i++)ordered.push(map[String(i)]||{label:String(i),val:0});}
-      return ordered;
+      if(p==='day'||p==='yesterday'){var r=[];for(var h=0;h<24;h++)r.push(h+'h');return r;}
+      if(p==='week')return['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+      if(p==='year')return['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+      var n=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();var r=[];for(var i=1;i<=n;i++)r.push(String(i));return r;
     }
 
-    function sumTx(list){return list.reduce(function(s,t){return s+Number(t.montant||0);},0);}
+    var agentsData={};
+    await Promise.all(agents.slice(0,10).map(async function(a,idx){
+      try{
+        var results=await Promise.all([
+          get('/transactions?limit=2000&type=depot&userId='+a.id),
+          get('/transactions?limit=2000&type=retrait&userId='+a.id),
+          get('/transactions?limit=1000&type=transfert&userId='+a.id),
+        ]);
+        var nsRes=await get('/users/'+a.id+'/network-stats');
+        var solde=nsRes.data.isOwner?nsRes.data.solde:null;
 
-    // Différencier trf envoyés/reçus : on ne peut pas filtrer par compteSource sans l'id du compte
-    // On le distingue via le signe : les txns sont du point de vue de l'API globale
-    // On utilisera le champ opérateurId ou compteSourceId selon ce que retourne l'API
-    var trfEnv=trfAll.filter(function(t){return String(t.operateurId||t.operateur_id||t.compteSourceId||t.compte_source_id||'')===_agStatId;});
-    var trfRec=trfAll.filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===_agStatId;});
-    // Fallback: si on n'a pas ces champs on les split par moitié (indicatif)
-    if(!trfEnv.length&&!trfRec.length){trfEnv=trfAll;}
+        function filterTx(list){return list.filter(function(t){var d=new Date(t.dateCreation||t.date_creation||0);return d>=d1&&(!d2||d<=d2);});}
+        function buildCrb(items){
+          var map={};
+          items.forEach(function(t){var k=getLabel(t.dateCreation||t.date_creation||0);if(!map[k])map[k]=0;map[k]+=Number(t.montant||0);});
+          return getAllLabels().map(function(l){return{label:l,val:map[l]||0};});
+        }
+        function sumTx(list){return list.reduce(function(s,t){return s+Number(t.montant||0);},0);}
 
-    _agStatCache[cacheKey]={
-      dep:{list:depP,vol:sumTx(depP),courbe:buildCrb(depP)},
-      ret:{list:retP,vol:sumTx(retP),courbe:buildCrb(retP)},
-      trfEnv:{list:trfEnv,vol:sumTx(trfEnv),courbe:buildCrb(trfEnv)},
-      trfRec:{list:trfRec,vol:sumTx(trfRec),courbe:buildCrb(trfRec)},
-      solde:solde
-    };
-    _renderAgentStatChart();
-  }catch(e){
-    var ce=document.getElementById('agstat-content');
-    if(ce)ce.innerHTML='<div class="info info-r">'+e.message+'</div>';
-  }
+        var depP=filterTx(results[0].data||[]);
+        var retP=filterTx(results[1].data||[]);
+        var trfAll=filterTx(results[2].data||[]);
+        var trfEnv=trfAll.filter(function(t){return String(t.compteSourceId||t.compte_source_id||t.operateurId||'')===a.id;});
+        var trfRec=trfAll.filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===a.id;});
+        if(!trfEnv.length&&!trfRec.length)trfEnv=trfAll;
+
+        agentsData[a.id]={
+          color:_AG_COLORS[idx%_AG_COLORS.length],
+          prenom:a.prenom,nom:a.nom,
+          dep:{vol:sumTx(depP),nb:depP.length,courbe:buildCrb(depP)},
+          ret:{vol:sumTx(retP),nb:retP.length,courbe:buildCrb(retP)},
+          trfEnv:{vol:sumTx(trfEnv),nb:trfEnv.length,courbe:buildCrb(trfEnv)},
+          trfRec:{vol:sumTx(trfRec),nb:trfRec.length,courbe:buildCrb(trfRec)},
+          solde:solde,labels:getAllLabels()
+        };
+      }catch(e){agentsData[a.id]={color:_AG_COLORS[idx%_AG_COLORS.length],prenom:a.prenom,nom:a.nom,dep:{vol:0,nb:0,courbe:[]},ret:{vol:0,nb:0,courbe:[]},trfEnv:{vol:0,nb:0,courbe:[]},trfRec:{vol:0,nb:0,courbe:[]},solde:null,labels:[]};}
+    }));
+
+    _agStatCache[cacheKey]=agentsData;
+    _renderAgStatChart(agents);
+  }catch(e){if(document.getElementById('agstat-content'))document.getElementById('agstat-content').innerHTML='<div class="info info-r">'+e.message+'</div>';}
 }
 
-function _renderAgentStatChart(){
-  var cacheKey=_agStatId+'_'+_agStatPeriod;
-  var d=_agStatCache[cacheKey];
+function _renderAgStatChart(agents){
+  var cacheKey=_agStatPeriod;
+  var agentsData=_agStatCache[cacheKey];
   var el=document.getElementById('agstat-content');
-  if(!d||!el)return;
-  var h='';
-  if(_agStatType==='depot'){
-    h+='<div style="background:linear-gradient(135deg,#15803d,#22c55e);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">DÉPÔTS TRAITÉS</div>'
-      +'<div style="font-size:30px;font-weight:900">'+F(d.dep.vol)+'</div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.dep.list.length+' opérations</div></div>';
-    h+=drawCourbe(d.dep.courbe,'val','#22c55e','Dépôts');
-  } else if(_agStatType==='retrait'){
-    h+='<div style="background:linear-gradient(135deg,#c2410c,#f97316);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">RETRAITS TRAITÉS</div>'
-      +'<div style="font-size:30px;font-weight:900">'+F(d.ret.vol)+'</div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.ret.list.length+' opérations</div></div>';
-    h+=drawCourbe(d.ret.courbe,'val','#f97316','Retraits');
-  } else if(_agStatType==='trfEnv'){
-    h+='<div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">TRANSFERTS ENVOYÉS</div>'
-      +'<div style="font-size:30px;font-weight:900">'+F(d.trfEnv.vol)+'</div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.trfEnv.list.length+' transferts</div></div>';
-    h+=drawCourbe(d.trfEnv.courbe,'val','#3b82f6','Trf. envoyés');
-  } else if(_agStatType==='trfRec'){
-    h+='<div style="background:linear-gradient(135deg,#0369a1,#60a5fa);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
-      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">TRANSFERTS REÇUS</div>'
-      +'<div style="font-size:30px;font-weight:900">'+F(d.trfRec.vol)+'</div>'
-      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.trfRec.list.length+' transferts</div></div>';
-    h+=drawCourbe(d.trfRec.courbe,'val','#60a5fa','Trf. reçus');
-  } else if(_agStatType==='solde'){
-    var s=d.solde;
-    if(s!==null){
-      h+='<div style="background:linear-gradient(135deg,var(--a2),#25D366);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
-        +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">SOLDE ACTUEL</div>'
-        +'<div style="font-size:30px;font-weight:900">'+F(s)+'</div>'
-        +'<div style="font-size:11px;opacity:.7;margin-top:6px">'+(s>=1500000?'✅ Liquidité suffisante (≥ 1 500 000)':'⚠️ Liquidité faible (< 1 500 000)')+'</div>'
+  if(!agentsData||!el)return;
+
+  var t=_agStatType;
+  var color=_typeColor(t);
+
+  // Cas Solde : classement horizontal
+  if(t==='solde'){
+    var items=agents.slice(0,10).map(function(a,i){
+      var d=agentsData[a.id];if(!d)return null;
+      return{prenom:a.prenom,nom:a.nom,color:d.color,solde:d.solde};
+    }).filter(Boolean).sort(function(a,b){return (b.solde||0)-(a.solde||0);});
+    var maxS=Math.max.apply(null,items.map(function(x){return x.solde||0;}));
+    var h='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:12px">Solde par agent</div>';
+    items.forEach(function(a){
+      var pct=maxS>0?Math.round(((a.solde||0)/maxS)*100):0;
+      h+='<div style="margin-bottom:10px">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+          +'<div style="font-size:11px;font-weight:700">'+((a.prenom||'')+' '+(a.nom||'')).trim()+'</div>'
+          +'<div style="font-size:11px;font-weight:700;color:'+a.color+'">'+((a.solde!==null)?F(a.solde):'N/D')+'</div>'
+        +'</div>'
+        +'<div style="background:#f3f4f6;border-radius:99px;height:8px"><div style="background:'+a.color+';height:8px;border-radius:99px;width:'+pct+'%"></div></div>'
       +'</div>';
-    } else {
-      h+='<div style="background:rgba(239,68,68,.08);border:1px solid #fecaca;border-radius:16px;padding:14px 16px;margin-bottom:14px;color:#dc2626;font-size:13px">⚠️ Solde visible uniquement pour vos agents directs (propriétaires)</div>';
-    }
+    });
+    h+='</div>';
+    el.innerHTML=h;
+    return;
   }
-  el.innerHTML=h||'<div style="text-align:center;padding:24px;color:var(--m)">Aucune donnée</div>';
+
+  // Cas séries temporelles : graphe groupé multi-agents
+  var keyMap={depot:'dep',retrait:'ret',trfEnv:'trfEnv',trfRec:'trfRec'};
+  var dk=keyMap[t]||'dep';
+  var agList=agents.slice(0,10).map(function(a,i){
+    var d=agentsData[a.id];
+    return d?{prenom:a.prenom,nom:a.nom,color:d.color,courbe:d[dk].courbe,vol:d[dk].vol,nb:d[dk].nb}:null;
+  }).filter(Boolean);
+  if(!agList.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--m)">Aucune donnée</div>';return;}
+
+  var labels=agList[0].courbe.map(function(c){return c.label;});
+  var maxVal=0;
+  agList.forEach(function(a){a.courbe.forEach(function(c){if(c.val>maxVal)maxVal=c.val;});});
+
+  // Carte résumé totaux
+  var h='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin-bottom:12px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<div style="font-size:12px;font-weight:700;color:#374151">Totaux sur la période</div>'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px">';
+  agList.forEach(function(a){
+    h+='<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="width:10px;height:10px;border-radius:2px;background:'+a.color+';flex-shrink:0"></div>'
+      +'<div style="font-size:12px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+((a.prenom||'')+' '+(a.nom||'')).trim()+'</div>'
+      +'<div style="font-size:12px;font-weight:800;color:'+a.color+'">'+F(a.vol)+'<span style="font-size:9px;color:#9ca3af;font-weight:400;margin-left:3px">'+a.nb+' ops</span></div>'
+    +'</div>';
+  });
+  h+='</div></div>';
+
+  // Graphe groupé multi-agents
+  h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin-bottom:14px">'
+    +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px">Évolution comparée</div>'
+    +'<div style="display:flex;align-items:flex-end;gap:4px;height:100px;overflow-x:auto">';
+
+  labels.forEach(function(lbl){
+    var barGroup='<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:'+(Math.max(24,Math.floor(320/labels.length)))+'px">'
+      +'<div style="width:100%;display:flex;gap:1px;align-items:flex-end;height:84px">';
+    agList.forEach(function(a){
+      var pt=a.courbe.find(function(c){return c.label===lbl;})||{val:0};
+      var pct=maxVal>0?Math.max(2,Math.round((pt.val/maxVal)*80)):2;
+      barGroup+='<div style="flex:1;background:'+a.color+';border-radius:2px 2px 0 0;height:'+(pt.val>0?pct:2)+'px;opacity:'+(pt.val>0?.9:.15)+'"></div>';
+    });
+    barGroup+='</div><div style="font-size:7px;color:#9ca3af;text-align:center;white-space:nowrap;overflow:hidden;max-width:100%;margin-top:2px">'+lbl+'</div></div>';
+    h+=barGroup;
+  });
+
+  h+='</div></div>';
+  el.innerHTML=h;
 }
+
+async function renderAgentsStats(){
+  var el=document.getElementById('rn-agent-content');
+  var agents=getAgents();
+  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent dans votre réseau</div>';return;}
+  _drawAgStatShell(el,agents);
+}
+
 var _rnTab='agent';      // 'agent' | 'business'
 var _rnSub='detail';     // 'detail' | 'solde' | 'inscrits'
 var _rnData=null;        // cache de la liste filleuls enrichie
