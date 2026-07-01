@@ -520,13 +520,45 @@ function setTab(t){
 
 <!-- RÉSEAU -->
 <div class="scr" id="s-reseau">
-  <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:52px 22px 16px">
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Mon r&#233;seau 🌐</div>
-    <div style="color:rgba(255,255,255,.8);font-size:13px">Agents · Business · Clients rattach&#233;s</div>
+  <!-- Header fixe vert avec compteur clients et sous-onglets -->
+  <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:52px 16px 0">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Mon réseau 🌐</div>
+        <div style="color:rgba(255,255,255,.8);font-size:13px">Agents · Business · Clients</div>
+      </div>
+      <div style="background:rgba(0,0,0,.18);border-radius:14px;padding:8px 16px;text-align:center">
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em">Total clients</div>
+        <div style="font-size:22px;font-weight:900;color:#fff" id="rn-total-clients">—</div>
+      </div>
+    </div>
+    <!-- Onglets principaux : Agent | Business -->
+    <div style="display:flex;gap:0;background:rgba(0,0,0,.15);border-radius:12px 12px 0 0;overflow:hidden">
+      <button id="rn-tab-agent" onclick="setReseauTab('agent')" style="flex:1;padding:11px 0;font-size:12px;font-weight:800;color:#fff;background:rgba(255,255,255,.25);border:none;cursor:pointer;font-family:inherit">Agents</button>
+      <button id="rn-tab-business" onclick="setReseauTab('business')" style="flex:1;padding:11px 0;font-size:12px;font-weight:800;color:rgba(255,255,255,.65);background:transparent;border:none;cursor:pointer;font-family:inherit">Business</button>
+    </div>
   </div>
-  <div class="sc" style="margin-top:14px" id="reseau-tab-content">
-    <div style="text-align:center;padding:32px"><div class="spin"></div></div>
+
+  <!-- Zone Agent avec sous-onglets -->
+  <div id="rn-zone-agent">
+    <div style="display:flex;gap:6px;padding:12px 16px 6px;overflow-x:auto">
+      <button id="rn-sub-detail" onclick="setReseauSub('detail')" style="padding:7px 14px;font-size:11px;font-weight:700;border:1px solid #25D366;background:#25D366;color:#fff;border-radius:99px;cursor:pointer;font-family:inherit;white-space:nowrap">Vue détail</button>
+      <button id="rn-sub-solde" onclick="setReseauSub('solde')" style="padding:7px 14px;font-size:11px;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#6b7280;border-radius:99px;cursor:pointer;font-family:inherit;white-space:nowrap">Solde agents</button>
+      <button id="rn-sub-inscrits" onclick="setReseauSub('inscrits')" style="padding:7px 14px;font-size:11px;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#6b7280;border-radius:99px;cursor:pointer;font-family:inherit;white-space:nowrap">Inscrits</button>
+      <button id="rn-sub-statsag" onclick="setReseauSub('statsag')" style="padding:7px 14px;font-size:11px;font-weight:700;border:1px solid #e5e7eb;background:#fff;color:#6b7280;border-radius:99px;cursor:pointer;font-family:inherit;white-space:nowrap">Statistiques</button>
+    </div>
+    <div id="rn-agent-content" style="padding:0 16px 100px">
+      <div style="text-align:center;padding:32px"><div class="spin"></div></div>
+    </div>
   </div>
+
+  <!-- Zone Business -->
+  <div id="rn-zone-business" style="display:none">
+    <div id="rn-business-content" style="padding:16px 16px 100px">
+      <div style="text-align:center;padding:32px"><div class="spin"></div></div>
+    </div>
+  </div>
+
   <nav class="bnav">
     <button class="nb" id="nb-home" onclick="setTab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Accueil</button>
     <button class="nb" id="nb-flux" onclick="setTab('flux')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Flux</button>
@@ -2270,7 +2302,8 @@ async function voirStatsReseau(userId){
         h+='<div class="srow"><span style="color:var(--m);font-size:13px">Solde actuel</span><span style="font-weight:800;font-size:14px">'+F(d.solde)+'</span></div>';
         h+='<div class="srow"><span style="color:var(--m);font-size:13px">Dépôts traités</span><span style="font-weight:700;font-size:13px">'+(d.nbDepots||0)+' · '+F(d.volDepots)+'</span></div>';
         h+='<div class="srow"><span style="color:var(--m);font-size:13px">Retraits traités</span><span style="font-weight:700;font-size:13px">'+(d.nbRetraits||0)+' · '+F(d.volRetraits)+'</span></div>';
-        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Transferts</span><span style="font-weight:700;font-size:13px">'+(d.nbTransferts||0)+' · '+F(d.volTransferts)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Transferts envoyés</span><span style="font-weight:700;font-size:13px">'+(d.nbTrfEnv||d.nbTransferts||0)+' · '+F(d.volTrfEnv||d.volTransferts||0)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Transferts reçus</span><span style="font-weight:700;font-size:13px">'+(d.nbTrfRec||0)+' · '+F(d.volTrfRec||0)+'</span></div>';
         h+='<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Clients inscrits</span><span style="font-weight:700;font-size:13px">'+(d.nbInscriptions||0)+'</span></div>';
       } else {
         // Agent rattaché mais n'appartenant pas à ce mini-master : vue limitée
@@ -2359,7 +2392,320 @@ async function logout(force){
   S('s-login');
 }
 
-// ══ QR CODE ══════════════════════════════════════════════════════
+// ══ Statistiques agents ══
+var _agStatPeriod='month';
+var _agStatType='depot';
+var _agStatId=null;
+var _agStatCache={};
+
+async function renderAgentsStats(){
+  var el=document.getElementById('rn-agent-content');
+  var agents=getAgents();
+  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent dans votre réseau</div>';return;}
+  if(!_agStatId)_agStatId=agents[0].id;
+  _renderAgentsStatsUI(el,agents);
+}
+
+function _renderAgentsStatsUI(el,agents){
+  // Sélecteur d'agent
+  var selOpts=agents.map(function(a){return '<option value="'+a.id+'"'+(a.id===_agStatId?' selected':'')+'>'+((a.prenom||'')+' '+(a.nom||'')).trim()+'</option>';}).join('');
+  // Boutons période
+  var periods=[['day','Auj.'],['yesterday','Hier'],['week','Semaine'],['month','Mois'],['year','Année']];
+  var pBtns=periods.map(function(p){
+    var on=p[0]===_agStatPeriod;
+    return '<button onclick="setAgStatPeriod(\''+p[0]+'\')" style="padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;'+(on?'background:#25D366;color:#fff;border:1px solid #25D366':'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)')+'">'+p[1]+'</button>';
+  }).join('');
+  // Boutons type
+  var types=[['depot','↓ Dépôts','#22c55e'],['retrait','↑ Retraits','#f97316'],['trfEnv','→ Trf. envoyés','#3b82f6'],['trfRec','← Trf. reçus','#60a5fa'],['solde','💰 Solde','#25D366']];
+  var tBtns=types.map(function(t){
+    var on=t[0]===_agStatType;
+    return '<button onclick="setAgStatType(\''+t[0]+'\')" style="padding:7px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;'+(on?'background:'+t[2]+';color:#fff;border:1px solid '+t[2]:'background:#fff;color:#6b7280;border:1px solid #e5e7eb')+'">'+t[1]+'</button>';
+  }).join('');
+
+  el.innerHTML=''
+    +'<div style="background:linear-gradient(135deg,var(--a2),#25D366);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
+      +'<select id="agstat-sel" onchange="setAgStatAgent(this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:none;font-size:13px;font-weight:700;font-family:inherit;background:#fff;margin-bottom:10px">'+selOpts+'</select>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+pBtns+'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch">'+tBtns+'</div>'
+    +'<div id="agstat-content"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>';
+
+  _chargerAgStatData();
+}
+
+function setAgStatAgent(id){_agStatId=id;_chargerAgStatData();}
+function setAgStatPeriod(p){_agStatPeriod=p;_renderAgentsStatsUI(document.getElementById('rn-agent-content'),getAgents());}
+function setAgStatType(t){_agStatType=t;_renderAgentStatChart();}
+
+async function _chargerAgStatData(){
+  if(!_agStatId)return;
+  var cacheKey=_agStatId+'_'+_agStatPeriod;
+  if(_agStatCache[cacheKey]){_renderAgentStatChart();return;}
+  document.getElementById('agstat-content').innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+  try{
+    var now=new Date();
+    function debutPeriod(p){
+      if(p==='day'){var d=new Date(now);d.setHours(0,0,0,0);return d;}
+      if(p==='yesterday'){var d=new Date(now);d.setDate(d.getDate()-1);d.setHours(0,0,0,0);return d;}
+      if(p==='week'){var d=new Date(now);var j=d.getDay();d.setDate(d.getDate()+(j===0?-6:1-j));d.setHours(0,0,0,0);return d;}
+      if(p==='year')return new Date(now.getFullYear(),0,1);
+      return new Date(now.getFullYear(),now.getMonth(),1);
+    }
+    var d1=debutPeriod(_agStatPeriod);
+    var d2=null;
+    if(_agStatPeriod==='yesterday'){var y=new Date(now);y.setDate(y.getDate()-1);y.setHours(23,59,59,999);d2=y;}
+
+    var results=await Promise.all([
+      get('/transactions?limit=2000&type=depot&userId='+_agStatId),
+      get('/transactions?limit=2000&type=retrait&userId='+_agStatId),
+      get('/transactions?limit=1000&type=transfert&userId='+_agStatId),
+    ]);
+    // On récupère aussi le solde via network-stats
+    var nsRes=await get('/users/'+_agStatId+'/network-stats');
+    var solde=nsRes.data.isOwner?nsRes.data.solde:null;
+
+    function filterTx(list){
+      return list.filter(function(t){
+        var d=new Date(t.dateCreation||t.date_creation||0);
+        return d>=d1&&(!d2||d<=d2);
+      });
+    }
+    var txDep=results[0].data||[];
+    var txRet=results[1].data||[];
+    var txTrf=results[2].data||[];
+
+    // Filtrer par période
+    var depP=filterTx(txDep),retP=filterTx(txRet);
+    var trfAll=filterTx(txTrf);
+
+    function getLabel(date){
+      var d=new Date(date);
+      var p=_agStatPeriod;
+      if(p==='day'||p==='yesterday')return d.getHours()+'h';
+      if(p==='week'){var j=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];return j[d.getDay()];}
+      if(p==='year'){var m=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];return m[d.getMonth()];}
+      return d.getDate()+'';
+    }
+
+    function buildCrb(items){
+      var map={};
+      items.forEach(function(t){var k=getLabel(t.dateCreation||t.date_creation||0);if(!map[k])map[k]={label:k,val:0};map[k].val+=Number(t.montant||0);});
+      var ordered=[];
+      var p=_agStatPeriod;
+      if(p==='day'||p==='yesterday'){for(var h=0;h<24;h++)ordered.push(map[h+'h']||{label:h+'h',val:0});}
+      else if(p==='week'){['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'].forEach(function(j){ordered.push(map[j]||{label:j,val:0});});}
+      else if(p==='year'){['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'].forEach(function(m){ordered.push(map[m]||{label:m,val:0});});}
+      else{var n=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();for(var i=1;i<=n;i++)ordered.push(map[String(i)]||{label:String(i),val:0});}
+      return ordered;
+    }
+
+    function sumTx(list){return list.reduce(function(s,t){return s+Number(t.montant||0);},0);}
+
+    // Différencier trf envoyés/reçus : on ne peut pas filtrer par compteSource sans l'id du compte
+    // On le distingue via le signe : les txns sont du point de vue de l'API globale
+    // On utilisera le champ opérateurId ou compteSourceId selon ce que retourne l'API
+    var trfEnv=trfAll.filter(function(t){return String(t.operateurId||t.operateur_id||t.compteSourceId||t.compte_source_id||'')===_agStatId;});
+    var trfRec=trfAll.filter(function(t){return String(t.compteDestId||t.compte_dest_id||'')===_agStatId;});
+    // Fallback: si on n'a pas ces champs on les split par moitié (indicatif)
+    if(!trfEnv.length&&!trfRec.length){trfEnv=trfAll;}
+
+    _agStatCache[cacheKey]={
+      dep:{list:depP,vol:sumTx(depP),courbe:buildCrb(depP)},
+      ret:{list:retP,vol:sumTx(retP),courbe:buildCrb(retP)},
+      trfEnv:{list:trfEnv,vol:sumTx(trfEnv),courbe:buildCrb(trfEnv)},
+      trfRec:{list:trfRec,vol:sumTx(trfRec),courbe:buildCrb(trfRec)},
+      solde:solde
+    };
+    _renderAgentStatChart();
+  }catch(e){
+    var ce=document.getElementById('agstat-content');
+    if(ce)ce.innerHTML='<div class="info info-r">'+e.message+'</div>';
+  }
+}
+
+function _renderAgentStatChart(){
+  var cacheKey=_agStatId+'_'+_agStatPeriod;
+  var d=_agStatCache[cacheKey];
+  var el=document.getElementById('agstat-content');
+  if(!d||!el)return;
+  var h='';
+  if(_agStatType==='depot'){
+    h+='<div style="background:linear-gradient(135deg,#15803d,#22c55e);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">DÉPÔTS TRAITÉS</div>'
+      +'<div style="font-size:30px;font-weight:900">'+F(d.dep.vol)+'</div>'
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.dep.list.length+' opérations</div></div>';
+    h+=drawCourbe(d.dep.courbe,'val','#22c55e','Dépôts');
+  } else if(_agStatType==='retrait'){
+    h+='<div style="background:linear-gradient(135deg,#c2410c,#f97316);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">RETRAITS TRAITÉS</div>'
+      +'<div style="font-size:30px;font-weight:900">'+F(d.ret.vol)+'</div>'
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.ret.list.length+' opérations</div></div>';
+    h+=drawCourbe(d.ret.courbe,'val','#f97316','Retraits');
+  } else if(_agStatType==='trfEnv'){
+    h+='<div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">TRANSFERTS ENVOYÉS</div>'
+      +'<div style="font-size:30px;font-weight:900">'+F(d.trfEnv.vol)+'</div>'
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.trfEnv.list.length+' transferts</div></div>';
+    h+=drawCourbe(d.trfEnv.courbe,'val','#3b82f6','Trf. envoyés');
+  } else if(_agStatType==='trfRec'){
+    h+='<div style="background:linear-gradient(135deg,#0369a1,#60a5fa);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+      +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">TRANSFERTS REÇUS</div>'
+      +'<div style="font-size:30px;font-weight:900">'+F(d.trfRec.vol)+'</div>'
+      +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+d.trfRec.list.length+' transferts</div></div>';
+    h+=drawCourbe(d.trfRec.courbe,'val','#60a5fa','Trf. reçus');
+  } else if(_agStatType==='solde'){
+    var s=d.solde;
+    if(s!==null){
+      h+='<div style="background:linear-gradient(135deg,var(--a2),#25D366);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
+        +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">SOLDE ACTUEL</div>'
+        +'<div style="font-size:30px;font-weight:900">'+F(s)+'</div>'
+        +'<div style="font-size:11px;opacity:.7;margin-top:6px">'+(s>=1500000?'✅ Liquidité suffisante (≥ 1 500 000)':'⚠️ Liquidité faible (< 1 500 000)')+'</div>'
+      +'</div>';
+    } else {
+      h+='<div style="background:rgba(239,68,68,.08);border:1px solid #fecaca;border-radius:16px;padding:14px 16px;margin-bottom:14px;color:#dc2626;font-size:13px">⚠️ Solde visible uniquement pour vos agents directs (propriétaires)</div>';
+    }
+  }
+  el.innerHTML=h||'<div style="text-align:center;padding:24px;color:var(--m)">Aucune donnée</div>';
+}
+var _rnTab='agent';      // 'agent' | 'business'
+var _rnSub='detail';     // 'detail' | 'solde' | 'inscrits'
+var _rnData=null;        // cache de la liste filleuls enrichie
+
+async function chargerReseauTab(){
+  _rnData=null;
+  // Compteur clients (hors onglet)
+  try{
+    var rc=await get('/users/'+(G.user&&G.user.id)+'/referrals');
+    var all=(rc.data&&rc.data.filleuls)||[];
+    all=await enrichirRoles(all);
+    _rnData=all;
+    var nbClients=all.filter(function(f){return f.role==='client'||!f.role;}).length;
+    var el=document.getElementById('rn-total-clients');if(el)el.textContent=nbClients;
+  }catch(e){var el=document.getElementById('rn-total-clients');if(el)el.textContent='0';}
+  setReseauTab('agent');
+}
+
+function setReseauTab(tab){
+  _rnTab=tab;
+  document.getElementById('rn-zone-agent').style.display=tab==='agent'?'':'none';
+  document.getElementById('rn-zone-business').style.display=tab==='business'?'':'none';
+  var tA=document.getElementById('rn-tab-agent');
+  var tB=document.getElementById('rn-tab-business');
+  if(tA){tA.style.background=tab==='agent'?'rgba(255,255,255,.25)':'transparent';tA.style.color=tab==='agent'?'#fff':'rgba(255,255,255,.65)';}
+  if(tB){tB.style.background=tab==='business'?'rgba(255,255,255,.25)':'transparent';tB.style.color=tab==='business'?'#fff':'rgba(255,255,255,.65)';}
+  if(tab==='agent') setReseauSub(_rnSub);
+  else renderBusiness();
+}
+
+function setReseauSub(sub){
+  _rnSub=sub;
+  ['detail','solde','inscrits','statsag'].forEach(function(s){
+    var b=document.getElementById('rn-sub-'+s);if(!b)return;
+    var on=s===sub;
+    b.style.background=on?'#25D366':'#fff';
+    b.style.color=on?'#fff':'#6b7280';
+    b.style.borderColor=on?'#25D366':'#e5e7eb';
+  });
+  if(sub==='detail') renderAgentsDetail();
+  else if(sub==='solde') renderAgentsSolde();
+  else if(sub==='inscrits') renderAgentsInscrits();
+  else renderAgentsStats();
+}
+
+function getAgents(){return (_rnData||[]).filter(function(f){return f.role==='agent';});}
+function getBusinessList(){return (_rnData||[]).filter(function(f){return f.role==='business';});}
+
+function renderAgentsDetail(){
+  var el=document.getElementById('rn-agent-content');
+  var agents=getAgents();
+  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent pour l\'instant</div>';return;}
+  var h='<div style="font-size:11px;font-weight:800;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px">'+agents.length+' agent(s)</div>';
+  agents.forEach(function(f){
+    h+='<div class="tx" style="background:#fff;border:1px solid var(--b);cursor:pointer;margin-bottom:8px" onclick="voirStatsReseau(\''+f.id+'\')"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:rgba(0,192,0,.12);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:15px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+(f.telephone||'')+'</div></div><svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div></div>';
+  });
+  el.innerHTML=h;
+}
+
+async function renderAgentsSolde(){
+  var el=document.getElementById('rn-agent-content');
+  var agents=getAgents();
+  el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+  var soldes=[];
+  var totalSolde=0;
+  await Promise.all(agents.map(async function(f){
+    try{
+      var r=await get('/users/'+f.id+'/network-stats');
+      var s=r.data.isOwner?r.data.solde:0;
+      soldes.push({id:f.id,prenom:f.prenom,nom:f.nom,solde:s,isOwner:r.data.isOwner,soldeSuffisant:r.data.soldeSuffisant});
+      totalSolde+=s;
+    }catch(e){soldes.push({id:f.id,prenom:f.prenom,nom:f.nom,solde:null,isOwner:false});}
+  }));
+  soldes.sort(function(a,b){return (b.solde||0)-(a.solde||0);});
+  var h='<div style="background:linear-gradient(135deg,#25D366,#008000);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">'
+    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">💰 TOTAL SOLDE DES AGENTS</div>'
+    +'<div style="font-size:26px;font-weight:900">'+F(totalSolde)+'</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' agent(s)</div>'
+  +'</div>';
+  soldes.forEach(function(a){
+    var sAff=a.isOwner?(a.solde!=null?F(a.solde):'—'):(a.soldeSuffisant?'✅ Suffisant':'⚠️ Bas');
+    var col=a.isOwner?'#25D366':(a.soldeSuffisant?'#22c55e':'#ef4444');
+    h+='<div style="background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(0,192,0,.1);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:13px;font-weight:800">'+((a.prenom||'?')[0])+'</div><div style="font-size:13px;font-weight:700">'+(a.prenom||'')+' '+(a.nom||'')+'</div></div><div style="font-size:13px;font-weight:800;color:'+col+'">'+sAff+'</div></div>';
+  });
+  el.innerHTML=h;
+}
+
+async function renderAgentsInscrits(){
+  var el=document.getElementById('rn-agent-content');
+  var agents=getAgents();
+  el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+  var inscrits=[];
+  var totalInscrits=0;
+  await Promise.all(agents.map(async function(f){
+    try{
+      var r=await get('/users/'+f.id+'/network-stats');
+      var n=r.data.nbInscriptions||0;
+      inscrits.push({id:f.id,prenom:f.prenom,nom:f.nom,nb:n});
+      totalInscrits+=n;
+    }catch(e){inscrits.push({id:f.id,prenom:f.prenom,nom:f.nom,nb:0});}
+  }));
+  inscrits.sort(function(a,b){return b.nb-a.nb;});
+  var h='<div style="background:linear-gradient(135deg,#25D366,#008000);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">'
+    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">👥 TOTAL INSCRITS DES AGENTS</div>'
+    +'<div style="font-size:26px;font-weight:900">'+totalInscrits+'</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' agent(s)</div>'
+  +'</div>';
+  inscrits.forEach(function(a){
+    h+='<div style="background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(0,192,0,.1);display:flex;align-items:center;justify-content:center;color:#25D366;font-size:13px;font-weight:800">'+((a.prenom||'?')[0])+'</div><div style="font-size:13px;font-weight:700">'+(a.prenom||'')+' '+(a.nom||'')+'</div></div><div style="font-size:16px;font-weight:900;color:#25D366">'+a.nb+'<span style="font-size:9px;font-weight:700;color:#9ca3af;margin-left:3px">inscrits</span></div></div>';
+  });
+  el.innerHTML=h;
+}
+
+async function renderBusiness(){
+  var el=document.getElementById('rn-business-content');
+  var biz=getBusinessList();
+  el.innerHTML='<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
+  var list=[];
+  var totalInscrits=0;
+  await Promise.all(biz.map(async function(f){
+    try{
+      var r=await get('/users/'+f.id+'/network-stats');
+      var n=r.data.nbInscriptions||0;
+      list.push({id:f.id,prenom:f.prenom,nom:f.nom,nb:n});
+      totalInscrits+=n;
+    }catch(e){list.push({id:f.id,prenom:f.prenom,nom:f.nom,nb:0});}
+  }));
+  list.sort(function(a,b){return b.nb-a.nb;});
+  var h='<div style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">'
+    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">👥 TOTAL INSCRITS BUSINESS</div>'
+    +'<div style="font-size:26px;font-weight:900">'+totalInscrits+'</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+biz.length+' business</div>'
+  +'</div>';
+  if(!list.length){h+='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun business pour l\'instant</div>';}
+  else{list.forEach(function(b){
+    h+='<div style="background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:13px;font-weight:800">'+((b.prenom||'?')[0])+'</div><div><div style="font-size:13px;font-weight:700">'+(b.prenom||'')+' '+(b.nom||'')+'</div></div></div><div style="font-size:16px;font-weight:900;color:#3b82f6">'+b.nb+'<span style="font-size:9px;font-weight:700;color:#9ca3af;margin-left:3px">inscrits</span></div></div>';
+  });}
+  el.innerHTML=h;
+}
 var _qrCallback=null;
 var _qrGenInstances={};
 
