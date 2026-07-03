@@ -1657,47 +1657,30 @@ async function chargerGains(){
     var disponible=gainsParr.filter(function(c){return c.statut==='verse';}).reduce(function(s,c){return s+Number(c.montant||0);},0);
 
     var dAuj=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var dHier=new Date(dAuj); dHier.setDate(dHier.getDate()-1);
     var dSem=new Date(now);var _jourSem=dSem.getDay();dSem.setDate(dSem.getDate()+(_jourSem===0?-6:1-_jourSem));dSem.setHours(0,0,0,0);
     var dMois=new Date(now.getFullYear(),now.getMonth(),1);
     var dAn=new Date(now.getFullYear(),0,1);
 
-    function sumG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);}
-    function nbG(d1){return gainsParr.filter(function(c){return new Date(c.date_calcul||0)>=d1;}).length;}
+    function sumG(d1,d2){return gainsParr.filter(function(c){var d=new Date(c.date_calcul||0);return d>=d1&&(!d2||d<d2);}).reduce(function(s,c){return s+Number(c.montant||0);},0);}
+    function nbG(d1,d2){return gainsParr.filter(function(c){var d=new Date(c.date_calcul||0);return d>=d1&&(!d2||d<d2);}).length;}
 
-    var tAuj=sumG(dAuj),tSem=sumG(dSem),tMois=sumG(dMois),tAn=sumG(dAn);
-    var tTotal=gainsParr.reduce(function(s,c){var mo=Number(c.montant_original||0);var m=Number(c.montant||0);return s+(mo>0?mo:m);},0);
+    var tAuj=sumG(dAuj), tHier=sumG(dHier,dAuj), tSem=sumG(dSem), tMois=sumG(dMois), tAn=sumG(dAn);
+    var tTotal=gainsParr.reduce(function(s,c){return s+Number(c.montant||0);},0);
 
     var codeParrainage=(me.codeParrainage||'').replace(/\s+/g,'').replace(/-/g,'');
     var h='';
 
-    // ── Carte résumé périodes ──
+    // ── Carte résumé 6 périodes ──
     h+='<div style="background:linear-gradient(135deg,var(--a2),var(--a));border-radius:20px;padding:20px 22px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:11px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">MES GAINS — PARRAINAGE</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tAuj)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAuj)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tSem)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dSem)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tMois)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dMois)+' ops</div>'
-        +'</div>'
-        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px">'
-          +'<div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div>'
-          +'<div style="font-size:17px;font-weight:900">'+F(tAn)+'</div>'
-          +'<div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAn)+' ops</div>'
-        +'</div>'
-      +'</div>'
-      +'<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">'
-        +'<div style="font-size:10px;opacity:.8">Total depuis toujours</div>'
-        +'<div style="font-size:14px;font-weight:800">'+F(tTotal)+'</div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Aujourd&#39;hui</div><div style="font-size:17px;font-weight:900">'+F(tAuj)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAuj)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Hier</div><div style="font-size:17px;font-weight:900">'+F(tHier)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dHier,dAuj)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Semaine</div><div style="font-size:17px;font-weight:900">'+F(tSem)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dSem)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div><div style="font-size:17px;font-weight:900">'+F(tMois)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dMois)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann&#233;e</div><div style="font-size:17px;font-weight:900">'+F(tAn)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(dAn)+' ops</div></div>'
+        +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:10px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Depuis toujours</div><div style="font-size:17px;font-weight:900">'+F(tTotal)+'</div><div style="font-size:8px;opacity:.6;margin-top:1px">'+nbG(new Date(0))+' ops</div></div>'
       +'</div>'
     +'</div>';
 
