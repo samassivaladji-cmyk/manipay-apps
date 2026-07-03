@@ -672,7 +672,7 @@ function setTab(t){
     <span class="lbl">Numéro destinataire</span>
     <div style="display:flex;gap:8px;margin-bottom:18px;align-items:center">
       <input class="inp" id="trf-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="document.getElementById('trf-btn-valider').disabled=this.value.replace(/\D/g,'').length<8"/>
-      <button onclick="ouvrirScanner(function(tel){document.getElementById('trf-tel').value=tel;var r=get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');r.then(function(res){var arr=Array.isArray(res.data)?res.data:[res.data];if(arr[0])ouvrirScreenTransfert(arr[0]);});})" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;height:48px">
+      <button onclick="ouvrirScanner(function(tel){document.getElementById('trf-tel').value=tel;var r=get('/users/lookup-pro?telephone='+encodeURIComponent(tel));r.then(function(res){var arr=Array.isArray(res.data)?res.data:[res.data];if(arr[0])ouvrirScreenTransfert(arr[0]);});})" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;height:48px">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#25D366"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#25D366"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#25D366"/></svg>
       </button>
     </div>
@@ -898,7 +898,7 @@ async function validerSaisieOp(){
   if(!tel){err.textContent='Numéro requis';err.style.display='';return;}
   loading.style.display='';
   try{
-    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+    var r=await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
     var arr=Array.isArray(r.data)?r.data:[r.data];
     if(!arr.length||!arr[0]) throw new Error('Client introuvable');
     var u=arr[0];
@@ -939,7 +939,7 @@ async function identClient(op){
   if(!tel){T('Numéro requis',true);return;}
   document.getElementById(op+'-ok').disabled=true;
   try{
-    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+    var r=await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
     var arr=Array.isArray(r.data)?r.data:[r.data];
     if(!arr.length||!arr[0]){throw new Error('Client introuvable');}
     var u=arr[0];opClients[op]=u;
@@ -1152,24 +1152,24 @@ function nouveauSopTrf(){if(_sopTrfClient)ouvrirScreenTransfert(_sopTrfClient);e
 async function doTransfert(btn){
   if(btn){btn.disabled=true;btn.textContent='...';}
   var tel=document.getElementById('trf-tel').value.trim();
-  if(!tel){T('Numéro requis',true);if(btn){btn.disabled=false;btn.textContent='Transférer';}return;}
+  if(!tel){T('Numéro requis',true);if(btn){btn.disabled=false;btn.textContent='Continuer →';}return;}
   document.getElementById('trf-loading').style.display='';
   document.getElementById('trf-form-btns').style.display='none';
   try{
-    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-    var arr=Array.isArray(r.data)?r.data:[r.data];
-    if(!arr.length||!arr[0])throw new Error('Destinataire introuvable');
+    var r=await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
+    var dest=r.data;
+    if(!dest)throw new Error('Destinataire introuvable');
     document.getElementById('trf-loading').style.display='none';
-    ouvrirScreenTransfert(arr[0]);
+    ouvrirScreenTransfert(dest);
     rstTrf();
   }catch(e){
     document.getElementById('trf-loading').style.display='none';
     document.getElementById('trf-form-btns').style.display='';
-    if(btn){btn.disabled=false;btn.textContent='Transférer';}
+    if(btn){btn.disabled=false;btn.textContent='Continuer →';}
     document.getElementById('trf-err').textContent=e.message;document.getElementById('trf-err').style.display='';
   }
 }
-function rstTrf(){document.getElementById('trf-tel').value='';document.getElementById('trf-loading').style.display='none';document.getElementById('trf-success').style.display='none';document.getElementById('trf-err').style.display='none';document.getElementById('trf-form-btns').style.display='';var b=document.getElementById('trf-btn-valider');if(b){b.disabled=false;b.textContent='Transférer';}}
+function rstTrf(){document.getElementById('trf-tel').value='';document.getElementById('trf-loading').style.display='none';document.getElementById('trf-success').style.display='none';document.getElementById('trf-err').style.display='none';document.getElementById('trf-form-btns').style.display='';var b=document.getElementById('trf-btn-valider');if(b){b.disabled=false;b.textContent='Continuer →';}}
 
 // ══ LOGIN ════════════════════════════════════════════════════════
 function goPin(){G.pin='';document.getElementById('pin-sub').textContent=document.getElementById('lg-tel').value;document.getElementById('err-pin').style.display='none';rDots();S('s-pin');}
@@ -2912,7 +2912,7 @@ function afficherChoixOp(tel, parts){
   // Identifier le client puis afficher le choix
   (async function(){
     try{
-      var r = await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+      var r = await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
       var arr = Array.isArray(r.data)?r.data:[r.data];
       if(!arr.length||!arr[0]) throw new Error('Client introuvable');
       var u = arr[0];

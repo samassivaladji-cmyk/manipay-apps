@@ -663,7 +663,7 @@ function setTab(t){
     <span class="lbl">Numéro destinataire</span>
     <div style="display:flex;gap:8px;margin-bottom:18px;align-items:center">
       <input class="inp" id="trf-tel" type="tel" placeholder="+225 07 XX XX XX" style="flex:1" oninput="document.getElementById('trf-btn-valider').disabled=this.value.replace(/\D/g,'').length<8"/>
-      <button onclick="ouvrirScanner(function(tel){document.getElementById('trf-tel').value=tel;var r=get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');r.then(function(res){var arr=Array.isArray(res.data)?res.data:[res.data];if(arr[0])ouvrirScreenTransfert(arr[0]);});closeSh('wave-qr-popup');})" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;height:48px">
+      <button onclick="ouvrirScanner(function(tel){document.getElementById('trf-tel').value=tel;var r=get('/users/lookup-pro?telephone='+encodeURIComponent(tel));r.then(function(res){if(res.data)ouvrirScreenTransfert(res.data);});closeSh('wave-qr-popup');})" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;height:48px">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="var(--a)"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="var(--a)"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="var(--a)"/></svg>
       </button>
     </div>
@@ -905,7 +905,7 @@ async function identClient(op){
   if(!tel){T('Numéro requis',true);return;}
   document.getElementById(op+'-ok').disabled=true;
   try{
-    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+    var r=await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
     var arr=Array.isArray(r.data)?r.data:[r.data];
     if(!arr.length||!arr[0]){throw new Error('Client introuvable');}
     var u=arr[0];opClients[op]=u;
@@ -1125,33 +1125,21 @@ function nouveauSopTrf(){if(_sopTrfClient)ouvrirScreenTransfert(_sopTrfClient);e
 
 async function doTransfert(btn){
   if(btn){btn.disabled=true;btn.textContent='...';}
-  var tel=document.getElementById('trf-tel').value.trim();var amt=Number(document.getElementById('trf-amt').value);
-  if(!tel){T('Numéro requis',true);if(btn){btn.disabled=false;btn.textContent='Transférer';}return;}
-  // Rechercher le destinataire et aller à l'écran de montant si succès
+  var tel=document.getElementById('trf-tel').value.trim();
+  if(!tel){T('Numéro requis',true);if(btn){btn.disabled=false;btn.textContent='Continuer →';}return;}
   document.getElementById('trf-loading').style.display='';
   document.getElementById('trf-form-btns').style.display='none';
   try{
-    var r=await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
-    var arr=Array.isArray(r.data)?r.data:[r.data];
-    if(!arr.length||!arr[0])throw new Error('Destinataire introuvable');
+    var r=await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
+    var dest=r.data;
+    if(!dest)throw new Error('Destinataire introuvable');
     document.getElementById('trf-loading').style.display='none';
-    if(amt>0){
-      // Montant déjà saisi : transférer directement
-      _sopTrfClient=arr[0];
-      var r2=await post('/transactions/transfer',{telephone:tel,montant:amt,motif:'Transfert liquidité'});
-      var d=r2.data||{};
-      document.getElementById('sop-trf-ok-txt').textContent='Transfert de '+F(amt)+' FCFA vers '+(arr[0].prenom||'')+' '+(arr[0].nom||'');
-      document.getElementById('sop-trf-ok-ref').textContent=d.reference||'';
-      closeSh('transfert');rstTrf();rafraichir();S('s-op-transfert-ok');
-    } else {
-      // Aller à l'écran montant
-      ouvrirScreenTransfert(arr[0]);
-      rstTrf();
-    }
+    ouvrirScreenTransfert(dest);
+    rstTrf();
   }catch(e){
     document.getElementById('trf-loading').style.display='none';
     document.getElementById('trf-form-btns').style.display='';
-    if(btn){btn.disabled=false;btn.textContent='Transférer';}
+    if(btn){btn.disabled=false;btn.textContent='Continuer →';}
     document.getElementById('trf-err').textContent=e.message;document.getElementById('trf-err').style.display='';
   }
 }
@@ -2440,7 +2428,7 @@ function afficherChoixOp(tel, parts){
   // Identifier le client puis afficher le choix
   (async function(){
     try{
-      var r = await get('/users?telephone='+encodeURIComponent(tel)+'&limit=1');
+      var r = await get('/users/lookup-pro?telephone='+encodeURIComponent(tel));
       var arr = Array.isArray(r.data)?r.data:[r.data];
       if(!arr.length||!arr[0]) throw new Error('Client introuvable');
       var u = arr[0];
