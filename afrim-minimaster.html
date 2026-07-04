@@ -479,12 +479,6 @@ function setTab(t){
   <div style="background:linear-gradient(135deg,var(--a2),#25D366);padding:52px 22px 16px">
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Commissions 💳</div>
     <div style="color:rgba(255,255,255,.75);font-size:13px">D&#233;p&#244;ts et retraits clients</div>
-    <div style="display:flex;gap:5px;margin-top:10px">
-      <button id="cp-day" onclick="setCommPeriod('day')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Auj.</button>
-      <button id="cp-week" onclick="setCommPeriod('week')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Semaine</button>
-      <button id="cp-month" onclick="setCommPeriod('month')" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.8);border-radius:20px;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Mois</button>
-      <button id="cp-year" onclick="setCommPeriod('year')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Année</button>
-    </div>
   </div>
   <div class="sc" style="margin-top:14px" id="comm-content">
     <div style="text-align:center;padding:32px"><div class="spin"></div></div>
@@ -575,7 +569,6 @@ function setTab(t){
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:2px">Statistiques 📊</div>
     <div style="color:rgba(255,255,255,.8);font-size:13px">Analyse compl&#232;te de vos op&#233;rations</div>
     <div style="display:flex;gap:5px;margin-top:10px">
-      <button id="stp-day" onclick="setStatPeriod('day')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Auj.</button>
       <button id="stp-yesterday" onclick="setStatPeriod('yesterday')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Hier</button>
       <button id="stp-week" onclick="setStatPeriod('week')" style="background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:20px;color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Semaine</button>
       <button id="stp-month" onclick="setStatPeriod('month')" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.8);border-radius:20px;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">Mois</button>
@@ -1451,13 +1444,13 @@ async function chargerCommissions(){
       +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Hier</div><div style="font-size:18px;font-weight:900">'+F(vHier)+'</div></div>'
       +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette semaine</div><div style="font-size:18px;font-weight:900">'+F(vSem)+'</div></div>'
       +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Ce mois</div><div style="font-size:18px;font-weight:900">'+F(vMois)+'</div></div>'
-      +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette ann\u00e9e</div><div style="font-size:18px;font-weight:900">'+F(vAn)+'</div></div>'
+      +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Cette année</div><div style="font-size:18px;font-weight:900">'+F(vAn)+'</div></div>'
       +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:11px"><div style="font-size:9px;opacity:.7;text-transform:uppercase;margin-bottom:3px">Depuis toujours</div><div style="font-size:18px;font-weight:900">'+F(vTot)+'</div></div>'
       +'</div></div>';
     h+='<div style="background:#fff;border:2px solid #25D366;border-radius:16px;padding:14px 16px;margin-bottom:14px">'
       +'<div style="font-size:11px;font-weight:700;color:#25D366;text-transform:uppercase;letter-spacing:.05em">COMMISSIONS ACTUELLES</div>'
       +'<div style="font-size:28px;font-weight:900;color:#25D366;margin:4px 0">'+F(disponible)+'</div>'
-      +'<div style="font-size:11px;color:#6b7280">Commissions d&#39;hier et avant \u00b7 En attente de virement</div>'
+      +'<div style="font-size:11px;color:#6b7280">Commissions d&#39;hier et avant · En attente de virement</div>'
     +'</div>';
     h+='<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:14px;margin-bottom:14px">'
       +'<div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:4px">&#128184; Virer vers mon compte</div>'
@@ -2177,7 +2170,7 @@ var _AG_COLORS=['#25D366','#f97316','#3b82f6','#8b5cf6','#ef4444','#eab308','#06
 
 
 function _drawAgStatShell(el,agents){
-  var periods=[['day','Auj.'],['yesterday','Hier'],['week','Semaine'],['month','Mois'],['year','Année']];
+  var periods=[['yesterday','Hier'],['week','Semaine'],['month','Mois'],['year','Année']];
   var pBtns=periods.map(function(p){var on=p[0]===_agStatPeriod;return '<button onclick="setAgStatPeriod(\''+p[0]+'\')" style="padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;'+(on?'background:#25D366;color:#fff;border:1px solid #25D366':'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)')+'">'+p[1]+'</button>';}).join('');
   var types=[['depot','↓ Dépôts'],['retrait','↑ Retraits'],['trfEnv','→ Trf. envoyés'],['trfRec','← Trf. reçus'],['solde','💰 Solde']];
   var tBtns=types.map(function(t){var on=t[0]===_agStatType;var col=_typeColor(t[0]);return '<button id="agstat-btn-'+t[0]+'" onclick="setAgStatType(\''+t[0]+'\')" style="padding:7px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;'+(on?'background:'+col+';color:#fff;border:1px solid '+col:'background:#fff;color:#6b7280;border:1px solid #e5e7eb')+'">'+t[1]+'</button>';}).join('');
