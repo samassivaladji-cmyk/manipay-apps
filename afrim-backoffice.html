@@ -4166,7 +4166,7 @@ function ouvrirRattacherManuel(){
   document.getElementById('rtm-err').style.display='none';
   openSh('rattacher-manuel');
 }
-async function confirmerRattacherManuel(){
+async function confirmerRattacherManuel(forceFlag){
   var errEl=document.getElementById('rtm-err');errEl.style.display='none';
   var telFilleul=document.getElementById('rtm-filleul-tel').value.trim();
   var telParrain=document.getElementById('rtm-parrain-tel').value.trim();
@@ -4177,11 +4177,37 @@ async function confirmerRattacherManuel(){
     var filleul=(rf.data||[])[0];var parrainU=(rp.data||[])[0];
     if(!filleul){errEl.textContent='Filleul introuvable avec ce numéro';errEl.style.display='';return;}
     if(!parrainU){errEl.textContent='Parrain introuvable avec ce numéro';errEl.style.display='';return;}
-    await apiPost('/admin/rattachements/rattacher',{filleulId:filleul.id,parrainId:parrainU.id});
+    var body={filleulId:filleul.id,parrainId:parrainU.id};
+    if(forceFlag)body.force=true;
+    var resp=await fetch(API+'/admin/rattachements/rattacher',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
+      body:JSON.stringify(body)
+    });
+    var data=await resp.json();
+    if(resp.status===409&&data.warning){
+      // Agent déjà rattaché → demander confirmation
+      var msg='⚠️ '+data.message+'\n\nVoulez-vous quand même transférer ce rattachement vers '+parrainU.prenom+' '+parrainU.nom+' ?';
+      if(confirm(msg)){
+        await confirmerRattacherManuelForce(filleul.id,parrainU.id);
+      }
+      return;
+    }
+    if(!resp.ok){errEl.textContent=data.message||'Erreur';errEl.style.display='';return;}
     toast('Rattachement effectué avec succès');
     closeSh('rattacher-manuel');
     refreshRtActiveTab();
   }catch(e){errEl.textContent=e.message;errEl.style.display='';}
+}
+async function confirmerRattacherManuelForce(filleulId,parrainId){
+  try{
+    var resp=await fetch(API+'/admin/rattachements/rattacher',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
+      body:JSON.stringify({filleulId,parrainId,force:true})
+    });
+    var data=await resp.json();
+    if(resp.ok){toast('✅ Rattachement forcé — ancien parrain remplacé');closeSh('rattacher-manuel');refreshRtActiveTab();}
+    else{toast(data.message||'Erreur',true);}
+  }catch(e){toast(e.message,true);}
 }
 
 // ── Onglets Rattachements ──
