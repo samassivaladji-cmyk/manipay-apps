@@ -368,12 +368,16 @@ function setTab(t){
       <button class="chip" onclick="setHistFilter('transfert')">Transferts</button>
       <button class="chip" onclick="setHistFilter('virement')">Virements</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-      <div style="position:relative;flex:1">
-        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input id="hist-search" type="text" placeholder="Num&#233;ro, montant, r&#233;f&#233;rence..." oninput="filtrerHistorique()" style="width:100%;padding:9px 12px 9px 34px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f9fafb"/>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
+      <div style="position:relative;flex:5">
+        <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.35" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013 8.79a19.79 19.79 0 01-3.07-8.67A2 2 0 011.91 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z"/></svg>
+        <input id="hist-search-tel" type="tel" inputmode="numeric" placeholder="Num&#233;ro" oninput="filtrerHistorique()" style="width:100%;padding:8px 8px 8px 28px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f9fafb"/>
       </div>
-      <button onclick="document.getElementById('hist-search').value='';filtrerHistorique()" style="padding:9px 12px;background:#f3f4f6;border:none;border-radius:12px;cursor:pointer;font-size:11px;color:#6b7280;font-family:inherit">✕</button>
+      <div style="position:relative;flex:4">
+        <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.35" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 9v1"/></svg>
+        <input id="hist-search-amt" type="tel" inputmode="numeric" placeholder="Montant" oninput="filtrerHistorique()" style="width:100%;padding:8px 8px 8px 28px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f9fafb"/>
+      </div>
+      <button onclick="document.getElementById('hist-search-tel').value='';document.getElementById('hist-search-amt').value='';filtrerHistorique()" style="padding:8px 10px;background:#f3f4f6;border:none;border-radius:10px;cursor:pointer;font-size:11px;color:#6b7280;font-family:inherit;flex-shrink:0">✕</button>
     </div>
   </div>
   <div class="sc"><div id="hist-list"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div></div>
@@ -1369,35 +1373,40 @@ var _histSearchTimer=null;
 function filtrerHistorique(){
   var el=document.getElementById('hist-list');
   if(!el)return;
-  var q=(document.getElementById('hist-search')?.value||'').trim();
-  // Filtre local immédiat sur les données déjà chargées (montant, référence, srcTel/destTel)
-  var qLow=q.toLowerCase().replace(/\s+/g,'');
+  var qTel=(document.getElementById('hist-search-tel')?.value||'').replace(/\s+/g,'');
+  var qAmt=(document.getElementById('hist-search-amt')?.value||'').replace(/\s+/g,'');
+  // Filtre local immédiat
   var list=_histAllData;
-  if(qLow){
+  if(qTel||qAmt){
     list=list.filter(function(t){
-      var montant=String(t.montant||'');
-      var ref=(t.reference||'').toLowerCase();
-      var tel1=(t.srcTel||'').replace(/\s+/g,'');
-      var tel2=(t.destTel||'').replace(/\s+/g,'');
-      var nom=((t.srcPrenom||'')+' '+(t.srcNom||'')+' '+(t.destPrenom||'')+' '+(t.destNom||'')).toLowerCase();
-      return montant.includes(qLow)||ref.includes(qLow)||tel1.includes(qLow)||tel2.includes(qLow)||nom.includes(qLow);
+      var okTel=true, okAmt=true;
+      if(qTel){
+        var tel1=(t.srcTel||'').replace(/\s+/g,'');
+        var tel2=(t.destTel||'').replace(/\s+/g,'');
+        okTel=tel1.includes(qTel)||tel2.includes(qTel);
+      }
+      if(qAmt){
+        okAmt=String(t.montant||'').includes(qAmt);
+      }
+      return okTel&&okAmt;
     });
   }
   el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction trouvée</div>';
-  // Recherche serveur en différé pour les numéros de téléphone (q>=3 chiffres)
+  // Recherche serveur en différé dès 3 chiffres dans le numéro
   clearTimeout(_histSearchTimer);
-  if(q.replace(/\D/g,'').length>=3){
+  if(qTel.length>=3){
     _histSearchTimer=setTimeout(async function(){
       try{
         var urlFilter=histFilter;
         if(histFilter==='virement')urlFilter='virement_commission';
-        var url='/transactions?limit=500&q='+encodeURIComponent(q)+(histFilter!=='all'?'&type='+urlFilter:'');
+        var url='/transactions?limit=500&q='+encodeURIComponent(qTel)+(histFilter!=='all'?'&type='+urlFilter:'');
         var r=await get(url);
         var srv=r.data||[];
         srv.forEach(function(t){if(t.id)_txCache[t.id]=t;});
-        // Fusionner avec les données locales
-        var merged=srv;
-        el.innerHTML=merged.length?merged.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction trouvée</div>';
+        _histAllData=srv;
+        // Appliquer aussi le filtre montant si renseigné
+        var res2=qAmt?srv.filter(function(t){return String(t.montant||'').includes(qAmt);}):srv;
+        el.innerHTML=res2.length?res2.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction trouvée</div>';
       }catch(e2){}
     },400);
   }
