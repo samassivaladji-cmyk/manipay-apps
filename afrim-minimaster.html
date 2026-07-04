@@ -461,6 +461,13 @@ function setTab(t){
       <button class="chip" onclick="setHistFilter('transfert')">Transferts</button>
       <button class="chip" onclick="setHistFilter('virement')">Virements</button>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+      <div style="position:relative;flex:1">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="hist-search" type="text" placeholder="N&#233;ro, montant, r&#233;f&#233;rence..." oninput="filtrerHistorique()" style="width:100%;padding:9px 12px 9px 34px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;background:#f9fafb"/>
+      </div>
+      <button onclick="document.getElementById('hist-search').value='';filtrerHistorique()" style="padding:9px 12px;background:#f3f4f6;border:none;border-radius:12px;cursor:pointer;font-size:11px;color:#6b7280;font-family:inherit">✕</button>
+    </div>
   </div>
   <div class="sc"><div id="hist-list"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div></div>
   <nav class="bnav">
@@ -1383,24 +1390,42 @@ function setHistFilter(f){
   document.querySelectorAll('#hist-chips .chip')[idx].classList.add('on');
   chargerHistorique();
 }
+var _histAllData=[];
 async function chargerHistorique(){
   var el=document.getElementById('hist-list');
   el.innerHTML='<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
   try{
     var urlFilter=histFilter;
-    if(histFilter==='virement')urlFilter='virement_commission';// gets both via LIKE in backend
-    var url='/transactions?limit=50'+(histFilter!=='all'?'&type='+urlFilter:'');
-    // For virement: fetch both types
+    if(histFilter==='virement')urlFilter='virement_commission';
+    var url='/transactions?limit=500'+(histFilter!=='all'?'&type='+urlFilter:'');
     var extraList=[];
     if(histFilter==='virement'){
-      try{var r2=await get('/transactions?limit=50&type=virement_gains');extraList=r2.data||[];}catch(e2){}
+      try{var r2=await get('/transactions?limit=200&type=virement_gains');extraList=r2.data||[];}catch(e2){}
     }
     var r=await get(url);
     var list=r.data||[];
     if(extraList.length){list=list.concat(extraList).sort(function(a,b){return new Date(b.dateCreation||b.date_creation||0)-new Date(a.dateCreation||a.date_creation||0);});}
     list.forEach(function(t){if(t.id)_txCache[t.id]=t;});
-    el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction</div>';
+    _histAllData=list;
+    filtrerHistorique();
   }catch(e){el.innerHTML='<div class="info info-r">'+e.message+'</div>';}
+}
+
+function filtrerHistorique(){
+  var el=document.getElementById('hist-list');
+  if(!el)return;
+  var q=(document.getElementById('hist-search')?.value||'').trim().toLowerCase().replace(/\s+/g,'');
+  var list=_histAllData;
+  if(q){
+    list=list.filter(function(t){
+      var montant=String(t.montant||'').replace(/\s+/g,'');
+      var ref=(t.reference||t.ref||'').toLowerCase();
+      var tel1=(t.telephoneSource||t.telephone_source||'').replace(/\s+/g,'');
+      var tel2=(t.telephoneDest||t.telephone_dest||'').replace(/\s+/g,'');
+      return montant.includes(q)||ref.includes(q)||tel1.includes(q)||tel2.includes(q);
+    });
+  }
+  el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Aucune transaction trouvée</div>';
 }
 
 
