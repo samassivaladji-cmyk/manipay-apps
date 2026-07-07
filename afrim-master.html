@@ -2230,7 +2230,7 @@ async function voirStatsReseau(userId){
     var body=document.getElementById('rstats-body');
     var h='<div style="text-align:left">';
     h+='<div style="font-size:18px;font-weight:800;margin-bottom:2px">'+(d.prenom||'')+' '+(d.nom||'')+'</div>';
-    h+='<div style="color:var(--m);font-size:13px;margin-bottom:16px">'+(d.telephone||'')+' · '+(d.role==='agent'?'Agent':'Business')+'</div>';
+    h+='<div style="color:var(--m);font-size:13px;margin-bottom:16px">'+(d.telephone||'')+' · '+(d.role==='agent'?'Agent':d.role==='mini_master'?'Mini-Master':'Business')+'</div>';
     if(d.role==='agent'){
       if(d.isOwner){
         // Agent appartenant à ce master : vue complète
@@ -2246,6 +2246,26 @@ async function voirStatsReseau(userId){
         var soldeOk=d.soldeSuffisant;
         h+='<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Niveau de solde</span>';
         h+=soldeOk
+          ?'<span style="color:#f59e0b;font-weight:800;font-size:13px">✅ Suffisant (≥ 1 500 000)</span>'
+          :'<span style="color:#ef4444;font-weight:800;font-size:13px">⚠️ Bas (&lt; 1 500 000)</span>';
+        h+='</div>';
+      }
+    } else if(d.role==='mini_master'){
+      if(d.isOwner){
+        // Mini-Master appartenant à ce Master : vue complète (lui + son réseau d'agents)
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Solde actuel</span><span style="font-weight:800;font-size:14px">'+F(d.solde)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Agents rattachés</span><span style="font-weight:700;font-size:13px">'+(d.nbAgents||0)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Business rattachés</span><span style="font-weight:700;font-size:13px">'+(d.nbBusiness||0)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Dépôts traités (r&#233;seau)</span><span style="font-weight:700;font-size:13px">'+(d.nbDepots||0)+' · '+F(d.volDepots)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Retraits traités (r&#233;seau)</span><span style="font-weight:700;font-size:13px">'+(d.nbRetraits||0)+' · '+F(d.volRetraits)+'</span></div>';
+        h+='<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Clients inscrits (total)</span><span style="font-weight:700;font-size:13px">'+(d.nbInscriptions||0)+'</span></div>';
+      } else {
+        // Mini-Master rattaché mais n'appartenant pas à ce master : vue limitée
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Agents rattachés</span><span style="font-weight:800;font-size:14px">'+(d.nbAgents||0)+'</span></div>';
+        h+='<div class="srow"><span style="color:var(--m);font-size:13px">Business rattachés</span><span style="font-weight:700;font-size:13px">'+(d.nbBusiness||0)+'</span></div>';
+        var soldeOkMM=d.soldeSuffisant;
+        h+='<div class="srow" style="border:none"><span style="color:var(--m);font-size:13px">Niveau de solde</span>';
+        h+=soldeOkMM
           ?'<span style="color:#f59e0b;font-weight:800;font-size:13px">✅ Suffisant (≥ 1 500 000)</span>'
           :'<span style="color:#ef4444;font-weight:800;font-size:13px">⚠️ Bas (&lt; 1 500 000)</span>';
         h+='</div>';
@@ -2343,7 +2363,7 @@ function _drawAgStatShell(el,agents){
   var legend=agents.slice(0,10).map(function(a,i){return '<div style="display:flex;align-items:center;gap:5px;white-space:nowrap"><div style="width:10px;height:10px;border-radius:3px;background:'+_AG_COLORS[i%_AG_COLORS.length]+';flex-shrink:0"></div><div style="font-size:11px;color:#374151;overflow:hidden;text-overflow:ellipsis;max-width:90px">'+(a.prenom||'')+'</div></div>';}).join('');
   el.innerHTML=''
     +'<div style="background:linear-gradient(135deg,var(--a2),#d97706);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
-      +'<div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:8px">Comparaison agents · '+agents.length+' agent(s)</div>'
+      +'<div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:8px">Comparaison Mini-Masters · '+agents.length+' mini-master(s)</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+pBtns+'</div>'
     +'</div>'
     +'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px">'+tBtns+'</div>'
@@ -2570,7 +2590,7 @@ function _renderAgStatChart(agents){
 async function renderAgentsStats(){
   var el=document.getElementById('rn-agent-content');
   var agents=getAgents();
-  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent dans votre réseau</div>';return;}
+  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun Mini-Master dans votre réseau</div>';return;}
   _drawAgStatShell(el,agents);
 }
 
@@ -2664,8 +2684,8 @@ function getBusinessList(){return (_rnData||[]).filter(function(f){return f.role
 function renderAgentsDetail(){
   var el=document.getElementById('rn-agent-content');
   var agents=getAgents();
-  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun agent pour l\'instant</div>';return;}
-  var h='<div style="font-size:11px;font-weight:800;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px">'+agents.length+' agent(s)</div>';
+  if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun Mini-Master pour l\'instant</div>';return;}
+  var h='<div style="font-size:11px;font-weight:800;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px">'+agents.length+' mini-master(s)</div>';
   agents.forEach(function(f){
     h+='<div class="tx" style="background:#fff;border:1px solid var(--b);cursor:pointer;margin-bottom:8px" onclick="voirStatsReseau(\''+f.id+'\')"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:rgba(0,192,0,.12);display:flex;align-items:center;justify-content:center;color:#d97706;font-size:15px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+(f.telephone||'')+'</div></div><svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div></div>';
   });
@@ -2688,9 +2708,9 @@ async function renderAgentsSolde(){
   }));
   soldes.sort(function(a,b){return (b.solde||0)-(a.solde||0);});
   var h='<div style="background:linear-gradient(135deg,#d97706,#008000);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">'
-    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">💰 TOTAL SOLDE DES AGENTS</div>'
+    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">💰 TOTAL SOLDE DES MINI-MASTERS</div>'
     +'<div style="font-size:26px;font-weight:900">'+F(totalSolde)+'</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' agent(s)</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' mini-master(s)</div>'
   +'</div>';
   soldes.forEach(function(a){
     var sAff=a.isOwner?(a.solde!=null?F(a.solde):'—'):(a.soldeSuffisant?'✅ Suffisant':'⚠️ Bas');
@@ -2716,9 +2736,9 @@ async function renderAgentsInscrits(){
   }));
   inscrits.sort(function(a,b){return b.nb-a.nb;});
   var h='<div style="background:linear-gradient(135deg,#d97706,#008000);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">'
-    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">👥 TOTAL INSCRITS DES AGENTS</div>'
+    +'<div style="font-size:10px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">👥 TOTAL INSCRITS DES MINI-MASTERS</div>'
     +'<div style="font-size:26px;font-weight:900">'+totalInscrits+'</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' agent(s)</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+agents.length+' mini-master(s)</div>'
   +'</div>';
   inscrits.forEach(function(a){
     h+='<div style="background:#fff;border:1px solid var(--b);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:50%;background:rgba(0,192,0,.1);display:flex;align-items:center;justify-content:center;color:#d97706;font-size:13px;font-weight:800">'+((a.prenom||'?')[0])+'</div><div style="font-size:13px;font-weight:700">'+(a.prenom||'')+' '+(a.nom||'')+'</div></div><div style="font-size:16px;font-weight:900;color:#d97706">'+a.nb+'<span style="font-size:9px;font-weight:700;color:#9ca3af;margin-left:3px">inscrits</span></div></div>';
