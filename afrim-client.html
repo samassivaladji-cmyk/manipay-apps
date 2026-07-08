@@ -217,10 +217,10 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
           <div style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-top:3px solid #fff;border-right:3px solid #fff;border-radius:0 4px 0 0"></div>
           <div style="position:absolute;bottom:32px;left:10px;width:22px;height:22px;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 4px"></div>
           <div style="position:absolute;bottom:32px;right:10px;width:22px;height:22px;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 4px 0"></div>
-          <div style="background:#fff;border-radius:12px;padding:12px" onclick="ouvrirPopupQR()">
+          <div style="background:#fff;border-radius:12px;padding:12px" onclick="ouvrirScannerDirect()">
             <div id="h-qr-canvas" style="width:200px;height:200px;margin:0 auto"></div>
           </div>
-          <button onclick="ouvrirPopupQR()" style="margin:10px auto 0;background:rgba(255,255,255,.22);border:none;border-radius:12px;padding:10px 24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px">
+          <button onclick="ouvrirScannerDirect()" style="margin:10px auto 0;background:rgba(255,255,255,.22);border:none;border-radius:12px;padding:10px 24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="7" height="7" rx="1"/><rect x="15" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M15 14h2m0 0h5m-5 0v2m0 3v2m5-7v7h-3"/></svg>
             Scanner QR
           </button>
@@ -743,7 +743,7 @@ function setTab(t){
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   if(t==='home'){document.getElementById('s-home').classList.add('on');chargerAccueil();chargerBadgeNotifs();}
   else if(t==='history'){document.getElementById('s-history').classList.add('on');chargerHistorique();}
-  else if(t==='receive'){ouvrirPopupQR();return;}
+  else if(t==='receive'){ouvrirScannerDirect();return;}
   else if(t==='profile'){document.getElementById('s-profile').classList.add('on');chargerProfil();}
   else if(t==='commissions'){document.getElementById('s-commissions').classList.add('on');setTimeout(chargerCommissions,50);}
   else if(t==='paiements'){document.getElementById('s-paiements').classList.add('on');}
@@ -1449,7 +1449,14 @@ async function doSW() {
 
 function ouvrirScannerDirect(){
   ouvrirPopupQR(function(tel,parts){
-    setTimeout(function(){
+    setTimeout(function(){ _routeQrScan(tel,parts); }, 300);
+  });
+}
+// Logique de routage centralisée : un QR scanné peut être un compte business
+// (paiement marchand) ou un compte client (transfert). Utilisée à la fois par
+// ouvrirScannerDirect() ET par le scanner générique (quand aucun callback
+// spécifique n'a été fourni), pour que TOUT scan respecte le même routage.
+function _routeQrScan(tel,parts){
       var role = parts[2] || 'client';
       if(role==='business'||role==='marchand'){
         // Paiement marchand → page pay-detail
@@ -1480,8 +1487,6 @@ function ouvrirScannerDirect(){
         // Transfert client → page style Wave
         ouvrirSendWave(parts[0], parts[1]||parts[0]);
       }
-    }, 300);
-  });
 }
 
 var payMerch=null;
@@ -1574,7 +1579,7 @@ function _lancerCamera(){
             fermerPopupQR();
             setTimeout(function(){
               if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
-              else{ouvrirSendWave(tel,parts[1]||tel);}
+              else{_routeQrScan(tel,parts);}
             },300);
           }
         }).catch(function(){});
@@ -1624,7 +1629,7 @@ function _lireQRVideo(){
     fermerPopupQR();
     setTimeout(function(){
       if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
-      else{ouvrirSendWave(tel,parts[1]||tel);}
+      else{_routeQrScan(tel,parts);}
     },300);
   }
 }
@@ -1827,7 +1832,7 @@ document.addEventListener('DOMContentLoaded',function(){
             fermerPopupQR();
             setTimeout(function(){
               if(typeof _qrCallback==='function'&&_qrCallback){_qrCallback(tel,parts);_qrCallback=null;}
-              else{ouvrirSendWave(tel,parts[1]||tel);}
+              else{_routeQrScan(tel,parts);}
             },300);
             return;
           }
