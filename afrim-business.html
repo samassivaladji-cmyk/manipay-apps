@@ -207,26 +207,32 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   </div>
 
   <div class="sc" style="padding-top:0">
-    <button onclick="openEncaisser()" class="btn btn-g" style="padding:17px;font-size:16px;margin-bottom:14px;box-shadow:0 6px 18px rgba(37,211,102,.3)">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg>
-      ENCAISSER UN CLIENT
-    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <button onclick="openEncaisser()" class="btn btn-g" style="padding:16px 8px;font-size:13px;flex-direction:column;gap:6px;box-shadow:0 6px 18px rgba(37,211,102,.3)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="#fff"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="#fff"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="#fff"/></svg>
+        ENCAISSER UN CLIENT
+      </button>
+      <button onclick="ouvrirQRView('boutique')" class="btn" style="padding:16px 8px;font-size:13px;flex-direction:column;gap:6px;background:var(--claude);color:#fff;box-shadow:0 6px 18px rgba(218,119,86,.3)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="2" y="3" width="7" height="7" rx="1"/><rect x="15" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M15 14h2m0 0h5m-5 0v2m0 3v2m5-7v7h-3"/></svg>
+        AFFICHER QR CODE
+      </button>
+    </div>
 
     <div class="act3" style="margin-bottom:16px">
       <button class="act3-btn" onclick="openSh('payer')" style="border-color:var(--claude-l)">
         <div style="width:36px;height:36px;border-radius:11px;background:var(--claude-l);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px">🏪</div>
         <div style="font-size:11px;font-weight:700;color:var(--t)">Payer marchand</div>
-        <div style="font-size:9px;color:var(--green-d);margin-top:1px;font-weight:700">Sans frais</div>
+        <div style="font-size:9px;color:var(--green-d);margin-top:1px;font-weight:700">0.5% frais</div>
       </button>
       <button class="act3-btn" onclick="ouvrirQRView('retrait')">
         <div style="width:36px;height:36px;border-radius:11px;background:#fef3e2;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px">💵</div>
         <div style="font-size:11px;font-weight:700;color:var(--t)">Retrait</div>
         <div style="font-size:9px;color:var(--m);margin-top:1px">Via un agent</div>
       </button>
-      <button class="act3-btn" onclick="ouvrirQRView('boutique')">
-        <div style="width:36px;height:36px;border-radius:11px;background:#eef2ff;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px">🔲</div>
-        <div style="font-size:11px;font-weight:700;color:var(--t)">Afficher QR</div>
-        <div style="font-size:9px;color:var(--m);margin-top:1px">Pour la boutique</div>
+      <button class="act3-btn" onclick="openSh('transfert')">
+        <div style="width:36px;height:36px;border-radius:11px;background:#eef2ff;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px">⇄</div>
+        <div style="font-size:11px;font-weight:700;color:var(--t)">Transfert</div>
+        <div style="font-size:9px;color:var(--m);margin-top:1px">Business ou client</div>
       </button>
     </div>
 
@@ -366,11 +372,11 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   </nav>
 </div>
 
-<!-- ═══════════════ SHEET ENCAISSER UN CLIENT ═══════════════ -->
+<!-- ═══════════════ SHEET ENCAISSER UN CLIENT (montant → scan du client) ═══════════════ -->
 <div class="sh-ov" id="sh-encaisser">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div class="sh-title">Encaisser un client</div><button class="sh-x" onclick="closeSh('encaisser')">✕</button></div>
+    <div class="sh-top"><div class="sh-title">Encaisser un client</div><button class="sh-x" onclick="closeSh('encaisser');rstEncaisser()">✕</button></div>
     <div id="enc-amt-view">
       <div style="text-align:center;padding:10px 0 24px">
         <div style="font-size:12px;color:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Montant à encaisser</div>
@@ -382,15 +388,51 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
         <button class="pin-key" onclick="encTap(7)">7</button><button class="pin-key" onclick="encTap(8)">8</button><button class="pin-key" onclick="encTap(9)">9</button>
         <button class="pin-key" onclick="encTap('000')">000</button><button class="pin-key" onclick="encTap(0)">0</button><button class="pin-key" onclick="encDel()">⌫</button>
       </div>
-      <button class="btn btn-g" id="enc-btn" disabled style="opacity:.4" onclick="genererQREncaisser()">Générer le QR code</button>
+      <button class="btn btn-g" id="enc-btn" disabled style="opacity:.4" onclick="lancerEncaisserScan()">Suivant</button>
     </div>
-    <div id="enc-qr-view" style="display:none;text-align:center;padding:6px 0 20px">
-      <div style="font-size:34px;font-weight:900;color:var(--t);margin-bottom:16px" id="enc-qr-amt">0 F</div>
-      <div style="background:#fff;border:2px solid var(--green);border-radius:16px;padding:16px;display:inline-block;margin-bottom:14px">
-        <div id="enc-qr-canvas" style="width:200px;height:200px"></div>
+    <div id="enc-confirm-view" style="display:none;text-align:center;padding:6px 0 20px">
+      <div style="font-size:12px;color:var(--m);font-weight:700;text-transform:uppercase;margin-bottom:6px">Montant flashé</div>
+      <div style="font-size:34px;font-weight:900;color:var(--t);margin-bottom:14px" id="enc-conf-amt">0 F</div>
+      <div style="background:var(--claude-l);border-radius:14px;padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;color:var(--claude-d);font-weight:700;text-transform:uppercase">Client scanné</div>
+        <div style="font-size:16px;font-weight:800" id="enc-conf-client">—</div>
+        <div style="font-size:12px;color:var(--m);font-family:monospace" id="enc-conf-tel">—</div>
       </div>
-      <div style="font-size:13px;color:var(--m);margin-bottom:20px">Le client scanne ce code pour vous payer instantanément.</div>
-      <button class="btn btn-ghost" onclick="rstEncaisser()">Nouveau montant</button>
+      <div id="enc-conf-err" style="display:none" class="info info-r"></div>
+      <button class="btn btn-g" id="enc-conf-btn" onclick="doEncaisserCollect()">Encaisser</button>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="rstEncaisser()">Annuler</button>
+    </div>
+    <div id="enc-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
+    <div id="enc-success" style="display:none;text-align:center;padding:10px 0 20px">
+      <div style="font-size:44px;margin-bottom:10px">✅</div>
+      <div style="font-size:19px;font-weight:800;margin-bottom:6px">Client encaissé</div>
+      <div style="color:var(--m);font-size:14px;margin-bottom:4px" id="enc-succ-txt"></div>
+      <div style="color:var(--d);font-size:12px;margin-bottom:22px" id="enc-succ-ref"></div>
+      <button class="btn btn-a" onclick="closeSh('encaisser');rstEncaisser()">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHEET TRANSFERT ═══════════════ -->
+<div class="sh-ov" id="sh-transfert">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Transfert</div><div style="font-size:11px;font-weight:700;color:var(--m)">Vers un autre Business ou un client — sans frais</div></div><button class="sh-x" onclick="closeSh('transfert');rstTransfert()">✕</button></div>
+    <div id="tr-form">
+      <span class="lbl">Numéro du destinataire</span>
+      <input class="inp" id="tr-tel" type="tel" inputmode="numeric" placeholder="+225 07 XX XX XX" oninput="calcTransfert()" style="margin-bottom:14px"/>
+      <span class="lbl">Montant (FCFA)</span>
+      <input class="inp" id="tr-amt" type="number" inputmode="numeric" placeholder="0" oninput="calcTransfert()" style="margin-bottom:16px"/>
+      <div id="tr-err" style="display:none" class="info info-r"></div>
+      <button class="btn btn-a" id="tr-btn" disabled style="opacity:.4" onclick="doTransfert()">Transférer</button>
+    </div>
+    <div id="tr-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
+    <div id="tr-success" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:44px;margin-bottom:10px">✅</div>
+      <div style="font-size:19px;font-weight:800;margin-bottom:6px">Transfert effectué</div>
+      <div style="color:var(--m);font-size:14px;margin-bottom:4px" id="tr-succ-txt"></div>
+      <div style="color:var(--d);font-size:12px;margin-bottom:22px" id="tr-succ-ref"></div>
+      <button class="btn btn-a" onclick="closeSh('transfert');rstTransfert()">Terminé</button>
     </div>
   </div>
 </div>
@@ -399,7 +441,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 <div class="sh-ov" id="sh-payer">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Payer un marchand</div><div style="font-size:11px;font-weight:800;color:var(--green-d)">Sans frais</div></div><button class="sh-x" onclick="closeSh('payer')">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">Payer un marchand</div><div style="font-size:11px;font-weight:800;color:var(--green-d)">0.5% de frais à votre charge</div></div><button class="sh-x" onclick="closeSh('payer')">✕</button></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:10px">
       <button onclick="closeSh('payer');lancerPayerScan()" style="background:#fff;border:2px solid var(--claude-l);border-radius:16px;padding:20px 10px;cursor:pointer;text-align:center">
         <div style="font-size:26px;margin-bottom:8px">🔳</div>
@@ -430,7 +472,8 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
         <div style="font-size:16px;font-weight:800" id="pc-name-disp">—</div>
       </div>
       <span class="lbl">Montant (FCFA)</span>
-      <input class="inp" id="pc-amt" type="number" inputmode="numeric" placeholder="0" oninput="calcPayerConfirm()" style="margin-bottom:16px"/>
+      <input class="inp" id="pc-amt" type="number" inputmode="numeric" placeholder="0" oninput="calcPayerConfirm()" style="margin-bottom:8px"/>
+      <div id="pc-frais-info" style="font-size:12px;color:var(--m);margin-bottom:16px">—</div>
       <div id="pc-err" style="display:none" class="info info-r"></div>
       <button class="btn btn-a" id="pc-btn" disabled style="opacity:.4" onclick="doPayerConfirm()">Confirmer le paiement</button>
     </div>
@@ -915,15 +958,18 @@ function dessinerQRHome(cid,data,color){
   el.appendChild(img);
 }
 
-// ── ENCAISSER UN CLIENT ──────────────────────────────────────────────────
-var _encAmt='';
+// ── ENCAISSER UN CLIENT (montant → scan du QR personnel du client) ───────
+var _encAmt='';var _encClientTel=null,_encClientNom=null;
 function openEncaisser(){rstEncaisser();openSh('encaisser');}
 function rstEncaisser(){
-  _encAmt='';
+  _encAmt='';_encClientTel=null;_encClientNom=null;
   document.getElementById('enc-amt-disp').textContent='0';
   document.getElementById('enc-btn').disabled=true;document.getElementById('enc-btn').style.opacity='.4';
   document.getElementById('enc-amt-view').style.display='';
-  document.getElementById('enc-qr-view').style.display='none';
+  document.getElementById('enc-confirm-view').style.display='none';
+  document.getElementById('enc-loading').style.display='none';
+  document.getElementById('enc-success').style.display='none';
+  document.getElementById('enc-conf-err').style.display='none';
 }
 function encTap(v){
   if(_encAmt.length>=9)return;
@@ -934,13 +980,75 @@ function encTap(v){
   document.getElementById('enc-btn').disabled=!ok;document.getElementById('enc-btn').style.opacity=ok?'1':'.4';
 }
 function encDel(){_encAmt=_encAmt.slice(0,-1);document.getElementById('enc-amt-disp').textContent=Number(_encAmt||0).toLocaleString('fr-FR');var ok=Number(_encAmt)>0;document.getElementById('enc-btn').disabled=!ok;document.getElementById('enc-btn').style.opacity=ok?'1':'.4';}
-function genererQREncaisser(){
+function lancerEncaisserScan(){
   var amt=Number(_encAmt);if(!amt)return;
-  var u=G.user||{};
-  document.getElementById('enc-qr-amt').textContent=F(amt);
-  dessinerQRHome('enc-qr-canvas',(u.telephone||'')+'|'+(u.codeParrainage||u.id||'')+'|business|'+amt,'#000');
-  document.getElementById('enc-amt-view').style.display='none';
-  document.getElementById('enc-qr-view').style.display='';
+  closeSh('encaisser');
+  ouvrirPopupQR(function(tel,parts){
+    var role=parts[2]||'client';
+    if(role==='business'){T("Ceci est un QR marchand, pas un QR client",true);openSh('encaisser');return;}
+    _encClientTel=tel;_encClientNom=tel;
+    document.getElementById('enc-conf-amt').textContent=F(amt);
+    document.getElementById('enc-conf-client').textContent='Chargement...';
+    document.getElementById('enc-conf-tel').textContent=tel;
+    document.getElementById('enc-amt-view').style.display='none';
+    document.getElementById('enc-confirm-view').style.display='';
+    document.getElementById('enc-conf-err').style.display='none';
+    openSh('encaisser');
+    get('/users/lookup-client?telephone='+encodeURIComponent(tel)).then(function(r){
+      var u=r.data;
+      _encClientNom=(u.prenom||'')+' '+(u.nom||'');
+      document.getElementById('enc-conf-client').textContent=_encClientNom||tel;
+    }).catch(function(){document.getElementById('enc-conf-client').textContent=tel;});
+  });
+}
+async function doEncaisserCollect(){
+  var amt=Number(_encAmt);if(!amt||!_encClientTel)return;
+  var errEl=document.getElementById('enc-conf-err');errEl.style.display='none';
+  document.getElementById('enc-confirm-view').style.display='none';
+  document.getElementById('enc-loading').style.display='';
+  try{
+    var r=await post('/transactions/collect',{telephone:_encClientTel,montant:amt});
+    document.getElementById('enc-loading').style.display='none';
+    document.getElementById('enc-success').style.display='';
+    document.getElementById('enc-succ-txt').textContent=F(amt)+' encaissés auprès de '+(r.data.clientNom||_encClientTel);
+    document.getElementById('enc-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    rafraichir();
+  }catch(e){
+    document.getElementById('enc-loading').style.display='none';
+    document.getElementById('enc-confirm-view').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
+
+// ── TRANSFERT (Business → Business ou Client, sans frais) ────────────────
+function rstTransfert(){
+  document.getElementById('tr-tel').value='';document.getElementById('tr-amt').value='';
+  document.getElementById('tr-err').style.display='none';
+  document.getElementById('tr-form').style.display='';document.getElementById('tr-loading').style.display='none';document.getElementById('tr-success').style.display='none';
+}
+function calcTransfert(){
+  var tel=(document.getElementById('tr-tel').value||'').trim();
+  var amt=Number(document.getElementById('tr-amt').value||0);
+  var ok=tel&&amt>0;
+  document.getElementById('tr-btn').disabled=!ok;document.getElementById('tr-btn').style.opacity=ok?'1':'.4';
+}
+async function doTransfert(){
+  var tel=(document.getElementById('tr-tel').value||'').trim();
+  var amt=Number(document.getElementById('tr-amt').value||0);
+  var solde=G.compte?Number(G.compte.solde):0;
+  var errEl=document.getElementById('tr-err');errEl.style.display='none';
+  if(amt>solde){errEl.textContent='Solde insuffisant ('+F(solde)+' disponible)';errEl.style.display='';return;}
+  document.getElementById('tr-form').style.display='none';document.getElementById('tr-loading').style.display='';
+  try{
+    var r=await post('/transactions/transfer',{telephone:tel,montant:amt});
+    document.getElementById('tr-loading').style.display='none';document.getElementById('tr-success').style.display='';
+    document.getElementById('tr-succ-txt').textContent=F(amt)+' transférés à '+tel;
+    document.getElementById('tr-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    rafraichir();
+  }catch(e){
+    document.getElementById('tr-loading').style.display='none';document.getElementById('tr-form').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
 }
 
 // ── MON QR (Retrait / Boutique) ──────────────────────────────────────────
@@ -986,24 +1094,33 @@ function calcPayerConfirm(){
   var amt=Number(document.getElementById('pc-amt').value||0);
   var ok=code&&amt>0;
   document.getElementById('pc-btn').disabled=!ok;document.getElementById('pc-btn').style.opacity=ok?'1':'.4';
+  var info=document.getElementById('pc-frais-info');
+  if(amt>0){
+    var frais=Math.round(amt*0.005);
+    info.textContent='Frais (0.5%) : '+F(frais)+' — Total débité : '+F(amt+frais);
+  }else{
+    info.textContent='—';
+  }
 }
 function rstPayerConfirm(){
   document.getElementById('pc-code').value='';document.getElementById('pc-amt').value='';
   document.getElementById('pc-code-wrap').style.display='';document.getElementById('pc-name-wrap').style.display='none';
-  document.getElementById('pc-err').style.display='none';
+  document.getElementById('pc-err').style.display='none';document.getElementById('pc-frais-info').textContent='—';
   document.getElementById('pc-form').style.display='';document.getElementById('pc-loading').style.display='none';document.getElementById('pc-success').style.display='none';
 }
 async function doPayerConfirm(){
   var code=(document.getElementById('pc-code').value||'').trim();
   var amt=Number(document.getElementById('pc-amt').value||0);
+  var frais=Math.round(amt*0.005);
+  var totalDebit=amt+frais;
   var solde=G.compte?Number(G.compte.solde):0;
   var errEl=document.getElementById('pc-err');errEl.style.display='none';
-  if(amt>solde){errEl.textContent='Solde insuffisant ('+F(solde)+' disponible)';errEl.style.display='';return;}
+  if(totalDebit>solde){errEl.textContent='Solde insuffisant ('+F(solde)+' disponible, '+F(totalDebit)+' requis)';errEl.style.display='';return;}
   document.getElementById('pc-form').style.display='none';document.getElementById('pc-loading').style.display='';
   try{
     var r=await post('/transactions/pay',{merchantCode:code,montant:amt});
     document.getElementById('pc-loading').style.display='none';document.getElementById('pc-success').style.display='';
-    document.getElementById('pc-succ-txt').textContent=F(amt)+' payés au marchand '+code;
+    document.getElementById('pc-succ-txt').textContent=F(amt)+' payés au marchand '+code+' (+ '+F(r.data.fraisClient||frais)+' de frais)';
     document.getElementById('pc-succ-ref').textContent='Réf: '+(r.data.reference||'');
     rafraichir();
   }catch(e){
