@@ -587,11 +587,11 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div id="sticker-form">
       <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:40px;margin-bottom:10px">🏷️</div>
-        <div style="color:var(--m);font-size:13px;line-height:1.6">Nous vous envoyons un autocollant QR code physique, prêt à afficher à la caisse de votre boutique. Notre équipe vous contactera pour la livraison.</div>
+        <div style="color:var(--m);font-size:13px;line-height:1.6">Nous vous envoyons un autocollant QR code physique, prêt à afficher à la caisse de votre boutique. Nous vous demanderons votre position GPS pour faciliter la livraison. Notre équipe vous contactera ensuite.</div>
       </div>
       <button class="btn btn-a" onclick="doDemandeSticker()">Envoyer la demande</button>
     </div>
-    <div id="sticker-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
+    <div id="sticker-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div><div style="color:var(--m);font-size:12px;margin-top:10px">Localisation puis envoi...</div></div>
     <div id="sticker-success" style="display:none;text-align:center;padding:10px 0 20px">
       <div style="font-size:44px;margin-bottom:10px">✅</div>
       <div style="font-size:19px;font-weight:800;margin-bottom:6px">Demande envoyée</div>
@@ -1073,10 +1073,16 @@ async function doDemandeSticker(){
   document.getElementById('sticker-loading').style.display='';
   var u=G.user||{};
   var nom=u.nomEntreprise||((u.prenom||'')+' '+(u.nom||''));
+  var localisationTxt = obtenirLocalisation().then(function(loc){
+    if(!loc) return "Position GPS : non communiquée (refusée ou indisponible).";
+    var lien = 'https://maps.google.com/?q='+loc.lat+','+loc.lng;
+    return 'Position GPS : '+loc.lat.toFixed(6)+', '+loc.lng.toFixed(6)+' (précision ~'+Math.round(loc.acc)+'m) — '+lien;
+  });
   try{
+    var locTxt = await localisationTxt;
     await post('/tickets',{
       sujet:'Demande de QR code autocollant',
-      description:'Le marchand '+nom+' ('+(u.telephone||'')+', code '+(u.codeParrainage||'')+') demande un QR code autocollant physique pour son commerce.',
+      description:'Le marchand '+nom+' ('+(u.telephone||'')+', code '+(u.codeParrainage||'')+') demande un QR code autocollant physique pour son commerce.\n'+locTxt,
       service:'backoffice',
       priorite:'normal'
     });
@@ -1087,6 +1093,20 @@ async function doDemandeSticker(){
     document.getElementById('sticker-form').style.display='';
     T(e.message,true);
   }
+}
+function obtenirLocalisation(){
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){resolve(null);return;}
+    var termine=false;
+    var timer=setTimeout(function(){if(!termine){termine=true;resolve(null);}},8000);
+    navigator.geolocation.getCurrentPosition(function(pos){
+      if(termine)return;termine=true;clearTimeout(timer);
+      resolve({lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy});
+    },function(){
+      if(termine)return;termine=true;clearTimeout(timer);
+      resolve(null);
+    },{enableHighAccuracy:true,timeout:7500,maximumAge:60000});
+  });
 }
 
 // ── NOTIFICATIONS ────────────────────────────────────────────────────────
@@ -1149,8 +1169,8 @@ function dessinerQRHome(cid,data,color){
   var el=document.getElementById(cid);if(!el)return;
   el.innerHTML='';
   var img=document.createElement('img');
-  img.style.cssText='width:200px;height:200px;display:block;margin:0 auto;border-radius:8px';
-  img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(data)+'&color=000000&bgcolor=ffffff&qzone=1';
+  img.style.cssText='width:100%;height:100%;display:block;margin:0 auto;border-radius:8px';
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(data)+'&color=000000&bgcolor=ffffff&qzone=1';
   el.appendChild(img);
 }
 
