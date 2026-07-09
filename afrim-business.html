@@ -490,7 +490,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div id="pc-form">
       <div id="pc-code-wrap" style="margin-bottom:14px">
         <span class="lbl">Code marchand</span>
-        <input class="inp" id="pc-code" type="text" placeholder="Ex: VAL1690" oninput="calcPayerConfirm()"/>
+        <input class="inp" id="pc-code" type="text" placeholder="Ex: VAL1690" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[\s-]/g,'');calcPayerConfirm()"/>
       </div>
       <div id="pc-name-wrap" style="display:none;margin-bottom:14px;background:var(--claude-l);border-radius:12px;padding:12px 14px">
         <div style="font-size:11px;color:var(--claude-d);font-weight:700;text-transform:uppercase">Marchand</div>
@@ -584,14 +584,32 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   <div class="sh">
     <div class="sh-bar"></div>
     <div class="sh-top"><div class="sh-title">QR code autocollant</div><button class="sh-x" onclick="closeSh('sticker');rstSticker()">✕</button></div>
-    <div id="sticker-form">
+    <div id="sticker-intro">
       <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:40px;margin-bottom:10px">🏷️</div>
-        <div style="color:var(--m);font-size:13px;line-height:1.6">Nous vous envoyons un autocollant QR code physique, prêt à afficher à la caisse de votre boutique. Nous vous demanderons votre position GPS pour faciliter la livraison. Notre équipe vous contactera ensuite.</div>
+        <div style="color:var(--m);font-size:13px;line-height:1.6">Nous vous envoyons un autocollant QR code physique, prêt à afficher à la caisse de votre boutique. Notre équipe vous contactera ensuite pour la livraison.</div>
       </div>
-      <button class="btn btn-a" onclick="doDemandeSticker()">Envoyer la demande</button>
+      <button class="btn btn-a" onclick="document.getElementById('sticker-intro').style.display='none';document.getElementById('sticker-question').style.display=''">Continuer</button>
     </div>
-    <div id="sticker-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div><div style="color:var(--m);font-size:12px;margin-top:10px">Localisation puis envoi...</div></div>
+    <div id="sticker-question" style="display:none">
+      <div style="font-size:16px;font-weight:800;color:var(--t);margin-bottom:20px;line-height:1.4">Êtes-vous actuellement à l'endroit où vous souhaitez que votre code QR soit livré ?</div>
+      <button onclick="choisirLieuSticker(true)" id="sticker-q-oui" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #e5e7eb;border-radius:13px;padding:14px 16px;margin-bottom:10px;cursor:pointer;font-family:inherit;text-align:left">
+        <span style="font-size:14px;color:var(--t)">Oui, je suis actuellement dans ma boutique</span>
+        <span class="sticker-radio" style="width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;margin-left:10px"></span>
+      </button>
+      <button onclick="choisirLieuSticker(false)" id="sticker-q-non" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #e5e7eb;border-radius:13px;padding:14px 16px;margin-bottom:20px;cursor:pointer;font-family:inherit;text-align:left">
+        <span style="font-size:14px;color:var(--t)">Non, je ne suis pas actuellement dans ma boutique</span>
+        <span class="sticker-radio" style="width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;margin-left:10px"></span>
+      </button>
+      <button class="btn btn-a" id="sticker-q-submit" disabled style="opacity:.4" onclick="validerLieuSticker()">Soumettre</button>
+    </div>
+    <div id="sticker-address" style="display:none;text-align:center;padding:6px 0 10px">
+      <div style="font-size:40px;margin-bottom:12px">🏪</div>
+      <div style="font-size:16px;font-weight:800;color:var(--t);margin-bottom:10px">Revenez faire la demande sur place</div>
+      <div style="color:var(--m);font-size:14px;line-height:1.6;margin-bottom:22px">Pour que la livraison se passe bien, merci de refaire cette demande une fois que vous serez dans votre boutique.</div>
+      <button class="btn btn-a" onclick="closeSh('sticker');rstSticker()">J'ai compris</button>
+    </div>
+    <div id="sticker-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div><div style="color:var(--m);font-size:12px;margin-top:10px" id="sticker-loading-txt">Envoi en cours...</div></div>
     <div id="sticker-success" style="display:none;text-align:center;padding:10px 0 20px">
       <div style="font-size:44px;margin-bottom:10px">✅</div>
       <div style="font-size:19px;font-weight:800;margin-bottom:6px">Demande envoyée</div>
@@ -1064,25 +1082,57 @@ function voirPlafond(){
 }
 function ouvrirDemandeSticker(){rstSticker();openSh('sticker');}
 function rstSticker(){
-  document.getElementById('sticker-form').style.display='';
+  document.getElementById('sticker-intro').style.display='';
+  document.getElementById('sticker-question').style.display='none';
+  document.getElementById('sticker-address').style.display='none';
   document.getElementById('sticker-loading').style.display='none';
   document.getElementById('sticker-success').style.display='none';
+  _stickerSurPlace=null;
+  ['sticker-q-oui','sticker-q-non'].forEach(function(id){
+    var b=document.getElementById(id);b.style.borderColor='#e5e7eb';
+    var r=b.querySelector('.sticker-radio');r.style.borderColor='#d1d5db';r.style.background='';
+  });
+  var sb=document.getElementById('sticker-q-submit');sb.disabled=true;sb.style.opacity='.4';
+}
+var _stickerSurPlace=null;
+function choisirLieuSticker(surPlace){
+  _stickerSurPlace=surPlace;
+  ['sticker-q-oui','sticker-q-non'].forEach(function(id){
+    var b=document.getElementById(id);b.style.borderColor='#e5e7eb';
+    var r=b.querySelector('.sticker-radio');r.style.borderColor='#d1d5db';r.style.background='';
+  });
+  var sel=document.getElementById(surPlace?'sticker-q-oui':'sticker-q-non');
+  sel.style.borderColor='var(--claude)';
+  var r=sel.querySelector('.sticker-radio');r.style.borderColor='var(--claude)';r.style.background='radial-gradient(circle,var(--claude) 42%,transparent 46%)';
+  var sb=document.getElementById('sticker-q-submit');sb.disabled=false;sb.style.opacity='1';
+}
+function validerLieuSticker(){
+  if(_stickerSurPlace===null)return;
+  if(_stickerSurPlace===true){
+    doDemandeSticker();
+  }else{
+    document.getElementById('sticker-question').style.display='none';
+    document.getElementById('sticker-address').style.display='';
+  }
 }
 async function doDemandeSticker(){
-  document.getElementById('sticker-form').style.display='none';
+  document.getElementById('sticker-question').style.display='none';
+  document.getElementById('sticker-loading-txt').textContent='Localisation puis envoi...';
   document.getElementById('sticker-loading').style.display='';
   var u=G.user||{};
   var nom=u.nomEntreprise||((u.prenom||'')+' '+(u.nom||''));
-  var localisationTxt = obtenirLocalisation().then(function(loc){
-    if(!loc) return "Position GPS : non communiquée (refusée ou indisponible).";
-    var lien = 'https://maps.google.com/?q='+loc.lat+','+loc.lng;
-    return 'Position GPS : '+loc.lat.toFixed(6)+', '+loc.lng.toFixed(6)+' (précision ~'+Math.round(loc.acc)+'m) — '+lien;
-  });
+  var loc=await obtenirLocalisation();
+  var lieuTxt;
+  if(!loc){
+    lieuTxt="Position GPS : non communiquée (refusée ou indisponible).";
+  }else{
+    var lien='https://maps.google.com/?q='+loc.lat+','+loc.lng;
+    lieuTxt='Position GPS : '+loc.lat.toFixed(6)+', '+loc.lng.toFixed(6)+' (précision ~'+Math.round(loc.acc)+'m) — '+lien;
+  }
   try{
-    var locTxt = await localisationTxt;
     await post('/tickets',{
       sujet:'Demande de QR code autocollant',
-      description:'Le marchand '+nom+' ('+(u.telephone||'')+', code '+(u.codeParrainage||'')+') demande un QR code autocollant physique pour son commerce.\n'+locTxt,
+      description:'Le marchand '+nom+' ('+(u.telephone||'')+', code '+(u.codeParrainage||'')+') demande un QR code autocollant physique pour son commerce.\n'+lieuTxt,
       service:'backoffice',
       priorite:'normal'
     });
@@ -1090,7 +1140,7 @@ async function doDemandeSticker(){
     document.getElementById('sticker-success').style.display='';
   }catch(e){
     document.getElementById('sticker-loading').style.display='none';
-    document.getElementById('sticker-form').style.display='';
+    document.getElementById('sticker-question').style.display='';
     T(e.message,true);
   }
 }

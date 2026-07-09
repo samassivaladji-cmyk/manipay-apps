@@ -578,7 +578,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       </div>
       <div id="pay-det-ref-wrap">
         <label class="lbl" id="pay-det-ref-label">Numéro de référence</label>
-        <input class="inp" id="pay-det-ref" type="text" placeholder="Ex: 12345678" inputmode="numeric" style="margin-bottom:16px;" oninput="calcPayDet()"/>
+        <input class="inp" id="pay-det-ref" type="text" placeholder="Ex: 12345678" inputmode="numeric" style="margin-bottom:16px;" oninput="this.value=this.value.toUpperCase().replace(/[\s-]/g,'');calcPayDet()"/>
       </div>
       <div id="pay-det-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px;"></div>
       <label class="lbl">Montant</label>
