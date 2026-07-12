@@ -1562,6 +1562,34 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
+<!-- SHEET TABLEAU RÉSEAU COMPARATIF -->
+<div class="sh-ov" id="sh-reseau-tableau">
+  <div class="sh" style="max-height:90vh;overflow-y:auto">
+    <div class="sh-bar"></div>
+    <div class="sh-top">
+      <div><div class="sh-title">Réseau direct</div><div style="color:var(--m);font-size:12px" id="rt-tbl-sub">—</div></div>
+      <button class="sh-x" onclick="closeSh('reseau-tableau')">✕</button>
+    </div>
+    <div style="padding:0 0 20px" id="rt-tbl-body">
+      <div style="padding:20px;text-align:center"><div class="spin"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET DÉTAIL COMPLET (comme vu par le Master/Mini-Master sur son réseau) -->
+<div class="sh-ov" id="sh-user-full">
+  <div class="sh" style="max-height:90vh;overflow-y:auto">
+    <div class="sh-bar"></div>
+    <div class="sh-top">
+      <div><div class="sh-title" id="suf-name">—</div><div style="color:var(--m);font-size:12px" id="suf-sub">—</div></div>
+      <button class="sh-x" onclick="closeSh('user-full')">✕</button>
+    </div>
+    <div style="padding:0 0 20px" id="suf-body">
+      <div style="padding:20px;text-align:center"><div class="spin"></div></div>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET SUPERVISEURS (Super BO) -->
 <div class="sh-ov" id="sh-superviseurs">
   <div class="sh" style="max-height:88vh;overflow-y:auto">
@@ -2311,6 +2339,13 @@ function voirU(id){
     info.appendChild(div);
   });
   body.appendChild(info);
+  if(perm('txns') && ['agent','mini_master','master','business'].indexOf(u.role)>=0){
+    var btnDetail=document.createElement('button');
+    btnDetail.textContent='📊 Voir en détail — solde, transactions, réseau';
+    btnDetail.style.cssText='width:100%;padding:15px;border-radius:14px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px';
+    btnDetail.addEventListener('click',function(){ouvrirDetailComplet(u);});
+    body.appendChild(btnDetail);
+  }
   function mkBtn(txt,cls,extra,fn){
     var btn=document.createElement('button');
     btn.className='btn '+(cls||'');btn.textContent=txt;
@@ -4744,6 +4779,13 @@ function voirU(id){
     info.appendChild(div);
   });
   body.appendChild(info);
+  if(perm('txns') && ['agent','mini_master','master','business'].indexOf(u.role)>=0){
+    var btnDetail=document.createElement('button');
+    btnDetail.textContent='📊 Voir en détail — solde, transactions, réseau';
+    btnDetail.style.cssText='width:100%;padding:15px;border-radius:14px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px';
+    btnDetail.addEventListener('click',function(){ouvrirDetailComplet(u);});
+    body.appendChild(btnDetail);
+  }
   function mkBtn(txt,cls,extra,fn){
     var btn=document.createElement('button');
     btn.className='btn '+(cls||'');btn.textContent=txt;
@@ -6248,8 +6290,135 @@ function afficherQrSuperviseur(){
 }
 
 // ════════════════════════════════════════════════════════════
-// SUPERVISEURS — vue d'ensemble Super BO + affectation régionale
+// TABLEAU COMPARATIF DU RÉSEAU DIRECT — trie par colonne
+// (Mini-Masters d'un Master, Agents d'un Mini-Master, filleuls d'un Business, etc.)
 // ════════════════════════════════════════════════════════════
+var _rtTblData=[];
+var _rtTblSort={col:'solde',dir:-1};
+async function voirReseauTableau(parrainId, nomParrain){
+  document.getElementById('rt-tbl-sub').textContent='Filleuls directs de '+nomParrain;
+  var body=document.getElementById('rt-tbl-body');
+  body.innerHTML='<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
+  openSh('reseau-tableau');
+  try{
+    var r=await apiGet('/users?parrainId='+parrainId+'&limit=200');
+    _rtTblData=(r.data||[]).map(function(u){
+      return {
+        id:u.id, nom:(u.prenom||'')+' '+(u.nom||''), telephone:u.telephone, role:u.role,
+        solde:u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined?Number(u.solde):0),
+        statut:u.statut
+      };
+    });
+    _rtTblSort={col:'solde',dir:-1};
+    _renderRtTbl();
+  }catch(e){
+    body.innerHTML='<div style="padding:20px;text-align:center;color:var(--r);font-size:13px">'+e.message+'</div>';
+  }
+}
+function _rtTblSortBy(col){
+  if(_rtTblSort.col===col)_rtTblSort.dir*=-1;else _rtTblSort={col:col,dir:col==='nom'||col==='role'?1:-1};
+  _renderRtTbl();
+}
+function _renderRtTbl(){
+  var body=document.getElementById('rt-tbl-body');
+  if(!_rtTblData.length){body.innerHTML='<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">Aucun filleul direct.</div>';return;}
+  var data=_rtTblData.slice().sort(function(a,b){
+    var c=_rtTblSort.col,d=_rtTblSort.dir;
+    if(typeof a[c]==='number')return (a[c]-b[c])*d;
+    return String(a[c]||'').localeCompare(String(b[c]||''))*d;
+  });
+  var cols=[['nom','Nom'],['role','Rôle'],['solde','Solde'],['statut','Statut']];
+  var h='<div style="overflow-x:auto;padding:0 8px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  h+='<tr>'+cols.map(function(c){
+    var arrow=_rtTblSort.col===c[0]?(_rtTblSort.dir===1?' ▲':' ▼'):'';
+    return '<th onclick="_rtTblSortBy(\''+c[0]+'\')" style="text-align:left;padding:9px 8px;background:#f9fafb;color:#6b7280;font-weight:800;cursor:pointer;white-space:nowrap;border-bottom:1px solid #e5e7eb">'+c[1]+arrow+'</th>';
+  }).join('')+'</tr>';
+  data.forEach(function(u){
+    h+='<tr style="border-bottom:1px solid #f3f4f6">'
+      +'<td style="padding:9px 8px;font-weight:700;color:#111827">'+u.nom+'</td>'
+      +'<td style="padding:9px 8px;color:#6b7280">'+u.role+'</td>'
+      +'<td style="padding:9px 8px;font-weight:700;color:#111827">'+F(u.solde)+'</td>'
+      +'<td style="padding:9px 8px;color:'+(u.statut==='actif'?'#22c55e':'#f59e0b')+'">'+u.statut+'</td>'
+      +'</tr>';
+  });
+  h+='</table></div>';
+  body.innerHTML=h;
+}
+
+
+async function ouvrirDetailComplet(u){
+  document.getElementById('suf-name').textContent=(u.prenom||'')+' '+(u.nom||'');
+  document.getElementById('suf-sub').textContent=u.role+' · '+u.telephone;
+  var body=document.getElementById('suf-body');
+  body.innerHTML='<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
+  openSh('user-full');
+  try{
+    var results=await Promise.allSettled([
+      apiGet('/users/'+u.id+'/network-stats'),
+      apiGet('/users/'+u.id+'/transactions?limit=50'),
+      apiGet('/users/'+u.id+'/referrals')
+    ]);
+    var stats=results[0].status==='fulfilled'?results[0].value.data:null;
+    var txns=results[1].status==='fulfilled'?(results[1].value.data||[]):[];
+    var refs=results[2].status==='fulfilled'?results[2].value.data:null;
+    var h='';
+    // Solde
+    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined?Number(u.solde):(stats?stats.solde:0));
+    h+='<div style="margin:0 16px 14px;background:#111827;border-radius:16px;padding:16px 18px">'
+      +'<div style="color:#9ca3af;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:4px">Solde actuel</div>'
+      +'<div style="color:#fff;font-size:24px;font-weight:800">'+F(solde)+'</div></div>';
+    // Stats réseau (dépôts/retraits/transferts) si disponibles
+    if(stats){
+      h+='<div style="padding:14px 16px 4px;font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase">📊 Activité (dépôts, retraits, transferts)</div>';
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 16px 14px">';
+      var cards=[
+        ['Dépôts',stats.nbDepots,stats.volDepots],
+        ['Retraits',stats.nbRetraits,stats.volRetraits],
+        ['Transferts envoyés',stats.nbTrfEnv,stats.volTrfEnv],
+        ['Transferts reçus',stats.nbTrfRec,stats.volTrfRec]
+      ];
+      cards.forEach(function(c){
+        if(c[1]===undefined)return;
+        h+='<div style="background:#f9fafb;border-radius:12px;padding:10px 12px">'
+          +'<div style="font-size:10px;color:#6b7280;font-weight:700">'+c[0]+'</div>'
+          +'<div style="font-size:14px;font-weight:800;color:#111827">'+(c[1]||0)+'</div>'
+          +'<div style="font-size:11px;color:#6b7280">'+F(c[2]||0)+'</div></div>';
+      });
+      h+='</div>';
+    }
+    // Réseau / gains
+    if(refs){
+      h+='<div style="padding:4px 16px 4px;font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase">🌿 Réseau & gains</div>';
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 16px 10px">'
+        +'<div style="background:#f0fdf4;border-radius:12px;padding:10px 12px"><div style="font-size:10px;color:#166534;font-weight:700">Filleuls rattachés</div><div style="font-size:16px;font-weight:800;color:#15803d">'+(refs.nbRattaches||0)+'</div></div>'
+        +'<div style="background:#fffbeb;border-radius:12px;padding:10px 12px"><div style="font-size:10px;color:#92400e;font-weight:700">Gains cumulés</div><div style="font-size:14px;font-weight:800;color:#b45309">'+F(refs.totalGains||0)+'</div></div>'
+        +'</div>';
+      if(refs.nbRattaches>0){
+        h+='<div style="margin:0 16px 14px"><button onclick=\'voirReseauTableau('+JSON.stringify(u.id)+','+JSON.stringify((u.prenom||"")+" "+(u.nom||""))+')\' style="width:100%;padding:11px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:12px;font-weight:700;color:#166534;cursor:pointer;font-family:inherit">📋 Comparer son réseau en tableau (triable)</button></div>';
+      }
+    }
+    // Transactions récentes
+    h+='<div style="padding:4px 16px 4px;font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase">🧾 Transactions récentes ('+txns.length+')</div>';
+    if(!txns.length){
+      h+='<div style="margin:0 16px;color:#9ca3af;font-size:12px">Aucune transaction.</div>';
+    } else {
+      h+='<div style="margin:0 16px">';
+      txns.slice(0,50).forEach(function(t){
+        var d=new Date(t.dateCreation||t.date_creation||t.createdAt);
+        h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6">'
+          +'<div><div style="font-size:12px;font-weight:700;color:#111827">'+(t.type||'')+'</div><div style="font-size:10px;color:#9ca3af">'+(isNaN(d)?'':d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}))+'</div></div>'
+          +'<div style="font-size:13px;font-weight:800;color:#111827">'+F(t.montant||0)+'</div>'
+          +'</div>';
+      });
+      h+='</div>';
+    }
+    body.innerHTML=h;
+  }catch(e){
+    body.innerHTML='<div style="padding:20px;text-align:center;color:var(--r);font-size:13px">'+e.message+'</div>';
+  }
+}
+
+
 var _supListCache = [];
 async function chargerSuperviseurs(){
   var box = document.getElementById('sup-list-container');
