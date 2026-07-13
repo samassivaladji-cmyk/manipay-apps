@@ -6460,15 +6460,27 @@ function _supCard(s){
       +'<button onclick="retirerMasterSuperviseur(\''+s.id+'\',\''+m.id+'\')" style="background:none;border:none;color:var(--r);font-size:11px;cursor:pointer;font-family:inherit">Retirer</button>'
       +'</div>';
   }).join('');
+  var autreType = s.type==='general' ? 'regional' : 'general';
+  var autreLabel = s.type==='general' ? 'Passer en Régional' : 'Passer en Général';
   return '<div style="margin:0 16px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
     +'<div style="font-size:13px;font-weight:800;color:#111827">'+(s.prenom||'')+' '+(s.nom||'')+'</div>'
     +'<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;background:'+(s.type==='general'?'#dbeafe;color:#1e40af':'#fef3c7;color:#92400e')+'">'+(s.type==='general'?'GÉNÉRAL':'RÉGIONAL')+'</span>'
     +'</div>'
     +'<div style="font-size:11px;color:#6b7280;margin-bottom:8px">'+(s.telephone||'')+' · '+(s.statut||'')+'</div>'
-    +mastersHtml
+    +(s.type==='regional' ? mastersHtml : '<div style="font-size:10px;color:#9ca3af;font-style:italic;margin-bottom:6px">Voit tout le réseau pro, sans restriction — les Masters listés ci-dessous (le cas échéant) n\u2019ont pas d\u2019effet tant que le statut reste Général.</div>'+mastersHtml)
     +'<button onclick="ouvrirAffecterMaster(\''+s.id+'\',\''+((s.prenom||'')+' '+(s.nom||'')).replace(/'/g,"")+'\')" style="width:100%;margin-top:6px;padding:8px;background:#f3f4f6;border:none;border-radius:8px;font-size:11px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit">+ Affecter un Master</button>'
+    +'<button onclick="changerTypeSuperviseur(\''+s.id+'\',\''+autreType+'\')" style="width:100%;margin-top:6px;padding:8px;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:11px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit">🔁 '+autreLabel+'</button>'
     +'</div>';
+}
+async function changerTypeSuperviseur(supId, nouveauType){
+  var msg = nouveauType==='general' ? 'Passer ce superviseur en GÉNÉRAL — il verra tout le réseau pro, quels que soient les Masters affectés ?' : 'Passer ce superviseur en RÉGIONAL — il ne verra plus que les Masters qui lui sont affectés ?';
+  if(!confirm(msg)) return;
+  try{
+    await callAPI('/superviseurs/'+supId+'/type', {method:'PATCH', body:JSON.stringify({type:nouveauType})});
+    toast('✓ Statut mis à jour');
+    chargerSuperviseurs();
+  }catch(e){ toast(e.message, true); }
 }
 function ouvrirAffecterMaster(supId, nom){
   document.getElementById('sup-affecter-id').value = supId;
@@ -9020,12 +9032,21 @@ var _cmpMetric = 'depot';
 var _cmpSort = {col:'depot', dir:-1};
 var _cmpData = [];
 var _cmpChartInst = null;
+var _cmpMasters = null;
+var _cmpMasterFilter = '';
 async function _supStatsRenderDetail() {
   var el = document.getElementById('sup-stats-detail');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px"><div class="spin"></div></div>';
+  // Charge la liste des Masters une seule fois, pour le filtre (utile dès qu'il y en a plusieurs)
+  if (_cmpMasters === null) {
+    try { var rm = await apiGet('/users?role=master&limit=200'); _cmpMasters = rm.data || []; }
+    catch(e) { _cmpMasters = []; }
+  }
   try {
-    var r = await apiGet('/admin/comparateur?role='+_supStatsCat+'&period='+_supStatsPeriod);
+    var url = '/admin/comparateur?role='+_supStatsCat+'&period='+_supStatsPeriod;
+    if (_cmpMasterFilter) url += '&masterId='+_cmpMasterFilter;
+    var r = await apiGet(url);
     _cmpData = r.data || [];
   } catch(e) {
     el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:12px">'+e.message+'</div>';
@@ -9034,7 +9055,15 @@ async function _supStatsRenderDetail() {
   var roleColorsMap = {agent:'#d97706',business:'#4f46e5',mini_master:'#2563eb',master:'#92400e'};
   var rc = roleColorsMap[_supStatsCat]||'#ea580c';
   var totalActifs = _cmpData.filter(function(u){return u.statut==='actif';}).length;
-  var h = '<div style="background:'+rc+'08;border:1px solid '+rc+'20;border-radius:12px;padding:11px 13px;margin-bottom:12px;display:flex;justify-content:space-between">'
+  var h = '';
+  // Filtre par Master — affiché seulement s'il y en a plus d'un, et pas utile sur l'onglet Master lui-même
+  if (_cmpMasters.length > 1 && _supStatsCat !== 'master') {
+    h += '<select id="cmp-master-filter" onchange="_cmpMasterFilter=this.value;_supStatsRenderDetail()" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;font-size:12px;font-family:inherit;margin-bottom:10px;background:#fff;color:#374151">'
+      +'<option value="">🌍 Tous les Masters</option>'
+      +_cmpMasters.map(function(m){return '<option value="'+m.id+'"'+(_cmpMasterFilter===m.id?' selected':'')+'>🏆 '+(m.prenom||'')+' '+(m.nom||'')+'</option>';}).join('')
+      +'</select>';
+  }
+  h += '<div style="background:'+rc+'08;border:1px solid '+rc+'20;border-radius:12px;padding:11px 13px;margin-bottom:12px;display:flex;justify-content:space-between">'
     +'<div><div style="font-size:13px;font-weight:800;color:'+rc+'">'+_cmpData.length+' au total</div>'
     +'<div style="font-size:10px;color:#6b7280">'+totalActifs+' actifs</div></div></div>';
 
@@ -9043,10 +9072,11 @@ async function _supStatsRenderDetail() {
     return;
   }
 
-  // Sélecteur de métrique (7 éléments), pilote à la fois le graphique et le tri du tableau
+  // Sélecteur de métrique (9 éléments), pilote à la fois le graphique et le tri du tableau
   var metrics = [
-    ['depot','💰 Dépôt','#22c55e'], ['retrait','💸 Retrait','#ef4444'],
+    ['solde','🏦 Solde','#111827'], ['depot','💰 Dépôt','#22c55e'], ['retrait','💸 Retrait','#ef4444'],
     ['transfertRecu','⬇️ Transf. reçu','#3b82f6'], ['transfertEnvoye','⬆️ Transf. envoyé','#0ea5e9'],
+    ['paiement','🛍️ Paiement','#db2777'],
     ['gain','🎁 Gain','#16a34a'], ['commission','🏆 Commission','#b45309'], ['filleuls','🌿 Filleuls','#7c3aed']
   ];
   h += '<div id="cmp-metric-btns" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px"></div>';
@@ -9072,10 +9102,12 @@ async function _supStatsRenderDetail() {
   _cmpRenderTable();
 }
 function _cmpVal(u, key) {
+  if (key==='solde') return u.solde||0;
   if (key==='depot') return u.depot?u.depot.vol:0;
   if (key==='retrait') return u.retrait?u.retrait.vol:0;
   if (key==='transfertRecu') return u.transfertRecu?u.transfertRecu.vol:0;
   if (key==='transfertEnvoye') return u.transfertEnvoye?u.transfertEnvoye.vol:0;
+  if (key==='paiement') return u.paiement?u.paiement.vol:0;
   if (key==='gain') return u.gain||0;
   if (key==='commission') return u.commission||0;
   if (key==='filleuls') return u.filleuls||0;
@@ -9087,7 +9119,7 @@ function _cmpRenderChart() {
   var sorted = _cmpData.slice().sort(function(a,b){return _cmpVal(b,_cmpMetric)-_cmpVal(a,_cmpMetric);}).slice(0,10);
   var labels = sorted.map(function(u){return (u.nom||'').split(' ')[0]||u.telephone;});
   var data = sorted.map(function(u){return _cmpVal(u,_cmpMetric);});
-  var metricColors = {depot:'#22c55e',retrait:'#ef4444',transfertRecu:'#3b82f6',transfertEnvoye:'#0ea5e9',gain:'#16a34a',commission:'#b45309',filleuls:'#7c3aed'};
+  var metricColors = {solde:'#111827',depot:'#22c55e',retrait:'#ef4444',transfertRecu:'#3b82f6',transfertEnvoye:'#0ea5e9',paiement:'#db2777',gain:'#16a34a',commission:'#b45309',filleuls:'#7c3aed'};
   if (_cmpChartInst) { _cmpChartInst.destroy(); }
   _cmpChartInst = new Chart(canvas.getContext('2d'), {
     type: 'bar',
@@ -9102,7 +9134,7 @@ function _cmpSortBy(col) {
 function _cmpRenderTable() {
   var wrap = document.getElementById('cmp-table-wrap');
   if (!wrap) return;
-  var cols = [['nom','Nom'],['depot','Dépôt'],['retrait','Retrait'],['transfertRecu','Tr. reçu'],['transfertEnvoye','Tr. envoyé'],['gain','Gain'],['commission','Commission'],['filleuls','Filleuls']];
+  var cols = [['nom','Nom'],['solde','Solde'],['depot','Dépôt'],['retrait','Retrait'],['transfertRecu','Tr. reçu'],['transfertEnvoye','Tr. envoyé'],['paiement','Paiement'],['gain','Gain'],['commission','Commission'],['filleuls','Filleuls']];
   var sorted = _cmpData.slice().sort(function(a,b){
     var va = _cmpSort.col==='nom' ? (a.nom||'') : _cmpVal(a,_cmpSort.col);
     var vb = _cmpSort.col==='nom' ? (b.nom||'') : _cmpVal(b,_cmpSort.col);
@@ -9117,10 +9149,12 @@ function _cmpRenderTable() {
   sorted.forEach(function(u){
     h += '<tr style="border-bottom:1px solid #f3f4f6">'
       +'<td style="padding:8px 7px;font-weight:700;color:#111827;white-space:nowrap">'+(u.nom||u.telephone)+'</td>'
+      +'<td style="padding:8px 7px;color:#111827;font-weight:800">'+F(u.solde||0)+'</td>'
       +'<td style="padding:8px 7px;color:#22c55e;font-weight:600">'+F(u.depot?u.depot.vol:0)+'</td>'
       +'<td style="padding:8px 7px;color:#ef4444;font-weight:600">'+F(u.retrait?u.retrait.vol:0)+'</td>'
       +'<td style="padding:8px 7px;color:#3b82f6;font-weight:600">'+F(u.transfertRecu?u.transfertRecu.vol:0)+'</td>'
       +'<td style="padding:8px 7px;color:#0ea5e9;font-weight:600">'+F(u.transfertEnvoye?u.transfertEnvoye.vol:0)+'</td>'
+      +'<td style="padding:8px 7px;color:#db2777;font-weight:600">'+F(u.paiement?u.paiement.vol:0)+'</td>'
       +'<td style="padding:8px 7px;color:#16a34a;font-weight:600">'+F(u.gain||0)+'</td>'
       +'<td style="padding:8px 7px;color:#b45309;font-weight:600">'+F(u.commission||0)+'</td>'
       +'<td style="padding:8px 7px;color:#7c3aed;font-weight:700">'+(u.filleuls||0)+'</td>'
