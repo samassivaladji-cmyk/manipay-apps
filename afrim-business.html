@@ -442,10 +442,15 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 <div class="sh-ov" id="sh-transfert">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Transfert</div><div style="font-size:11px;font-weight:700;color:var(--m)">Vers un autre Business ou un client — sans frais</div></div><button class="sh-x" onclick="closeSh('transfert');rstTransfert()">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">Transfert</div><div style="font-size:11px;font-weight:700;color:var(--m)">Vers un professionnel (Agent, Mini-Master, Master, Business) ou un client — sans frais</div></div><button class="sh-x" onclick="closeSh('transfert');rstTransfert()">✕</button></div>
     <div id="tr-form">
       <span class="lbl">Numéro du destinataire</span>
-      <input class="inp" id="tr-tel" type="tel" inputmode="numeric" placeholder="+225 07 XX XX XX" oninput="calcTransfert()" style="margin-bottom:14px"/>
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+        <input class="inp" id="tr-tel" type="tel" inputmode="numeric" placeholder="+225 07 XX XX XX" oninput="calcTransfert()" style="flex:1;margin-bottom:0"/>
+        <button onclick="lancerTransfertScan()" style="background:var(--s);border:1.5px solid var(--b);border-radius:13px;padding:0 14px;cursor:pointer;display:flex;align-items:center;height:48px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--claude)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3" rx=".5" fill="var(--claude)"/><rect x="19" y="14" width="2" height="2" rx=".5" fill="var(--claude)"/><rect x="14" y="19" width="2" height="2" rx=".5" fill="var(--claude)"/></svg>
+        </button>
+      </div>
       <span class="lbl">Montant (FCFA)</span>
       <input class="inp" id="tr-amt" type="number" inputmode="numeric" placeholder="0" oninput="calcTransfert()" style="margin-bottom:16px"/>
       <div id="tr-err" style="display:none" class="info info-r"></div>
@@ -1301,6 +1306,12 @@ function rstTransfert(){
   document.getElementById('tr-err').style.display='none';
   document.getElementById('tr-form').style.display='';document.getElementById('tr-loading').style.display='none';document.getElementById('tr-success').style.display='none';
 }
+function lancerTransfertScan(){
+  ouvrirPopupQR(function(tel){
+    document.getElementById('tr-tel').value=tel;
+    calcTransfert();
+  });
+}
 function calcTransfert(){
   var tel=(document.getElementById('tr-tel').value||'').trim();
   var amt=Number(document.getElementById('tr-amt').value||0);
@@ -1406,6 +1417,8 @@ async function doPayerConfirm(){
       '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Total débité chez vous</span><span style="font-weight:900;color:#ef4444">'+F(td)+'</span></div>'
       +'<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Reçu par '+code+'</span><span style="font-weight:900;color:#137a3f">'+F(amt-fb)+'</span></div>';
     document.getElementById('pc-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    // Mise à jour immédiate du solde affiché, sans attendre le prochain rafraîchissement réseau
+    if(G.compte){G.compte.solde=Number(G.compte.solde)-td;afficherSolde();}
     rafraichir();
   }catch(e){
     document.getElementById('pc-loading').style.display='none';document.getElementById('pc-form').style.display='';

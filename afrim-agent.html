@@ -342,10 +342,17 @@ function setTab(t){
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:24px">⇄</div>
         <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#1d4ed8">Transfert</div><div style="font-size:10px;color:var(--m);margin-top:2px">Liquidité · Gratuit</div></div>
       </button>
-      <button onclick="openSh('payer')" style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer">
+      <button onclick="openSh('payer')" style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;grid-column:span 2">
         <div style="width:46px;height:46px;border-radius:13px;background:rgba(168,85,247,.12);display:flex;align-items:center;justify-content:center;color:#a855f7;font-size:22px">🏪</div>
         <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:#7e22ce">Payer marchand</div><div style="font-size:10px;color:var(--m);margin-top:2px">0.5% de frais</div></div>
       </button>
+    </div>
+    <div style="background:linear-gradient(135deg,#a855f7,#7e22ce);border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px">💜 Mon code de parrainage</div>
+        <div id="h-code-parrainage" style="font-size:20px;font-weight:900;font-family:monospace;color:#fff">—</div>
+      </div>
+      <button onclick="copierCodeParrainageHome()" style="padding:8px 14px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Copier</button>
     </div>
     <span class="lbl">Transactions récentes</span>
     <div id="h-txns"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div>
@@ -1215,6 +1222,8 @@ async function doPayerConfirm(){
       '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Total débité chez vous</span><span style="font-weight:900;color:#ef4444">'+F(td)+'</span></div>'
       +'<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Reçu par '+code+'</span><span style="font-weight:900;color:#137a3f">'+F(amt-fb)+'</span></div>';
     document.getElementById('pc-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    // Mise à jour immédiate du solde affiché, sans attendre le prochain rafraîchissement réseau
+    if(G.compte){G.compte.solde=Number(G.compte.solde)-td;setSoldeVal(FN(G.compte.solde));}
     rafraichir();
   }catch(e){
     document.getElementById('pc-loading').style.display='none';document.getElementById('pc-form').style.display='';
@@ -1320,6 +1329,12 @@ async function doLogin(){
   }
 }
 
+function copierCodeParrainageHome(){
+  var code=(G.user&&G.user.codeParrainage)||'';
+  if(!code){T('Code indisponible',true);return;}
+  if(navigator.clipboard)navigator.clipboard.writeText(code).then(function(){T('Code copié !');});
+  else T('Code: '+code);
+}
 function entrerApp(){
   document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';
   S('s-home');chargerAccueil();
@@ -1332,6 +1347,7 @@ async function chargerAccueil(){
   var u=G.user;if(!u)return;
   document.getElementById('h-name').textContent=(u.prenom||'')+' '+(u.nom||'');
   document.getElementById('h-zone').textContent=(u.zone||'Zone non définie')+' · '+(u.codeParrainage||'');
+  var hcp=document.getElementById('h-code-parrainage');if(hcp)hcp.textContent=u.codeParrainage||'—';
   // Charger solde
   try{
     var crP=await get('/accounts/me');
