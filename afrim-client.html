@@ -1349,6 +1349,7 @@ function selService(id){
   document.getElementById('pay-det-err').style.display='none';
   document.getElementById('pay-det-ref').value='';
   document.getElementById('pay-det-amt').value='';
+  var info1=document.getElementById('pay-det-frais-info');if(info1)info1.innerHTML='';
   setTab('pay-detail');
 }
 function fermerDetailPaiement(){setTab('paiements');renderListePaiements(SERVICES_PAY);}
@@ -1506,7 +1507,9 @@ function _routeQrScan(tel,parts){
         document.getElementById('pay-det-footer').style.display='';
         // Si le business a généré un QR "Encaisser un client" avec montant fixé, on le pré-remplit
         document.getElementById('pay-det-amt').value=montantQR>0?montantQR:'';
+        var infoQr=document.getElementById('pay-det-frais-info');if(infoQr)infoQr.innerHTML='';
         var okAmt=montantQR>0;
+        calcPayDet();
         document.getElementById('btn-pay-det').disabled=!okAmt;
         document.getElementById('btn-pay-det').style.opacity=okAmt?'1':'.4';
         setTab('pay-detail');
