@@ -1110,8 +1110,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <input id="seg-recu-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
       </div>
 
-      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Niveau KYC</div>
-      <div id="seg-kyc" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+      <div id="seg-kyc-section">
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px">Niveau KYC</div>
+        <div id="seg-kyc" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+      </div>
 
       <div style="font-size:13px;font-weight:800;margin-bottom:10px">Statut</div>
       <div id="seg-statuts" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
@@ -4642,10 +4644,14 @@ function renderSansFilleul(list){
 var segRolesSel={},segKycSel={},segStatutSel={};
 var segResults=[];var segSelected={};
 function initSegmentationUI(){
+  var isSup = G.user && G.user.role === 'superviseur';
   var rolesEl=document.getElementById('seg-roles');
   if(rolesEl&&!rolesEl.dataset.init){
     rolesEl.dataset.init='1';
-    [['client','Client'],['agent','Agent'],['business','Business'],['mini_master','Mini-Master'],['master','Master'],['superviseur','Superviseur']].forEach(function(r){
+    var rolesDisponibles = isSup
+      ? [['agent','Agent'],['business','Business'],['mini_master','Mini-Master'],['master','Master']]
+      : [['client','Client'],['agent','Agent'],['business','Business'],['mini_master','Mini-Master'],['master','Master'],['superviseur','Superviseur']];
+    rolesDisponibles.forEach(function(r){
       var btn=document.createElement('button');
       btn.type='button';
       btn.textContent=r[1];
@@ -4659,6 +4665,10 @@ function initSegmentationUI(){
       rolesEl.appendChild(btn);
     });
   }
+  // Le niveau KYC est un critère propre aux clients (plafonds KYC1/2/3) — sans objet pour le
+  // superviseur, qui ne peut de toute façon cibler que le réseau professionnel.
+  var kycSection=document.getElementById('seg-kyc-section');
+  if(kycSection) kycSection.style.display = isSup ? 'none' : '';
   var kycEl=document.getElementById('seg-kyc');
   if(kycEl&&!kycEl.dataset.init){
     kycEl.dataset.init='1';

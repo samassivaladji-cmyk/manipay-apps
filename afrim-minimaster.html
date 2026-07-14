@@ -484,6 +484,11 @@ function setTab(t){
         <div style="font-size:13px;font-weight:700;color:#1e3a8a">Transfert</div>
         <div style="font-size:10px;color:#2563eb;margin-top:2px">Liquidité · Gratuit</div>
       </button>
+      <button onclick="openSh('payer')" style="background:#fff;border:2px solid #a855f7;border-radius:16px;padding:16px 12px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08);grid-column:span 2">
+        <div style="width:38px;height:38px;border-radius:12px;background:#a855f7;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px;color:#fff">🏪</div>
+        <div style="font-size:13px;font-weight:700;color:#6b21a8">Payer marchand</div>
+        <div style="font-size:10px;color:#a855f7;margin-top:2px">0.5% de frais</div>
+      </button>
     </div>
   </div>
 
@@ -750,6 +755,57 @@ function setTab(t){
       <button class="btn btn-a" id="trf-btn-valider" style="flex:2" disabled onclick="doTransfert(this)">Continuer →</button>
     </div>
     <div id="trf-success" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHEET PAYER MARCHAND (choix) ═══════════════ -->
+<div class="sh-ov" id="sh-payer">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Payer un marchand</div><div style="font-size:11px;font-weight:800;color:#7e22ce">0.5% de frais à votre charge</div></div><button class="sh-x" onclick="closeSh('payer')">✕</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:10px">
+      <button onclick="closeSh('payer');lancerPayerScan()" style="background:#fff;border:2px solid #e9d5ff;border-radius:16px;padding:20px 10px;cursor:pointer;text-align:center">
+        <div style="font-size:26px;margin-bottom:8px">🔳</div>
+        <div style="font-size:13px;font-weight:700">Payer sur place</div>
+        <div style="font-size:10px;color:var(--m);margin-top:2px">Scanner le QR</div>
+      </button>
+      <button onclick="closeSh('payer');ouvrirPayerDistance()" style="background:#fff;border:2px solid #e9d5ff;border-radius:16px;padding:20px 10px;cursor:pointer;text-align:center">
+        <div style="font-size:26px;margin-bottom:8px">📶</div>
+        <div style="font-size:13px;font-weight:700">Payer à distance</div>
+        <div style="font-size:10px;color:var(--m);margin-top:2px">Code marchand</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHEET CONFIRMATION PAIEMENT MARCHAND ═══════════════ -->
+<div class="sh-ov" id="sh-payer-confirm">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div class="sh-title">Payer le marchand</div><button class="sh-x" onclick="closeSh('payer-confirm');rstPayerConfirm()">✕</button></div>
+    <div id="pc-form">
+      <div id="pc-code-wrap" style="margin-bottom:14px">
+        <span class="lbl">Code marchand</span>
+        <input class="inp" id="pc-code" type="text" placeholder="Ex: VAL1690" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[\s-]/g,'');calcPayerConfirm()"/>
+      </div>
+      <div id="pc-name-wrap" style="display:none;margin-bottom:14px;background:#fdf4ff;border-radius:12px;padding:12px 14px">
+        <div style="font-size:11px;color:#7e22ce;font-weight:700;text-transform:uppercase">Marchand</div>
+        <div style="font-size:16px;font-weight:800" id="pc-name-disp">—</div>
+      </div>
+      <span class="lbl">Montant (FCFA)</span>
+      <input class="inp" id="pc-amt" type="number" inputmode="numeric" placeholder="0" oninput="calcPayerConfirm()" style="margin-bottom:8px"/>
+      <div id="pc-frais-info" style="font-size:12px;color:var(--m);margin-bottom:16px">—</div>
+      <div id="pc-err" style="display:none" class="info info-r"></div>
+      <button class="btn btn-a" id="pc-btn" disabled style="opacity:.4" onclick="doPayerConfirm()">Confirmer le paiement</button>
+    </div>
+    <div id="pc-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
+    <div id="pc-success" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:44px;margin-bottom:10px">✅</div>
+      <div style="font-size:19px;font-weight:800;margin-bottom:6px">Paiement effectué</div>
+      <div style="color:var(--m);font-size:14px;margin-bottom:4px" id="pc-succ-txt"></div>
+      <div style="color:var(--d);font-size:12px;margin-bottom:22px" id="pc-succ-ref"></div>
+      <button class="btn btn-a" onclick="closeSh('payer-confirm');rstPayerConfirm()">Terminé</button>
+    </div>
   </div>
 </div>
 
@@ -2955,6 +3011,80 @@ function afficherChoixOp(tel, parts){
 function ouvrirDepotAvecClient(){
   var client=_scannedClient||opClients['scan']||opClients['choix'];if(!client)return;
   closeSh('choix-op');setTimeout(function(){ouvrirScreenDepot(client);},300);
+}
+
+// ── PAYER MARCHAND (paiement d'un compte Business depuis le solde pro) ──
+var _payerMode='distance'; // 'scan' | 'distance'
+function ouvrirPayerDistance(){
+  _payerMode='distance';
+  document.getElementById('pc-code-wrap').style.display='';
+  document.getElementById('pc-name-wrap').style.display='none';
+  document.getElementById('pc-code').value='';
+  openSh('payer-confirm');
+}
+function lancerPayerScan(){
+  _payerMode='scan';
+  ouvrirPopupQR(function(tel,parts){
+    var role=parts[2]||'';
+    if(role!=='business'){T("Ce QR n'est pas un QR marchand",true);return;}
+    var code=parts[1]||'';var nom=tel;
+    document.getElementById('pc-code-wrap').style.display='none';
+    document.getElementById('pc-name-wrap').style.display='';
+    document.getElementById('pc-name-disp').textContent=nom;
+    document.getElementById('pc-code').value=code;
+    var montantQR=parts[3]?Number(parts[3]):0;
+    document.getElementById('pc-amt').value=montantQR>0?montantQR:'';
+    calcPayerConfirm();
+    openSh('payer-confirm');
+  });
+}
+function calcPayerConfirm(){
+  var code=(document.getElementById('pc-code').value||'').trim();
+  var amt=Number(document.getElementById('pc-amt').value||0);
+  var ok=code&&amt>0;
+  document.getElementById('pc-btn').disabled=!ok;document.getElementById('pc-btn').style.opacity=ok?'1':'.4';
+  var info=document.getElementById('pc-frais-info');
+  if(amt>0){
+    var fraisClient=Math.round(amt*0.005);
+    var fraisAutre=Math.round(amt*0.005);
+    info.innerHTML=
+      '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Frais à votre charge (0.5%)</span><span style="font-weight:700">'+F(fraisClient)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #e5e7eb;margin-top:4px;padding-top:6px"><span style="font-weight:700">Total débité chez vous</span><span style="font-weight:900;color:#ef4444">'+F(amt+fraisClient)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Reçu par le marchand</span><span style="font-weight:700;color:#137a3f">'+F(amt-fraisAutre)+'</span></div>';
+  }else{
+    info.innerHTML='—';
+  }
+}
+function rstPayerConfirm(){
+  document.getElementById('pc-code').value='';document.getElementById('pc-amt').value='';
+  document.getElementById('pc-code-wrap').style.display='';document.getElementById('pc-name-wrap').style.display='none';
+  document.getElementById('pc-err').style.display='none';document.getElementById('pc-frais-info').innerHTML='—';
+  document.getElementById('pc-form').style.display='';document.getElementById('pc-loading').style.display='none';document.getElementById('pc-success').style.display='none';
+}
+async function doPayerConfirm(){
+  var code=(document.getElementById('pc-code').value||'').trim();
+  var amt=Number(document.getElementById('pc-amt').value||0);
+  var frais=Math.round(amt*0.005);
+  var totalDebit=amt+frais;
+  var solde=G.compte?Number(G.compte.solde):0;
+  var errEl=document.getElementById('pc-err');errEl.style.display='none';
+  if(totalDebit>solde){errEl.textContent='Solde insuffisant ('+F(solde)+' disponible, '+F(totalDebit)+' requis)';errEl.style.display='';return;}
+  document.getElementById('pc-form').style.display='none';document.getElementById('pc-loading').style.display='';
+  try{
+    var r=await post('/transactions/pay',{merchantCode:code,montant:amt});
+    document.getElementById('pc-loading').style.display='none';document.getElementById('pc-success').style.display='';
+    var fc=r.data.fraisClient!=null?r.data.fraisClient:frais;
+    var fb=r.data.fraisBusiness!=null?r.data.fraisBusiness:frais;
+    var td=r.data.totalDebitClient!=null?r.data.totalDebitClient:totalDebit;
+    document.getElementById('pc-succ-txt').innerHTML=
+      '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Total débité chez vous</span><span style="font-weight:900;color:#ef4444">'+F(td)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Reçu par '+code+'</span><span style="font-weight:900;color:#137a3f">'+F(amt-fb)+'</span></div>';
+    document.getElementById('pc-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    rafraichir();
+  }catch(e){
+    document.getElementById('pc-loading').style.display='none';document.getElementById('pc-form').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
 }
 
 function ouvrirTransfertAvecClient(){
