@@ -3139,6 +3139,21 @@ function setSoldeVal(v){
   if(el) el.textContent = _soldeVisible ? v : '••••••';
 }
 
+// Rafraîchissement automatique et silencieux : couvre le cas où l'agent/master/mini-master
+// REÇOIT un paiement ou un transfert (rien ne le déclenche de son côté dans ce cas).
+function _pollSoldeSilencieux(){
+  if(!G.token || G.locked || G.tab!=='home') return;
+  get('/accounts/me').then(function(cr){
+    if(cr && cr.data){
+      var changed = G.compte && Number(cr.data.solde)!==Number(G.compte.solde);
+      G.compte=cr.data;
+      if(changed){ setSoldeVal(FN(cr.data.solde)); if(typeof chargerTxns==='function') chargerTxns(); }
+    }
+  }).catch(function(){});
+}
+setInterval(_pollSoldeSilencieux, 10000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) _pollSoldeSilencieux(); });
+
 // ── Notifs (placeholder) ─────────────────────────────────────────
 async function ouvrirNotifs(){
   // Ouvrir le panel notifications

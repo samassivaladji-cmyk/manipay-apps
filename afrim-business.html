@@ -778,6 +778,20 @@ async function chargerCompteursReseau(){
 function afficherSolde(){var s=G.compte?Number(G.compte.solde):0;document.getElementById('h-solde').textContent=G.soldeVisible?F(s):'••••• FCFA';}
 function toggleSolde(){G.soldeVisible=!G.soldeVisible;afficherSolde();}
 
+// Rafraîchissement automatique et silencieux : couvre le cas où le business REÇOIT un paiement
+// ou un transfert (rien ne le déclenche de son côté, contrairement à quand il envoie lui-même).
+function _pollSoldeSilencieux(){
+  if(!G.token || G.locked || G.tab!=='home') return;
+  get('/accounts/me').then(function(cr){
+    if(cr && cr.data && G.compte && Number(cr.data.solde)!==Number(G.compte.solde)){
+      G.compte=cr.data; afficherSolde(); chargerTxns();
+    } else if(cr && cr.data){ G.compte=cr.data; }
+  }).catch(function(){});
+}
+setInterval(_pollSoldeSilencieux, 10000);
+// Vérification immédiate dès que l'utilisateur revient sur l'app (pas besoin d'attendre le prochain cycle)
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) _pollSoldeSilencieux(); });
+
 var _txCache={};
 var TX_CFG={
   paiement_marchand:{l:'Paiement reçu',icon:'🛒',color:'#137a3f'},
