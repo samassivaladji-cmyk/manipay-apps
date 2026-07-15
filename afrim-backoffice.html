@@ -2433,6 +2433,7 @@ function voirU(id){
     if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   }
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+  if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
@@ -3360,6 +3361,11 @@ async function rechercherClient(){
     btnPin.style.cssText='width:100%;margin-top:8px;padding:13px;background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
     btnPin.addEventListener('click',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
     btnZone.appendChild(btnPin);
+    var btnPerte=document.createElement('button');
+    btnPerte.textContent='📱 Téléphone perdu (réinit. appareils)';
+    btnPerte.style.cssText='width:100%;margin-top:8px;padding:13px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+    btnPerte.addEventListener('click',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+    btnZone.appendChild(btnPerte);
     card.appendChild(btnZone);
   }
   el.appendChild(card);
@@ -4885,6 +4891,7 @@ function voirU(id){
     if(u.statut==='bloque')mkBtn('Debloquer','btn-g','',function(){chgStatut(id,'actif');});
   }
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+  if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
@@ -5552,6 +5559,11 @@ async function rechercherClient(){
     btnPin.style.cssText='width:100%;margin-top:8px;padding:13px;background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
     btnPin.addEventListener('click',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
     btnZone.appendChild(btnPin);
+    var btnPerte=document.createElement('button');
+    btnPerte.textContent='📱 Téléphone perdu (réinit. appareils)';
+    btnPerte.style.cssText='width:100%;margin-top:8px;padding:13px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+    btnPerte.addEventListener('click',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
+    btnZone.appendChild(btnPerte);
     card.appendChild(btnZone);
   }
   el.appendChild(card);
@@ -7133,13 +7145,27 @@ function nouvelleRecherche(){
   currentClientId=null;
 }
 
+async function reinitialiserAppareilsClient(userId,nom){
+  if(!confirm('Réinitialiser les appareils de '+nom+' (cas téléphone perdu) ? Ça efface les appareils connus, révoque toutes les sessions actives et génère un nouveau PIN temporaire à communiquer. Assurez-vous d\'avoir vérifié son identité avant.'))return;
+  try{
+    var h={'Content-Type':'application/json','Authorization':'Bearer '+G.token};
+    var resp=await fetch(API+'/users/'+userId+'/reinitialiser-appareils',{method:'POST',headers:h});
+    var data=await resp.json();
+    if(!resp.ok)throw new Error(data.message||'Erreur');
+    var pinTemp=data.data&&data.data.pinTemporaire?data.data.pinTemporaire:'?';
+    alert('Appareils réinitialisés pour '+nom+'.\n\nPIN temporaire à communiquer : '+pinTemp+'\n\nIl devra le changer à sa prochaine connexion.');
+    toast('📱 Appareils de '+nom+' réinitialisés par '+acteur());
+  }catch(e){toast('Erreur: '+e.message,true);}
+}
 async function resetPinClient(userId,nom){
-  if(!confirm('Réinitialiser le PIN de '+nom+' à 1234 ? L\'utilisateur devra le changer à la prochaine connexion.'))return;
+  if(!confirm('Réinitialiser le PIN de '+nom+' avec un nouveau code temporaire aléatoire ? L\'utilisateur devra le changer à la prochaine connexion.'))return;
   try{
     var h={'Content-Type':'application/json','Authorization':'Bearer '+G.token};
     var resp=await fetch(API+'/users/'+userId+'/reset-pin',{method:'POST',headers:h});
     var data=await resp.json();
     if(!resp.ok)throw new Error(data.message||'Erreur lors de la réinitialisation');
+    var pinTemp=data.data&&data.data.pinTemporaire?data.data.pinTemporaire:'?';
+    alert('PIN temporaire pour '+nom+' : '+pinTemp+'\n\nCommuniquez ce code au titulaire — il devra le changer à sa prochaine connexion.');
     toast('🔐 PIN de '+nom+' réinitialisé par '+acteur());
   }catch(e){toast('Erreur: '+e.message,true);}
 }

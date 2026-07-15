@@ -117,7 +117,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
     <label class="lbl">Votre code secret actuel (PIN)</label>
     <input class="inp" id="rec-pin" type="password" placeholder="••••" inputmode="numeric" maxlength="4" style="margin-bottom:14px;letter-spacing:.3em;text-align:center" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
     <label class="lbl">Code de récupération</label>
-    <input class="inp" id="rec-code" type="text" placeholder="XXXX-XXXX-XXXX" style="margin-bottom:20px;text-transform:uppercase;font-family:monospace" oninput="this.value=this.value.toUpperCase()"/>
+    <input class="inp" id="rec-code" type="text" placeholder="1234-ABCD" style="margin-bottom:20px;text-transform:uppercase;font-family:monospace" oninput="this.value=this.value.toUpperCase()"/>
     <div id="rec-loading" style="display:none;text-align:center;padding:12px"><div class="spin"></div></div>
     <button class="btn btn-g" id="rec-btn" onclick="doLoginRecovery()">Récupérer mon compte</button>
     <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--m)">Vous n'avez pas noté ce code ? <a href="#" onclick="alert('Contactez le support AFRIM PAY : ils vérifieront votre identité et débloqueront votre compte.');return false" style="color:var(--claude);font-weight:700">Contacter le support</a></div>
