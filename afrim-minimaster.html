@@ -298,7 +298,8 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
 <script>
 var API='https://afrim-pay-backend.onrender.com/api/v1';
 var _ls={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},del:function(k){try{localStorage.removeItem(k);}catch(e){}}};
-let G={token:_ls.get('afrim_token'),refresh:_ls.get('afrim_refresh'),user:null,compte:null,pin:'',lockPin:'',tab:'home'};
+
+function getDeviceId(){var id=_ls.get('afrim_device_id');if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);_ls.set('afrim_device_id',id);}return id;}let G={token:_ls.get('afrim_token'),refresh:_ls.get('afrim_refresh'),user:null,compte:null,pin:'',lockPin:'',tab:'home'};
 var _soldeVisible=true;var _soldeVal='—';
 try{G.user=JSON.parse(_ls.get('afrim_user')||'null');}catch(e){}
 
@@ -335,7 +336,7 @@ async function doRefresh(){
 }
 
 function T(msg,err){var el=document.getElementById('toast');el.textContent=msg;el.className=err?'on err':'on';clearTimeout(T._t);T._t=setTimeout(function(){el.className='';},2800);}
-function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function F(n){return Number(n||0).toLocaleString('fr-FR');}
 function FN(n){return Number(n||0).toLocaleString('fr-FR');} // sans FCFA
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function S(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
@@ -367,11 +368,11 @@ function setTab(t){
     <div style="background:rgba(0,192,0,.1);border:1px solid rgba(0,192,0,.3);border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:28px">
       <span style="color:#25D366;font-size:11px;font-weight:800;letter-spacing:.14em">🌿 ESPACE MINI-MASTER</span>
     </div>
-    <div class="card" style="padding:28px;text-align:left">
+    <div style="background:#25D366;border-radius:16px;padding:28px;text-align:left;box-shadow:0 8px 24px rgba(0,192,0,.25)">
       <div id="err-login" class="info info-r" style="display:none"></div>
-      <span class="lbl">Numéro de téléphone</span>
-      <div style="margin-bottom:14px"><input class="inp" id="lg-tel" type="tel" placeholder="+225 07 XX XX XX" oninput="document.getElementById('lg-btn').disabled=this.value.replace(/\D/g,'').length<8"/></div>
-      <button class="btn btn-a" id="lg-btn" disabled onclick="goPin()">Continuer →</button>
+      <span class="lbl" style="color:rgba(255,255,255,.85)">Numéro de téléphone</span>
+      <div style="margin-bottom:14px"><input class="inp" id="lg-tel" type="tel" placeholder="+225 07 XX XX XX" style="background:#fff;border-color:#fff;color:#005000" oninput="document.getElementById('lg-btn').disabled=this.value.replace(/\D/g,'').length<8"/></div>
+      <button class="btn" id="lg-btn" disabled onclick="goPin()" style="background:#FFE566;color:#005000">Continuer →</button>
     </div>
   </div>
 </div>
@@ -397,6 +398,20 @@ function setTab(t){
         <button class="pin-key empty"></button><button class="pin-key" onclick="PIN(0)">0</button><button class="pin-key" onclick="DELP()">⌫</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="scr" id="s-device-verify" style="align-items:center;justify-content:center;padding:40px 22px;min-height:100vh">
+  <div style="width:100%;max-width:360px;text-align:center">
+    <div style="font-size:44px;margin-bottom:14px">🔐</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px">Nouvel appareil détecté</div>
+    <div style="color:var(--m);font-size:13px;margin-bottom:24px">Un code a été envoyé sur vos autres appareils déjà connectés à ce compte. Entrez-le ci-dessous pour continuer.</div>
+    <input class="inp" id="dv-code" type="tel" inputmode="numeric" maxlength="4" placeholder="- - - -" style="text-align:center;font-size:26px;letter-spacing:.35em;font-weight:800;margin-bottom:14px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
+    <div id="dv-err" class="info info-r" style="display:none;margin-bottom:16px"></div>
+    <div id="dv-loading" style="display:none;padding:12px"><div class="spin"></div></div>
+    <button class="btn btn-a" id="dv-btn" onclick="confirmerVerifAppareil()" style="width:100%;margin-bottom:12px">Confirmer</button>
+    <div style="font-size:11px;color:var(--m)">Aucun accès à vos autres appareils ? <a href="#" onclick="alert('Contactez le support AFRIM PAY pour vérifier votre identité et débloquer votre compte.');return false" style="color:var(--a);font-weight:700">Contacter le support</a></div>
+    <button onclick="S('s-pin')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-top:20px;font-family:inherit">← Retour</button>
   </div>
 </div>
 
@@ -1273,7 +1288,7 @@ async function doSopTransfert(){
     var r=await post('/transactions/transfer',{telephone:client.telephone,montant:amt,motif:'Transfert liquidité'});
     loading.style.display='none';
     var d=r.data||{};
-    document.getElementById('sop-trf-ok-txt').textContent='Transfert de '+F(amt)+' FCFA vers '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('sop-trf-ok-txt').textContent='Transfert de '+F(amt)+' vers '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('sop-trf-ok-ref').textContent=d.reference||'';
     rafraichir();S('s-op-transfert-ok');
   }catch(e){
@@ -1316,8 +1331,15 @@ async function doLogin(){
   document.getElementById('pin-loading').style.display='';document.getElementById('pin-keys').style.display='none';
   var errEl=document.getElementById('err-pin');errEl.style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:tel,pin:G.pin});
+    var r=await post('/auth/login',{telephone:tel,pin:G.pin,deviceId:getDeviceId()});
     var d=r.data;
+    if(d.needsDeviceVerification){
+      _dvTel=tel;
+      document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';
+      document.getElementById('dv-code').value='';document.getElementById('dv-err').style.display='none';
+      S('s-device-verify');
+      return;
+    }
     var SUPER_ADMIN_TEL='0505414751';
     var isSuperAdmin=d.user.telephone===SUPER_ADMIN_TEL;
     if(d.user.role!=='mini_master' && !isSuperAdmin)throw new Error('Cette app est réservée aux Mini-Masters AFRIM PAY.');
@@ -1335,6 +1357,23 @@ function copierCodeParrainageHome(){
   if(!code){T('Code indisponible',true);return;}
   if(navigator.clipboard)navigator.clipboard.writeText(code).then(function(){T('Code copié !');});
   else T('Code: '+code);
+}
+var _dvTel='';
+async function confirmerVerifAppareil(){
+  var code=(document.getElementById('dv-code').value||'').trim();
+  var errEl=document.getElementById('dv-err');errEl.style.display='none';
+  if(code.length!==4){errEl.textContent='Code à 4 chiffres requis';errEl.style.display='';return;}
+  document.getElementById('dv-btn').style.display='none';document.getElementById('dv-loading').style.display='';
+  try{
+    var r=await post('/auth/login/verify-device',{telephone:_dvTel,code:code,deviceId:getDeviceId()});
+    var d=r.data;
+    G.token=d.accessToken;G.refresh=d.refreshToken;G.user=d.user;G.compte=d.user.comptes&&d.user.comptes[0];
+    _ls.set('afrim_token',G.token);_ls.set('afrim_refresh',G.refresh);_ls.set('afrim_user',JSON.stringify(G.user));
+    entrerApp();
+  }catch(e){
+    document.getElementById('dv-btn').style.display='';document.getElementById('dv-loading').style.display='none';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
 }
 function entrerApp(){
   document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';
@@ -2118,7 +2157,7 @@ function renderStatTab(){
     var vol=d.ret.vol,nb=d.ret.list.length;
     h+='<div style="background:linear-gradient(135deg,#c2410c,#f97316);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">VOLUME RETRAITS</div>'
-      +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
+      +'<div style="font-size:32px;font-weight:900">'+F(vol)+'</div>'
       +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div></div>';
     h+=drawCourbe(d.ret.courbe,'val','#f97316','Retraits');
 
@@ -2176,7 +2215,7 @@ function renderStatTab(){
     var vol=d.gains.vol,nb=d.gains.list.length;
     h+='<div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:16px;padding:16px 18px;margin-bottom:14px;color:#fff">'
       +'<div style="font-size:10px;font-weight:700;opacity:.7;text-transform:uppercase;margin-bottom:4px">GAINS PARRAINAGE</div>'
-      +'<div style="font-size:32px;font-weight:900">'+F(vol)+' <span style="font-size:13px;opacity:.7">FCFA</span></div>'
+      +'<div style="font-size:32px;font-weight:900">'+F(vol)+'</div>'
       +'<div style="font-size:12px;opacity:.8;margin-top:4px">'+nb+' op&#233;rations</div></div>';
     h+=drawCourbe(d.gains.courbe,'val','#8b5cf6','Gains parrainage');
     if(!nb)h+='<div style="text-align:center;padding:20px;color:var(--m);font-size:13px">Aucun gain de parrainage sur cette p&#233;riode</div>';
@@ -2995,7 +3034,7 @@ function lockDEL(){_lockPin=_lockPin.slice(0,-1);rLockDots();}
 async function verifierLock(){
   var errEl=document.getElementById('lock-err');errEl.style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin});
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin,deviceId:getDeviceId()});
     document.getElementById('s-lock').classList.remove('on');
     G.token=r.data.accessToken;_ls.set('afrim_token',G.token);
   }catch(e){
@@ -3150,6 +3189,26 @@ function _pollSoldeSilencieux(){
       if(changed){ setSoldeVal(FN(cr.data.solde)); if(typeof chargerTxns==='function') chargerTxns(); }
     }
   }).catch(function(){});
+  get('/transactions/otp/pending').then(function(r){
+    var box=document.getElementById('h-pending-otp');
+    if(!box)return;
+    if(r&&r.data&&r.data.pending){
+      var libelle=r.data.type==='retrait'?'retirer':'encaisser';
+      document.getElementById('h-pending-otp-txt').textContent=
+        (r.data.demandeurNom||'Un professionnel')+' souhaite '+libelle+' '+F(r.data.montant)+' sur votre compte. Un code vous a été envoyé.';
+      box.style.display='';
+    } else {
+      box.style.display='none';
+    }
+  }).catch(function(){});
+}
+async function refuserDemandeOtp(){
+  if(!confirm('Refuser cette demande ? La personne sera notifiée et le code sera immédiatement invalidé.'))return;
+  try{
+    await post('/transactions/otp/refuser',{});
+    document.getElementById('h-pending-otp').style.display='none';
+    T('Demande refusée');
+  }catch(e){T(e.message,true);}
 }
 setInterval(_pollSoldeSilencieux, 10000);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) _pollSoldeSilencieux(); });
@@ -3331,7 +3390,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){
                           fetch(base+'/api/v1/users/fcm-token',{
                             method:'POST',
                             headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
-                            body:JSON.stringify({token:token})
+                            body:JSON.stringify({token:token,deviceId:getDeviceId()})
                           }).then(function(){console.log('[FCM] Token saved OK');}).catch(function(){});
                         }
                       }
@@ -3368,7 +3427,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){
         fetch((window.API_BASE||'https://afrim-pay-backend.onrender.com')+'/api/v1/users/fcm-token',{
           method:'POST',
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
-          body:JSON.stringify({token:window._fcmToken})
+          body:JSON.stringify({token:window._fcmToken,deviceId:getDeviceId()})
         }).then(function(r){console.log('[FCM] Token sauvegardé');}).catch(function(e){console.warn('[FCM] Save error:',e);});
       }
     }
@@ -3428,7 +3487,7 @@ async function doSopDepot(){
     var r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt});
     loading.style.display='none';
     var d=r.data||{};
-    document.getElementById('sop-dep-ok-txt').textContent='Dépôt de '+F(amt)+' FCFA pour '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('sop-dep-ok-txt').textContent='Dépôt de '+F(amt)+' pour '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('sop-dep-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
     document.getElementById('sop-dep-ok-ref').textContent=d.reference||'';
     rafraichir();S('s-op-depot-ok');
@@ -3484,7 +3543,7 @@ async function demanderOTPSop(){
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
-    document.getElementById('sop-ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' FCFA total';
+    document.getElementById('sop-ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
     document.getElementById('sop-ret-otp-err').style.display='none';
     document.getElementById('sop-ret-phase1').style.display='none';
     document.getElementById('sop-ret-phase2').style.display='';
@@ -3513,7 +3572,7 @@ async function confirmerOTPSop(){
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
     loading.style.display='none';
     var d=r.data||{};
-    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' FCFA pour '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
     document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
     rafraichir();S('s-op-retrait-ok');

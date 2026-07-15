@@ -121,7 +121,21 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
   </div>
 </div>
 
-<div class="scr" id="s-notif" style="background:#f9fafb;min-height:100vh">
+<div class="scr" id="s-device-verify" style="justify-content:center;align-items:center;min-height:100vh;padding:32px 24px;background:#fff">
+  <div style="width:100%;max-width:320px;text-align:center">
+    <div style="font-size:44px;margin-bottom:14px">🔐</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">Nouvel appareil détecté</h2>
+    <div style="color:var(--m);font-size:14px;margin-bottom:28px">Un code a été envoyé sur vos autres appareils déjà connectés à ce compte. Entrez-le ci-dessous pour continuer.</div>
+    <input class="inp" id="dv-code" type="tel" inputmode="numeric" maxlength="4" placeholder="- - - -" style="text-align:center;font-size:28px;letter-spacing:.35em;font-weight:800;margin-bottom:14px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
+    <div id="dv-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 16px;border-radius:12px;margin-bottom:16px;font-size:13px"></div>
+    <div id="dv-loading" style="display:none;padding:12px"><div class="spin"></div></div>
+    <button class="btn btn-g" id="dv-btn" onclick="confirmerVerifAppareil()" style="width:100%;margin-bottom:12px">Confirmer</button>
+    <div style="font-size:12px;color:var(--m)">Aucun accès à vos autres appareils ? <a href="#" onclick="alert('Contactez le support AFRIM PAY pour vérifier votre identité et débloquer votre compte.');return false" style="color:var(--claude);font-weight:700">Contacter le support</a></div>
+    <button onclick="S('s-pin')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-top:20px">← Retour</button>
+  </div>
+</div>
+
+
   <div style="background:#fff;padding:52px 20px 16px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:12px">
@@ -270,6 +284,12 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
             <button onclick="copierCode()" style="padding:8px 14px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Copier</button>
           </div>
         </div>
+      </div>
+
+      <div id="h-pending-otp" style="display:none;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#c2410c;text-transform:uppercase;margin-bottom:4px">🔐 Demande en attente</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:10px" id="h-pending-otp-txt">—</div>
+        <button onclick="refuserDemandeOtp()" style="width:100%;padding:10px;background:#fff;border:1.5px solid #ef4444;border-radius:10px;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser cette demande</button>
       </div>
 
       <div style="background:rgba(255,255,255,.14);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.28);border-radius:20px;padding:16px">
@@ -701,7 +721,8 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 <script>
 const API='https://afrim-pay-backend.onrender.com/api/v1';
 var LS={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},remove:function(k){try{localStorage.removeItem(k);}catch(e){}}};
-let G={token:LS.get('afrim_token'),refresh:LS.get('afrim_refresh'),user:null,compte:null,pin:'',soldeVisible:false,tab:'home',loginTel:''};
+
+function getDeviceId(){var id=LS.get('afrim_device_id');if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);LS.set('afrim_device_id',id);}return id;}let G={token:LS.get('afrim_token'),refresh:LS.get('afrim_refresh'),user:null,compte:null,pin:'',soldeVisible:false,tab:'home',loginTel:''};
 try{G.user=JSON.parse(LS.get('afrim_user'));}catch(e){}
 
 async function api(path,opts){
@@ -723,7 +744,7 @@ async function doRefresh(){
 }
 
 function T(msg,isErr){var el=document.getElementById('toast');el.textContent=msg;el.className=isErr?'on err':'on';clearTimeout(T._t);T._t=setTimeout(()=>el.className='',2800);}
-function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function F(n){return Number(n||0).toLocaleString('fr-FR');}
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 
 function S(id){if(G.locked)return;document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);if(typeof fbLogScreen==='function')fbLogScreen(id);}
@@ -1002,6 +1023,26 @@ function _pollSoldeSilencieux(){
       }
     }
   }).catch(function(){});
+  get('/transactions/otp/pending').then(function(r){
+    var box=document.getElementById('h-pending-otp');
+    if(!box)return;
+    if(r&&r.data&&r.data.pending){
+      var libelle=r.data.type==='retrait'?'retirer':'encaisser';
+      document.getElementById('h-pending-otp-txt').textContent=
+        (r.data.demandeurNom||'Un professionnel')+' souhaite '+libelle+' '+F(r.data.montant)+' sur votre compte. Un code vous a été envoyé.';
+      box.style.display='';
+    } else {
+      box.style.display='none';
+    }
+  }).catch(function(){});
+}
+async function refuserDemandeOtp(){
+  if(!confirm('Refuser cette demande ? La personne sera notifiée et le code sera immédiatement invalidé.'))return;
+  try{
+    await post('/transactions/otp/refuser',{});
+    document.getElementById('h-pending-otp').style.display='none';
+    T('Demande refusée');
+  }catch(e){T(e.message,true);}
 }
 setInterval(_pollSoldeSilencieux,10000);
 // Vérification immédiate dès que l'utilisateur revient sur l'app (cohérent avec les autres apps)
@@ -1463,7 +1504,7 @@ async function doSW() {
     var r = await post('/transactions/transfer', {telephone: window._swTel, montant: amt});
     document.getElementById('sw-loading').style.display = 'none';
     document.getElementById('sw-success').style.display = '';
-    document.getElementById('sw-succ-txt').textContent = F(amt) + ' FCFA envoyés à ' + window._swTel;
+    document.getElementById('sw-succ-txt').textContent = F(amt)+' envoyés à ' + window._swTel;
     document.getElementById('sw-succ-ref').textContent = r.data.reference;
     rafraichir();
   } catch(e) {
@@ -1561,8 +1602,32 @@ function rDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)
 
 async function doLogin(){
   document.getElementById('pin-keys').style.display='none';document.getElementById('pin-loading').style.display='';document.getElementById('err-pin').style.display='none';
-  try{var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin});G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');chargerBadgeNotifs();}
+  try{
+    var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin,deviceId:getDeviceId()});
+    if(r.data.needsDeviceVerification){
+      document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();
+      document.getElementById('dv-code').value='';document.getElementById('dv-err').style.display='none';
+      S('s-device-verify');
+      return;
+    }
+    G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');chargerBadgeNotifs();
+  }
   catch(e){document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';document.getElementById('err-pin').textContent=e.message;document.getElementById('err-pin').style.display='';G.pin='';rDots();}
+}
+async function confirmerVerifAppareil(){
+  var code=(document.getElementById('dv-code').value||'').trim();
+  var errEl=document.getElementById('dv-err');errEl.style.display='none';
+  if(code.length!==4){errEl.textContent='Code à 4 chiffres requis';errEl.style.display='';return;}
+  document.getElementById('dv-btn').style.display='none';document.getElementById('dv-loading').style.display='';
+  try{
+    var r=await post('/auth/login/verify-device',{telephone:G.loginTel,code:code,deviceId:getDeviceId()});
+    G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));
+    if(typeof fbLogLogin==='function')fbLogLogin();
+    setTab('home');chargerBadgeNotifs();
+  }catch(e){
+    document.getElementById('dv-btn').style.display='';document.getElementById('dv-loading').style.display='none';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
 }
 
 function dessinerQRHome(cid,data,color){
@@ -1757,17 +1822,17 @@ async function chargerCommissions(){
     +'<div style="background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:16px;padding:20px;margin-bottom:14px;color:#fff">'
     +'<div style="font-size:11px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">MES GAINS — PARRAINAGE</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">AUJOURD\'HUI</div><div id="cm-auj" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-auj-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">HIER</div><div id="cm-hier" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-hier-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">SEMAINE</div><div id="cm-sem" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-sem-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">CE MOIS</div><div id="cm-mois" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-mois-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">CETTE ANNÉE</div><div id="cm-ann" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-ann-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
-    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">DEPUIS TOUJOURS</div><div id="cm-total" style="font-size:20px;font-weight:900">0 FCFA</div><div id="cm-total-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">AUJOURD\'HUI</div><div id="cm-auj" style="font-size:20px;font-weight:900">0</div><div id="cm-auj-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">HIER</div><div id="cm-hier" style="font-size:20px;font-weight:900">0</div><div id="cm-hier-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">SEMAINE</div><div id="cm-sem" style="font-size:20px;font-weight:900">0</div><div id="cm-sem-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">CE MOIS</div><div id="cm-mois" style="font-size:20px;font-weight:900">0</div><div id="cm-mois-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">CETTE ANNÉE</div><div id="cm-ann" style="font-size:20px;font-weight:900">0</div><div id="cm-ann-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
+    +'<div style="background:rgba(0,0,0,.15);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">DEPUIS TOUJOURS</div><div id="cm-total" style="font-size:20px;font-weight:900">0</div><div id="cm-total-nb" style="font-size:10px;opacity:.7">0 ops</div></div>'
     +'</div></div>'
     // Gains disponibles
     +'<div style="background:#fff;border:2px solid #f59e0b;border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">'
     +'<div><div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">GAINS ACTUELS</div>'
-    +'<div id="cm-dispo" style="font-size:28px;font-weight:900;color:#d97706">0 FCFA</div>'
+    +'<div id="cm-dispo" style="font-size:28px;font-weight:900;color:#d97706">0</div>'
     +'<div style="font-size:11px;color:#6b7280;margin-top:2px">En attente de virement</div></div>'
     +'<div style="font-size:36px">🤝</div></div>'
     // Parrainés / Rattachés
@@ -1778,7 +1843,7 @@ async function chargerCommissions(){
     // Virer gains
     +'<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:14px">'
     +'<div style="font-size:13px;font-weight:700;margin-bottom:4px">💸 Virer mes gains</div>'
-    +'<div style="font-size:11px;color:#6b7280;margin-bottom:10px">Disponible : <span id="cm-dispo2" style="font-weight:700;color:#d97706">0 FCFA</span></div>'
+    +'<div style="font-size:11px;color:#6b7280;margin-bottom:10px">Disponible : <span id="cm-dispo2" style="font-weight:700;color:#d97706">0</span></div>'
     +'<div style="display:flex;gap:8px"><input id="gains-vir-amt" type="number" placeholder="Montant en FCFA" style="flex:1;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none;font-family:inherit"/>'
     +'<button onclick="virerGains()" style="padding:10px 18px;background:#d97706;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Virer</button></div>'
     +'</div>'
@@ -1818,7 +1883,7 @@ async function chargerCommissions(){
       if(d>=dAnn){tAnn+=m;nAnn++;}
     });
 
-    var F=function(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';};
+    var F=function(n){return Number(n||0).toLocaleString('fr-FR');};
     var s=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
     s('cm-auj',F(tAuj));s('cm-auj-nb',nAuj+' ops');
     s('cm-hier',F(tHier));s('cm-hier-nb',nHier+' ops');
@@ -2320,7 +2385,7 @@ async function deverrouillerApp(){
     for(var i=0;i<4;i++){var d=document.getElementById('lk'+i);if(d){d.style.background='';d.style.borderColor='#d1d5db';}}
   }
   try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin});
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin,deviceId:getDeviceId()});
     if(r.data&&r.data.accessToken){G.token=r.data.accessToken;LS.set('afrim_token',G.token);}
     resetDots();
     if(errEl)errEl.style.display='none';
@@ -2544,7 +2609,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
                         fetch(base+'/api/v1/users/fcm-token',{
                           method:'POST',
                           headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
-                          body:JSON.stringify({token:token})
+                          body:JSON.stringify({token:token,deviceId:getDeviceId()})
                         }).then(function(){console.log('[FCM] Token saved');}).catch(function(e){console.warn('[FCM]',e);});
                       }
                       // Stocker pour retry après login
@@ -2576,7 +2641,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
       fetch('/api/v1/users/fcm-token',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
-        body:JSON.stringify({token:window._fcmToken})
+        body:JSON.stringify({token:window._fcmToken,deviceId:getDeviceId()})
       }).catch(function(){});
     }
   };

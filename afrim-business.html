@@ -126,6 +126,20 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   </div>
 </div>
 
+<div class="scr" id="s-device-verify" style="align-items:center;justify-content:center;padding:32px 24px;min-height:100vh;background:#fff">
+  <div style="width:100%;max-width:320px;text-align:center">
+    <div style="font-size:44px;margin-bottom:14px">🔐</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">Nouvel appareil détecté</h2>
+    <div style="color:var(--m);font-size:13px;margin-bottom:24px">Un code a été envoyé sur vos autres appareils déjà connectés à ce compte. Entrez-le ci-dessous pour continuer.</div>
+    <input class="inp" id="dv-code" type="tel" inputmode="numeric" maxlength="4" placeholder="- - - -" style="text-align:center;font-size:26px;letter-spacing:.35em;font-weight:800;margin-bottom:14px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
+    <div id="dv-err" style="display:none" class="info info-r"></div>
+    <div id="dv-loading" style="display:none;padding:12px"><div class="spin"></div></div>
+    <button class="btn btn-g" id="dv-btn" onclick="confirmerVerifAppareil()" style="width:100%;margin:14px 0 12px">Confirmer</button>
+    <div style="font-size:11px;color:var(--m)">Aucun accès à vos autres appareils ? <a href="#" onclick="alert('Contactez le support AFRIM PAY pour vérifier votre identité et débloquer votre compte.');return false" style="color:var(--claude);font-weight:700">Contacter le support</a></div>
+    <button onclick="S('s-pin')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-top:20px;font-family:inherit">← Retour</button>
+  </div>
+</div>
+
 <!-- ═══════════════ LOCK ═══════════════ -->
 <div id="s-lock">
   <div style="width:100%;max-width:320px;text-align:center;display:flex;flex-direction:column;align-items:center">
@@ -255,6 +269,12 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
         <span style="font-size:12px;font-weight:800;color:var(--claude-d)">COPIER</span>
       </div>
     </button>
+
+    <div id="h-pending-otp" style="display:none;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;color:#c2410c;text-transform:uppercase;margin-bottom:4px">🔐 Demande en attente</div>
+      <div style="font-size:13px;color:#374151;margin-bottom:10px" id="h-pending-otp-txt">—</div>
+      <button onclick="refuserDemandeOtp()" style="width:100%;padding:10px;background:#fff;border:1.5px solid #ef4444;border-radius:10px;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser cette demande</button>
+    </div>
 
     <div class="row" style="margin-bottom:10px">
       <div style="font-size:15px;font-weight:800">Transactions récentes</div>
@@ -424,8 +444,18 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       </div>
       <div id="enc-conf-frais" style="text-align:left;font-size:13px;margin-bottom:16px"></div>
       <div id="enc-conf-err" style="display:none" class="info info-r"></div>
-      <button class="btn btn-g" id="enc-conf-btn" onclick="doEncaisserCollect()">Encaisser</button>
+      <button class="btn btn-g" id="enc-conf-btn" onclick="demanderOtpEncaissement()">Envoyer le code au client</button>
       <button class="btn btn-ghost" style="margin-top:10px" onclick="rstEncaisser()">Annuler</button>
+    </div>
+    <div id="enc-otp-view" style="display:none;text-align:center;padding:6px 0 20px">
+      <div style="font-size:38px;margin-bottom:10px">🔐</div>
+      <div style="font-size:17px;font-weight:800;margin-bottom:6px">Demandez le code au client</div>
+      <div style="color:var(--m);font-size:13px;margin-bottom:18px">Un code à 4 chiffres a été envoyé sur le compte de <span id="enc-otp-client" style="font-weight:700">—</span>. Il doit vous le communiquer de vive voix.</div>
+      <input class="inp" id="enc-otp-input" type="tel" inputmode="numeric" maxlength="4" placeholder="- - - -" style="text-align:center;font-size:26px;letter-spacing:.3em;font-weight:800;margin-bottom:10px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
+      <div id="enc-otp-err" style="display:none" class="info info-r"></div>
+      <button class="btn btn-g" onclick="confirmerOtpEncaissement()">Confirmer l'encaissement</button>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="demanderOtpEncaissement()">Renvoyer le code</button>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="rstEncaisser()">Annuler</button>
     </div>
     <div id="enc-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
     <div id="enc-success" style="display:none;text-align:center;padding:10px 0 20px">
@@ -690,7 +720,8 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 <script>
 const API='https://afrim-pay-backend.onrender.com/api/v1';
 var LS={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},remove:function(k){try{localStorage.removeItem(k);}catch(e){}}};
-let G={token:LS.get('afrim_token'),refresh:LS.get('afrim_refresh'),user:null,compte:null,pin:'',soldeVisible:false,tab:'home',loginTel:'',locked:false};
+
+function getDeviceId(){var id=LS.get('afrim_device_id');if(!id){id='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);LS.set('afrim_device_id',id);}return id;}let G={token:LS.get('afrim_token'),refresh:LS.get('afrim_refresh'),user:null,compte:null,pin:'',soldeVisible:false,tab:'home',loginTel:'',locked:false};
 try{G.user=JSON.parse(LS.get('afrim_user'));}catch(e){}
 
 async function api(path,opts){
@@ -712,7 +743,7 @@ async function doRefresh(){
 }
 
 function T(msg,isErr){var el=document.getElementById('toast');el.textContent=msg;el.className=isErr?'on err':'on';clearTimeout(T._t);T._t=setTimeout(()=>el.className='',2800);}
-function F(n){return Number(n||0).toLocaleString('fr-FR')+' FCFA';}
+function F(n){return Number(n||0).toLocaleString('fr-FR');}
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 
 function S(id){if(G.locked)return;document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
@@ -739,10 +770,32 @@ function PIN(n){if(G.pin.length>=4)return;G.pin+=n;rDots();if(G.pin.length===4)s
 function DELP(){G.pin=G.pin.slice(0,-1);rDots();}
 function rDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.className='pin-dot'+(i<G.pin.length?' on':'');}}
 
+async function confirmerVerifAppareil(){
+  var code=(document.getElementById('dv-code').value||'').trim();
+  var errEl=document.getElementById('dv-err');errEl.style.display='none';
+  if(code.length!==4){errEl.textContent='Code à 4 chiffres requis';errEl.style.display='';return;}
+  document.getElementById('dv-btn').style.display='none';document.getElementById('dv-loading').style.display='';
+  try{
+    var r=await post('/auth/login/verify-device',{telephone:G.loginTel,code:code,deviceId:getDeviceId()});
+    G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
+    LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));
+    setTab('home');chargerBadgeNotifs();
+    if(typeof initFCMAfterLogin==='function')initFCMAfterLogin();
+  }catch(e){
+    document.getElementById('dv-btn').style.display='';document.getElementById('dv-loading').style.display='none';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
 async function doLogin(){
   document.getElementById('pin-keys').style.display='none';document.getElementById('pin-loading').style.display='';document.getElementById('err-pin').style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin});
+    var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin,deviceId:getDeviceId()});
+    if(r.data.needsDeviceVerification){
+      document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();
+      document.getElementById('dv-code').value='';document.getElementById('dv-err').style.display='none';
+      S('s-device-verify');
+      return;
+    }
     if(r.data.user && r.data.user.role!=='business'){throw new Error("Ce compte n'est pas un compte Business.");}
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
     LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));
@@ -787,6 +840,26 @@ function _pollSoldeSilencieux(){
       G.compte=cr.data; afficherSolde(); chargerTxns();
     } else if(cr && cr.data){ G.compte=cr.data; }
   }).catch(function(){});
+  get('/transactions/otp/pending').then(function(r){
+    var box=document.getElementById('h-pending-otp');
+    if(!box)return;
+    if(r&&r.data&&r.data.pending){
+      var libelle=r.data.type==='retrait'?'retirer':'encaisser';
+      document.getElementById('h-pending-otp-txt').textContent=
+        (r.data.demandeurNom||'Un professionnel')+' souhaite '+libelle+' '+F(r.data.montant)+' sur votre compte. Un code vous a été envoyé.';
+      box.style.display='';
+    } else {
+      box.style.display='none';
+    }
+  }).catch(function(){});
+}
+async function refuserDemandeOtp(){
+  if(!confirm('Refuser cette demande ? La personne sera notifiée et le code sera immédiatement invalidé.'))return;
+  try{
+    await post('/transactions/otp/refuser',{});
+    document.getElementById('h-pending-otp').style.display='none';
+    T('Demande refusée');
+  }catch(e){T(e.message,true);}
 }
 setInterval(_pollSoldeSilencieux, 10000);
 // Vérification immédiate dès que l'utilisateur revient sur l'app (pas besoin d'attendre le prochain cycle)
@@ -944,21 +1017,21 @@ async function chargerGains(){
     +'<div style="background:var(--claude-d);border-radius:16px;padding:20px;margin-bottom:14px;color:#fff">'
     +'<div style="font-size:11px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">GAINS — PARRAINAGE (5%)</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">AUJOURD\'HUI</div><div id="cm-auj" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">HIER</div><div id="cm-hier" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">SEMAINE</div><div id="cm-sem" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">CE MOIS</div><div id="cm-mois" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">CETTE ANNÉE</div><div id="cm-ann" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
-    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">TOUJOURS</div><div id="cm-total" style="font-size:20px;font-weight:900">0 FCFA</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">AUJOURD\'HUI</div><div id="cm-auj" style="font-size:20px;font-weight:900">0</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">HIER</div><div id="cm-hier" style="font-size:20px;font-weight:900">0</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">SEMAINE</div><div id="cm-sem" style="font-size:20px;font-weight:900">0</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">CE MOIS</div><div id="cm-mois" style="font-size:20px;font-weight:900">0</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">CETTE ANNÉE</div><div id="cm-ann" style="font-size:20px;font-weight:900">0</div></div>'
+    +'<div style="background:rgba(0,0,0,.18);border-radius:12px;padding:12px"><div style="font-size:9px;font-weight:700;opacity:.75;text-transform:uppercase">TOUJOURS</div><div id="cm-total" style="font-size:20px;font-weight:900">0</div></div>'
     +'</div></div>'
     +'<div style="background:#fff;border:2px solid var(--green);border-radius:16px;padding:16px;margin-bottom:14px">'
     +'<div style="font-size:11px;font-weight:700;color:var(--green-d);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">GAINS ACTUELS</div>'
-    +'<div class="row"><div id="cm-mois2" style="font-size:26px;font-weight:900;color:var(--green-d)">0 FCFA</div><div style="font-size:13px;color:var(--m)">/ 200 000 FCFA</div></div>'
+    +'<div class="row"><div id="cm-mois2" style="font-size:26px;font-weight:900;color:var(--green-d)">0</div><div style="font-size:13px;color:var(--m)">/ 200 000 FCFA</div></div>'
     +'<div style="background:#f0f0f0;border-radius:99px;height:8px;margin-top:10px;overflow:hidden"><div id="cm-bar" style="background:var(--green);height:100%;width:0%"></div></div>'
     +'</div>'
     +'<div style="background:#fff;border:2px solid var(--claude);border-radius:16px;padding:16px;margin-bottom:14px">'
     +'<div style="font-size:11px;font-weight:700;color:var(--claude-d);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">VIREMENT</div>'
-    +'<div class="row" style="margin-bottom:10px"><div><div id="cm-dispo" style="font-size:24px;font-weight:900;color:var(--claude-d)">0 FCFA</div><div style="font-size:11px;color:var(--m)">Disponible pour virement</div></div></div>'
+    +'<div class="row" style="margin-bottom:10px"><div><div id="cm-dispo" style="font-size:24px;font-weight:900;color:var(--claude-d)">0</div><div style="font-size:11px;color:var(--m)">Disponible pour virement</div></div></div>'
     +'<button class="btn btn-a" id="btn-virer-gains" disabled style="opacity:.4" onclick="doVirerGains()">Virer vers mon solde</button>'
     +'<div id="virer-err" style="display:none" class="info info-r"></div>'
     +'</div>'
@@ -1252,9 +1325,12 @@ function rstEncaisser(){
   document.getElementById('enc-btn').disabled=true;document.getElementById('enc-btn').style.opacity='.4';
   document.getElementById('enc-amt-view').style.display='';
   document.getElementById('enc-confirm-view').style.display='none';
+  document.getElementById('enc-otp-view').style.display='none';
   document.getElementById('enc-loading').style.display='none';
   document.getElementById('enc-success').style.display='none';
   document.getElementById('enc-conf-err').style.display='none';
+  document.getElementById('enc-otp-err').style.display='none';
+  document.getElementById('enc-otp-input').value='';
   var fi=document.getElementById('enc-conf-frais');if(fi)fi.innerHTML='';
 }
 function encTap(v){
@@ -1291,13 +1367,33 @@ function lancerEncaisserScan(){
     }).catch(function(){document.getElementById('enc-conf-client').textContent=tel;});
   });
 }
-async function doEncaisserCollect(){
+async function demanderOtpEncaissement(){
   var amt=Number(_encAmt);if(!amt||!_encClientTel)return;
   var errEl=document.getElementById('enc-conf-err');errEl.style.display='none';
   document.getElementById('enc-confirm-view').style.display='none';
   document.getElementById('enc-loading').style.display='';
   try{
-    var r=await post('/transactions/collect',{telephone:_encClientTel,montant:amt});
+    var r=await post('/transactions/collect/request',{telephone:_encClientTel,montant:amt});
+    document.getElementById('enc-loading').style.display='none';
+    document.getElementById('enc-otp-client').textContent=r.data.clientNom||_encClientTel;
+    document.getElementById('enc-otp-input').value='';
+    document.getElementById('enc-otp-err').style.display='none';
+    document.getElementById('enc-otp-view').style.display='';
+  }catch(e){
+    document.getElementById('enc-loading').style.display='none';
+    document.getElementById('enc-confirm-view').style.display='';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
+async function confirmerOtpEncaissement(){
+  var amt=Number(_encAmt);if(!amt||!_encClientTel)return;
+  var otp=(document.getElementById('enc-otp-input').value||'').trim();
+  var errEl=document.getElementById('enc-otp-err');errEl.style.display='none';
+  if(otp.length!==4){errEl.textContent='Code à 4 chiffres requis';errEl.style.display='';return;}
+  document.getElementById('enc-otp-view').style.display='none';
+  document.getElementById('enc-loading').style.display='';
+  try{
+    var r=await post('/transactions/collect/confirm',{telephone:_encClientTel,otp:otp});
     document.getElementById('enc-loading').style.display='none';
     document.getElementById('enc-success').style.display='';
     var td=r.data.totalDebitClient!=null?r.data.totalDebitClient:amt;
@@ -1306,10 +1402,11 @@ async function doEncaisserCollect(){
       '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Débité chez '+(r.data.clientNom||_encClientTel)+'</span><span style="font-weight:900;color:#ef4444">'+F(td)+'</span></div>'
       +'<div style="display:flex;justify-content:space-between;padding:2px 0"><span>Reçu sur votre compte</span><span style="font-weight:900;color:var(--green-d)">'+F(amt-fb)+'</span></div>';
     document.getElementById('enc-succ-ref').textContent='Réf: '+(r.data.reference||'');
+    if(G.compte){G.compte.solde=Number(G.compte.solde)+(amt-fb);afficherSolde();}
     rafraichir();
   }catch(e){
     document.getElementById('enc-loading').style.display='none';
-    document.getElementById('enc-confirm-view').style.display='';
+    document.getElementById('enc-otp-view').style.display='';
     errEl.textContent=e.message;errEl.style.display='';
   }
 }
@@ -1613,7 +1710,7 @@ async function deverrouillerApp(){
   var errEl=document.getElementById('lock-err');var pin=_lockPin;if(pin.length!==4)return;
   function resetDots(){_lockPin='';for(var i=0;i<4;i++){var d=document.getElementById('lk'+i);if(d){d.style.background='rgba(255,255,255,.15)';d.style.borderColor='rgba(255,255,255,.4)';}}}
   try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin});
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin,deviceId:getDeviceId()});
     if(r.data&&r.data.accessToken){G.token=r.data.accessToken;LS.set('afrim_token',G.token);}
     resetDots();if(errEl)errEl.style.display='none';
     G.locked=false;document.getElementById('s-lock').classList.remove('on');
@@ -1695,12 +1792,12 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
           if(!('Notification' in window))return;
           Notification.requestPermission().then(function(perm){
             if(perm!=='granted')return;
-            navigator.serviceWorker.register('/firebase-messaging-sw.js').then(function(reg){
+            navigator.serviceWorker.register('https://samassivaladji-cmyk.github.io/afrim-pay-apps/firebase-messaging-sw.js').then(function(reg){
               getToken(msg,{serviceWorkerRegistration:reg}).then(function(token){
                 if(!token)return;
                 window._fcmToken=token;
                 if(window.G && window.G.token){
-                  fetch(window.API+'/users/fcm-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window.G.token},body:JSON.stringify({token:token})}).catch(function(){});
+                  fetch(window.API+'/users/fcm-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window.G.token},body:JSON.stringify({token:token,deviceId:getDeviceId()})}).catch(function(){});
                 }
               }).catch(function(){});
             }).catch(function(){});
