@@ -393,6 +393,11 @@ function setTab(t){
       </div>
       <button onclick="copierCodeParrainageHome()" style="padding:8px 14px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Copier</button>
     </div>
+    <div id="h-pending-otp" style="display:none;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:16px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;color:#c2410c;text-transform:uppercase;margin-bottom:4px">🔐 Demande en attente</div>
+      <div style="font-size:13px;color:#374151;margin-bottom:10px" id="h-pending-otp-txt">—</div>
+      <button onclick="refuserDemandeOtp()" style="width:100%;padding:10px;background:#fff;border:1.5px solid #ef4444;border-radius:10px;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser cette demande</button>
+    </div>
     <span class="lbl">Transactions récentes</span>
     <div id="h-txns"><div style="text-align:center;padding:20px"><div class="spin"></div></div></div>
   </div>
@@ -2724,6 +2729,26 @@ function _pollSoldeSilencieux(){
       if(changed){ setSoldeVal(FN(cr.data.solde)); if(typeof chargerTxns==='function') chargerTxns(); }
     }
   }).catch(function(){});
+  get('/transactions/otp/pending').then(function(r){
+    var box=document.getElementById('h-pending-otp');
+    if(!box)return;
+    if(r&&r.data&&r.data.pending){
+      var libelle=r.data.type==='retrait'?'retirer':'encaisser';
+      document.getElementById('h-pending-otp-txt').textContent=
+        (r.data.demandeurNom||'Un professionnel')+' souhaite '+libelle+' '+F(r.data.montant)+' sur votre compte. Un code vous a été envoyé.';
+      box.style.display='';
+    } else {
+      box.style.display='none';
+    }
+  }).catch(function(){});
+}
+async function refuserDemandeOtp(){
+  if(!confirm('Refuser cette demande ? La personne sera notifiée et le code sera immédiatement invalidé.'))return;
+  try{
+    await post('/transactions/otp/refuser',{});
+    document.getElementById('h-pending-otp').style.display='none';
+    T('Demande refusée');
+  }catch(e){T(e.message,true);}
 }
 setInterval(_pollSoldeSilencieux, 10000);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) _pollSoldeSilencieux(); });
