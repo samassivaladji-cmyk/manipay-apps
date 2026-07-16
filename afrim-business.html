@@ -406,11 +406,6 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div><div class="params-label">Sécurité</div><div class="params-sub">Modifier le code PIN</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
-    <button class="params-item" onclick="ouvrirRegenererCodeRecup()">
-      <div class="params-icon" style="background:#fef3c7">🔑</div>
-      <div><div class="params-label">Code de récupération</div><div class="params-sub">Générer un nouveau code (perte de téléphone)</div></div>
-      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin:10px 0 4px">
       <div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:4px">🛡️ Politique du code secret (PIN)</div>
       <div style="font-size:11px;color:#1e3a8a;line-height:1.5">Votre PIN à 4 chiffres ne peut pas être : des chiffres identiques (0000, 1111...), une suite logique (1234, 4321...), ni une année entre 1940 et 2025 (souvent une date de naissance, facile à deviner par un proche). Choisissez un code que vous seul pouvez deviner.</div>
@@ -818,14 +813,6 @@ async function confirmerVerifAppareil(){
     document.getElementById('dv-btn').style.display='';document.getElementById('dv-loading').style.display='none';
     errEl.textContent=e.message;errEl.style.display='';
   }
-}
-async function ouvrirRegenererCodeRecup(){
-  var pin=prompt('Entrez votre PIN actuel pour générer un nouveau code de récupération :');
-  if(!pin)return;
-  try{
-    var r=await post('/users/regenerer-code-recuperation',{pin:pin});
-    alert('Nouveau code de récupération (notez-le, il ne sera plus jamais affiché) :\n\n'+r.data.codeRecuperation+'\n\nL\'ancien code ne fonctionne plus.');
-  }catch(e){T(e.message,true);}
 }
 async function doLoginRecovery(){
   var tel=(document.getElementById('rec-tel').value||'').trim();

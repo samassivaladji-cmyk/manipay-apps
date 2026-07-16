@@ -7217,7 +7217,8 @@ async function reinitialiserAppareilsClient(userId,nom){
     var data=await resp.json();
     if(!resp.ok)throw new Error(data.message||'Erreur');
     var pinTemp=data.data&&data.data.pinTemporaire?data.data.pinTemporaire:'?';
-    alert('Appareils réinitialisés pour '+nom+'.\n\nPIN temporaire à communiquer : '+pinTemp+'\n\nIl devra le changer à sa prochaine connexion.');
+    var codeRecup=data.data&&data.data.codeRecuperation?data.data.codeRecuperation:'?';
+    alert('Appareils réinitialisés pour '+nom+'.\n\nPIN temporaire à communiquer : '+pinTemp+'\nNouveau code de récupération à communiquer : '+codeRecup+'\n\nIl devra changer son PIN à sa prochaine connexion.');
     toast('📱 Appareils de '+nom+' réinitialisés par '+acteur());
   }catch(e){toast('Erreur: '+e.message,true);}
 }
