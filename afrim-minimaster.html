@@ -1384,8 +1384,10 @@ async function doLogin(){
     _ls.set('afrim_token',G.token);_ls.set('afrim_refresh',G.refresh);_ls.set('afrim_user',JSON.stringify(G.user));
     entrerApp();
     if(G.user&&G.user.pinAChanger){
+      var _pinUtilise=G.pin;
       setTimeout(function(){
         alert('Votre PIN a été réinitialisé. Vous devez en choisir un nouveau avant de continuer.');
+        document.getElementById('old-pin').value=_pinUtilise;
         openSh('change-pin');
       },300);
     }

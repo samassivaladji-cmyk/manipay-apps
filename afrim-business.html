@@ -850,12 +850,14 @@ async function doLogin(){
     if(r.data.user && r.data.user.role!=='business'){throw new Error("Ce compte n'est pas un compte Business.");}
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
     LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));
+    var _pinUtilise=G.pin;
     document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();
     setTab('home');chargerBadgeNotifs();
     if(typeof initFCMAfterLogin==='function')initFCMAfterLogin();
     if(G.user&&G.user.pinAChanger){
       setTimeout(function(){
         alert('Votre PIN a été réinitialisé. Vous devez en choisir un nouveau avant de continuer.');
+        document.getElementById('cp-old').value=_pinUtilise;
         openSh('change-pin');
       },300);
     }

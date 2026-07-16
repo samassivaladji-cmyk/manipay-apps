@@ -1671,11 +1671,12 @@ async function doLogin(){
       S('s-device-verify');
       return;
     }
+    var _pinUtilise=G.pin;
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('afrim_token',G.token);LS.set('afrim_refresh',G.refresh);LS.set('afrim_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');chargerBadgeNotifs();
     if(G.user&&G.user.pinAChanger){
       setTimeout(function(){
         alert('Votre PIN a été réinitialisé. Vous devez en choisir un nouveau avant de continuer.');
-        document.getElementById('cp-old').value='1234';
+        document.getElementById('cp-old').value=_pinUtilise;
         openSh('change-pin');
       },300);
     }
