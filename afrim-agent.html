@@ -246,7 +246,7 @@ function setTab(t){
     <div style="margin-bottom:20px"><input class="inp" id="rec-code" type="text" placeholder="1234-ABCD" style="text-transform:uppercase;font-family:monospace" oninput="this.value=this.value.toUpperCase()"/></div>
     <div id="rec-loading" style="display:none;text-align:center;padding:12px"><div class="spin"></div></div>
     <button class="btn btn-a" id="rec-btn" onclick="doLoginRecovery()">Récupérer mon compte</button>
-    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--m)">Vous n'avez pas noté ce code ? <a href="#" onclick="alert('Contactez le support AFRIM PAY : ils vérifieront votre identité et débloqueront votre compte.');return false" style="color:var(--a);font-weight:700">Contacter le support</a></div>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--m)">Vous n'avez pas noté ce code ? <a href="https://wa.me/2250789132645?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20r%C3%A9cup%C3%A9rer%20mon%20compte%20AFRIM%20PAY" target="_blank" style="color:var(--a);font-weight:700">Contacter le support</a></div>
   </div>
 </div>
 
@@ -283,7 +283,7 @@ function setTab(t){
     <div id="dv-err" class="info info-r" style="display:none;margin-bottom:16px"></div>
     <div id="dv-loading" style="display:none;padding:12px"><div class="spin"></div></div>
     <button class="btn btn-a" id="dv-btn" onclick="confirmerVerifAppareil()" style="width:100%;margin-bottom:12px">Confirmer</button>
-    <div style="font-size:11px;color:var(--m)">Aucun accès à vos autres appareils ? <a href="#" onclick="alert('Contactez le support AFRIM PAY pour vérifier votre identité et débloquer votre compte.');return false" style="color:var(--a);font-weight:700">Contacter le support</a></div>
+    <div style="font-size:11px;color:var(--m)">Aucun accès à vos autres appareils ? <a href="https://wa.me/2250789132645?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20v%C3%A9rifier%20mon%20identit%C3%A9%20et%20d%C3%A9bloquer%20mon%20compte%20AFRIM%20PAY" target="_blank" style="color:var(--a);font-weight:700">Contacter le support</a></div>
     <button onclick="S('s-pin')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-top:20px;font-family:inherit">← Retour</button>
   </div>
 </div>
@@ -2381,7 +2381,7 @@ function voirPaliers(){
 
 function contacterSupport(){
   var msg='Bonjour, je suis agent AFRIM PAY '+(G.user?'('+((G.user.prenom||'')+' '+(G.user.nom||'')).trim()+' - '+(G.user.telephone||'')+')':"")+" et j'ai besoin d'assistance.";
-  var url='https://wa.me/002250789132645?text='+encodeURIComponent(msg);
+  var url='https://wa.me/2250789132645?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
 
