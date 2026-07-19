@@ -1,0 +1,14 @@
+{
+  "name": "ManiPay Master",
+  "short_name": "ManiPay Master",
+  "start_url": "/manipay-apps/manipay-master.html",
+  "scope": "/manipay-apps/",
+  "display": "standalone",
+  "background_color": "#D97706",
+  "theme_color": "#D97706",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-master-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-master-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
