@@ -461,6 +461,11 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       <div><div class="params-label">Inviter un ami</div><div class="params-sub">Partager votre code parrainage</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="ouvrirCreationFilleul()">
+      <div class="params-icon" style="background:#ecfdf5">➕</div>
+      <div><div class="params-label">Créer un compte</div><div class="params-sub">Pour un proche, rattaché automatiquement à vous</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:18px;margin-bottom:10px">Partenaires</div>
     <div style="background:#fff;border-radius:14px;border:1px solid #f3f4f6;padding:16px;margin-bottom:8px">
       <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:12px">Partenaires bancaires</div>
@@ -720,7 +725,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 <div class="sh-ov" id="sh-inscription">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Créer un compte</div><div style="color:var(--m);font-size:12px">Client ManiPay</div></div><button class="sh-x" onclick="closeSh('inscription');rstIns()">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title" id="ins-sh-title">Créer un compte</div><div style="color:var(--m);font-size:12px" id="ins-sh-sub">Client ManiPay</div></div><button class="sh-x" onclick="closeSh('inscription');rstIns()">✕</button></div>
     <div class="sh-body">
       <div id="ins-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
       <div id="ins-form">
@@ -752,7 +757,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
           <input type="checkbox" id="ins-code-confirm" onchange="document.getElementById('ins-btn-continuer').disabled=!this.checked;document.getElementById('ins-btn-continuer').style.opacity=this.checked?'1':'.4'"/>
           J'ai noté ce code en lieu sûr
         </label>
-        <button class="btn btn-g" id="ins-btn-continuer" disabled style="opacity:.4" onclick="closeSh('inscription');rstIns();S('s-login')">Se connecter →</button>
+        <button class="btn btn-g" id="ins-btn-continuer" disabled style="opacity:.4" onclick="finInscription()">Se connecter →</button>
       </div>
     </div>
   </div>
@@ -1614,7 +1619,27 @@ function calcPay(){}
 async function doPay(){}
 function rstPay(){}
 
-function rstIns(){['ins-prenom','ins-nom','ins-tel','ins-pin','ins-parrain'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('ins-err').style.display='none';document.getElementById('ins-form').style.display='';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';}
+function rstIns(){['ins-prenom','ins-nom','ins-tel','ins-pin','ins-parrain'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('ins-err').style.display='none';document.getElementById('ins-form').style.display='';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';
+  G.modeFilleul=false;
+  var pc=document.getElementById('ins-parrain');pc.readOnly=false;pc.style.background='';
+  document.getElementById('ins-sh-title').textContent='Créer un compte';
+  document.getElementById('ins-sh-sub').textContent='Client ManiPay';
+}
+function ouvrirCreationFilleul(){
+  if(!G.user||!G.user.codeParrainage){T('Code parrainage indisponible pour le moment');return;}
+  rstIns();
+  G.modeFilleul=true;
+  var pc=document.getElementById('ins-parrain');
+  pc.value=G.user.codeParrainage;pc.readOnly=true;pc.style.background='#f3f4f6';
+  document.getElementById('ins-sh-title').textContent='Créer un compte';
+  document.getElementById('ins-sh-sub').textContent='Rattaché automatiquement à vous';
+  openSh('inscription');
+}
+function finInscription(){
+  var etaitFilleul=G.modeFilleul;
+  closeSh('inscription');rstIns();
+  if(etaitFilleul){ rafraichir(); } else { S('s-login'); }
+}
 async function doInscrire(){
   var prenom=document.getElementById('ins-prenom').value.trim();var nom=document.getElementById('ins-nom').value.trim();var telephone=document.getElementById('ins-tel').value.trim();var pin=document.getElementById('ins-pin').value.trim();var parrainCode=document.getElementById('ins-parrain').value.trim();
   var errEl=document.getElementById('ins-err');errEl.style.display='none';
@@ -1630,8 +1655,13 @@ async function doInscrire(){
     // via la sheet dédiée, quand le client touche son plafond de gains.
     var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode:parrainCode||undefined});
     document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='';
-    document.getElementById('ins-succ-txt').textContent='Votre compte a été créé ! Code parrainage : '+(r.data.codeParrainage||'');
+    if(G.modeFilleul){
+      document.getElementById('ins-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé et rattaché à vous. Donnez-lui son code de récupération ci-dessous pour qu\'il puisse se connecter et faire son KYC.';
+    } else {
+      document.getElementById('ins-succ-txt').textContent='Votre compte a été créé ! Code parrainage : '+(r.data.codeParrainage||'');
+    }
     document.getElementById('ins-code-recup').textContent=r.data.codeRecuperation||'—';
+    document.getElementById('ins-btn-continuer').textContent=G.modeFilleul?'Terminer':'Se connecter →';
   }
   catch(e){document.getElementById('ins-loading').style.display='none';document.getElementById('ins-form').style.display='';errEl.textContent=e.message;errEl.style.display='';}
 }
