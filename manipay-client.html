@@ -302,13 +302,14 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       </div>
 
       <div id="h-parrain" style="display:none;margin-bottom:14px">
-        <div style="background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:14px 16px">
-          <div class="row">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px">&#x1F49A; Code parrainage</div>
-              <div id="h-code" style="font-size:22px;font-weight:900;font-family:monospace;color:#fff"></div>
+        <div style="background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:12px 14px">
+          <div class="row" style="align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">&#x1F49A; Code parrainage</div>
+              <div id="h-code" style="font-size:15px;font-weight:900;font-family:monospace;color:#fff;white-space:nowrap"></div>
             </div>
-            <button onclick="copierCode()" style="padding:8px 14px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Copier</button>
+            <button onclick="copierCode()" style="flex-shrink:0;padding:8px 12px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Copier</button>
+            <button onclick="ouvrirCreationFilleul()" style="flex-shrink:0;padding:8px 12px;background:#fff;color:var(--g);border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif">&#x2795; Créer</button>
           </div>
         </div>
       </div>
