@@ -340,6 +340,38 @@ async function doRefresh(){
 
 function T(msg,err){var el=document.getElementById('toast');el.textContent=msg;el.className=err?'on err':'on';clearTimeout(T._t);T._t=setTimeout(function(){el.className='';},2800);}
 function F(n){return Number(n||0).toLocaleString('fr-FR');}
+function maskTel(tel){
+  if(!tel) return '—';
+  var s=String(tel).replace(/\s+/g,'');
+  var prefix='';
+  if(s.indexOf('+225')===0){prefix='+225 ';s=s.slice(4);}
+  if(s.length<=6) return prefix+s;
+  return prefix+s.slice(0,4)+'*'.repeat(s.length-6)+s.slice(-2);
+}
+// Client -> numero complet. Professionnel (agent/business/master/mini_master) -> nom commercial (ou nom civil) + numero masque.
+function contactInfo(role, nomCommercial, prenom, nom, tel){
+  var civil=((prenom||'')+' '+(nom||'')).trim();
+  var nomAffiche=(nomCommercial&&nomCommercial.trim())?nomCommercial.trim():civil;
+  var isPro=['agent','business','master','mini_master'].includes(role);
+  return { nom: nomAffiche||'—', tel: isPro?maskTel(tel):(tel||'—') };
+}
+function ouvrirNomCommercial(){
+  document.getElementById('nc-input').value=(G.user&&G.user.nomCommercial)||'';
+  document.getElementById('nc-err').style.display='none';
+  openSh('nom-commercial');
+}
+async function enregistrerNomCommercial(){
+  var val=document.getElementById('nc-input').value.trim();
+  try{
+    await patch('/users/me/nom-commercial',{nomCommercial:val});
+    if(G.user)G.user.nomCommercial=val;
+    T('Nom commercial enregistré');
+    closeSh('nom-commercial');
+  }catch(e){
+    document.getElementById('nc-err').textContent=e.message;
+    document.getElementById('nc-err').style.display='';
+  }
+}
 function FN(n){return Number(n||0).toLocaleString('fr-FR');} // sans FCFA
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function S(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
@@ -760,6 +792,11 @@ function setTab(t){
       <div><div class="params-label">Mes informations</div><div class="params-sub">Nom, Prénom, Téléphone, KYC</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="ouvrirNomCommercial()">
+      <div class="params-icon" style="background:#fef3c7">🏷️</div>
+      <div><div class="params-label">Nom commercial</div><div class="params-sub">Affiché aux autres à la place de votre numéro</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <button class="params-item" onclick="openSh('change-pin')">
       <div class="params-icon" style="background:#fef3c7">🔐</div>
       <div><div class="params-label">Modifier le code secret</div><div class="params-sub">Changer votre PIN de connexion</div></div>
@@ -951,6 +988,19 @@ function setTab(t){
   </div>
 </div>
 
+<!-- SHEET NOM COMMERCIAL -->
+<div class="sh-ov" id="sh-nom-commercial">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Nom commercial</div><div style="color:var(--m);font-size:12px">Affiché aux autres à la place de votre numéro</div></div><button class="sh-x" onclick="closeSh('nom-commercial')">✕</button></div>
+    <div id="nc-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+    <label class="lbl">Nom commercial (facultatif)</label>
+    <input class="inp" id="nc-input" type="text" placeholder="Ex: Boutique Awa" maxlength="60" style="margin-bottom:6px"/>
+    <div style="font-size:11px;color:var(--m);margin-bottom:16px">Si laissé vide, votre nom et prénom seront affichés à la place.</div>
+    <button class="btn btn-a" onclick="enregistrerNomCommercial()">Enregistrer</button>
+  </div>
+</div>
+
 <!-- SHEET INFOS -->
 <div class="sh-ov" id="sh-infos">
   <div class="sh">
@@ -967,9 +1017,9 @@ var PHOTOS_CFG={
   client_KYC1:[{id:'selfie',label:'Selfie',req:true,selfie:true}],
   client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
   client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'naissance',label:'Extrait naissance',req:true,selfie:false},{id:'domicile',label:'Justif. domicile',req:true,selfie:false}],
-  business:[{id:'selfie_gerant',label:'Selfie gérant',req:true,selfie:true},{id:'cni_r',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_v',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:true,selfie:false},{id:'fiscal',label:'Déclaration fiscale',req:false,selfie:false}],
-  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:true,selfie:false},{id:'rccm',label:'Registre de commerce',req:true,selfie:false}],
-  mini_master:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:true,selfie:false},{id:'rccm',label:'Registre de commerce',req:true,selfie:false}],
+  business:[{id:'selfie_gerant',label:'Selfie gérant',req:true,selfie:true},{id:'cni_r',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_v',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:false,selfie:false},{id:'fiscal',label:'Déclaration fiscale',req:false,selfie:false}],
+  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:false,selfie:false},{id:'rccm',label:'Registre de commerce',req:false,selfie:false}],
+  mini_master:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:false,selfie:false},{id:'rccm',label:'Registre de commerce',req:false,selfie:false}],
 };
 var insType=null,insKyc='KYC1',insPhotos={};
 
@@ -2104,8 +2154,9 @@ async function showTxDetail(txId){
   } else if(type==='transfert'){
     var cid=G.compte?String(G.compte.id):'';
     var isSrc=String(tx.compteSourceId||tx.compte_source_id||'')===cid;
-    nomClient=isSrc?((tx.destPrenom||'')+' '+(tx.destNom||'')):((tx.srcPrenom||'')+' '+(tx.srcNom||''));
-    telClient=isSrc?(tx.destTel||'—'):(tx.srcTel||'—');
+    var ci=isSrc?contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel):contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+    nomClient=ci.nom;
+    telClient=ci.tel;
     sensClient=isSrc?'Envoy&#233; &#224;':'Re&#231;u de';
   }
 
@@ -2941,7 +2992,8 @@ function renderAgentsDetail(){
   if(!agents.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun Mini-Master pour l\'instant</div>';return;}
   var h='<div style="font-size:11px;font-weight:800;color:var(--m);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px">'+agents.length+' mini-master(s)</div>';
   agents.forEach(function(f){
-    h+='<div class="tx" style="background:#fff;border:1px solid var(--b);cursor:pointer;margin-bottom:8px" onclick="voirStatsReseau(\''+f.id+'\')"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:rgba(0,192,0,.12);display:flex;align-items:center;justify-content:center;color:#d97706;font-size:15px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+(f.prenom||'')+' '+(f.nom||'')+'</div><div style="color:var(--m);font-size:11px">'+(f.telephone||'')+'</div></div><svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div></div>';
+    var ci=contactInfo(f.role,f.nomCommercial,f.prenom,f.nom,f.telephone);
+    h+='<div class="tx" style="background:#fff;border:1px solid var(--b);cursor:pointer;margin-bottom:8px" onclick="voirStatsReseau(\''+f.id+'\')"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:rgba(0,192,0,.12);display:flex;align-items:center;justify-content:center;color:#d97706;font-size:15px;font-weight:800">'+((f.prenom||'?')[0])+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+ci.nom+'</div><div style="color:var(--m);font-size:11px">'+ci.tel+'</div></div><svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div></div>';
   });
   el.innerHTML=h;
 }

@@ -393,6 +393,11 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div><div class="params-label">Mes informations</div><div class="params-sub">Entreprise, téléphone, code marchand</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="ouvrirNomCommercial()">
+      <div class="params-icon" style="background:var(--claude-l)">🏷️</div>
+      <div><div class="params-label">Nom commercial</div><div class="params-sub">Affiché aux autres à la place de votre numéro</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <button class="params-item" onclick="ouvrirDemandeSticker()">
       <div class="params-icon" style="background:#eef2ff">🏷️</div>
       <div><div class="params-label">Demander un code QR autocollant</div><div class="params-sub">Sticker physique pour votre boutique</div></div>
@@ -549,7 +554,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 <div class="sh-ov" id="sh-transfert">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Transfert</div><div style="font-size:11px;font-weight:700;color:var(--m)">Vers un autre Business — gratuit jusqu'à 20 000 F/jour</div></div><button class="sh-x" onclick="closeSh('transfert');rstTransfert()">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">Transfert</div><div style="font-size:11px;font-weight:700;color:var(--m)">Vers un autre Business — 20 000 F/jour gratuits (envoi et réception)</div></div><button class="sh-x" onclick="closeSh('transfert');rstTransfert()">✕</button></div>
     <div id="tr-form">
       <span class="lbl">Numéro du destinataire</span>
       <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
@@ -649,6 +654,19 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div class="sh-bar"></div>
     <div class="sh-top"><div><div class="sh-title">Vos documents</div><div style="font-size:12px;color:var(--m)">Requis pour valider votre compte Business</div></div><button class="sh-x" onclick="closeSh('documents')">✕</button></div>
     <div id="doc-body"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHEET NOM COMMERCIAL ═══════════════ -->
+<div class="sh-ov" id="sh-nom-commercial">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Nom commercial</div><div style="color:var(--m);font-size:12px">Affiché aux autres à la place de votre numéro</div></div><button class="sh-x" onclick="closeSh('nom-commercial')">✕</button></div>
+    <div id="nc-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#ef4444;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+    <label class="lbl">Nom commercial (facultatif)</label>
+    <input class="inp" id="nc-input" type="text" placeholder="Ex: Boutique Awa" maxlength="60" style="margin-bottom:6px"/>
+    <div style="font-size:11px;color:var(--m);margin-bottom:16px">Si laissé vide, votre nom et prénom seront affichés à la place.</div>
+    <button class="btn btn-a" onclick="enregistrerNomCommercial()">Enregistrer</button>
   </div>
 </div>
 
@@ -980,16 +998,61 @@ var TX_CFG={
   transfert:{l:'Transfert',icon:'⇄',color:'#3b82f6'},
   virement_gains:{l:'Virement de gains',icon:'💰',color:'#DA7756',i:'💰'}
 };
+function maskTel(tel){
+  if(!tel) return '—';
+  var s=String(tel).replace(/\s+/g,'');
+  var prefix='';
+  if(s.indexOf('+225')===0){prefix='+225 ';s=s.slice(4);}
+  if(s.length<=6) return prefix+s;
+  return prefix+s.slice(0,4)+'*'.repeat(s.length-6)+s.slice(-2);
+}
+// Client -> numéro complet. Professionnel (agent/business/master/mini_master) -> nom commercial (ou nom civil) + numéro masqué.
+function contactInfo(role, nomCommercial, prenom, nom, tel){
+  var civil=((prenom||'')+' '+(nom||'')).trim();
+  var nomAffiche=(nomCommercial&&nomCommercial.trim())?nomCommercial.trim():civil;
+  var isPro=['agent','business','master','mini_master'].includes(role);
+  return { nom: nomAffiche||'—', tel: isPro?maskTel(tel):(tel||'—') };
+}
+function ouvrirNomCommercial(){
+  document.getElementById('nc-input').value=(G.user&&G.user.nomCommercial)||'';
+  document.getElementById('nc-err').style.display='none';
+  openSh('nom-commercial');
+}
+async function enregistrerNomCommercial(){
+  var val=document.getElementById('nc-input').value.trim();
+  try{
+    await patch('/users/me/nom-commercial',{nomCommercial:val});
+    if(G.user)G.user.nomCommercial=val;
+    T('Nom commercial enregistré');
+    closeSh('nom-commercial');
+  }catch(e){
+    document.getElementById('nc-err').textContent=e.message;
+    document.getElementById('nc-err').style.display='';
+  }
+}
 function txRow(tx){
-  var isIn = (tx.type==='paiement_marchand' && tx.compteDestId && G.compte && tx.compteDestId===G.compte.id) || tx.type==='paiement_marchand';
+  var cid = G.compte ? G.compte.id : '';
+  var srcId = tx.compte_source_id||tx.compteSourceId||'';
+  var dstId = tx.compte_dest_id||tx.compteDestId||'';
+  var isIn = tx.type==='paiement_marchand' || (tx.type==='transfert' ? dstId===cid : tx.type!=='retrait');
   var cfg=TX_CFG[tx.type]||{l:tx.type,icon:'💳',color:'#6b7280'};
+  var label = cfg.l, icon = cfg.icon, sub='';
+  if(tx.type==='transfert'){
+    label = isIn ? 'Transfert reçu' : 'Transfert envoyé';
+    icon = isIn ? '📥' : '📤';
+    var ci = isIn ? contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel) : contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+    sub = (isIn?'De ':'À ')+ci.nom;
+  } else if(tx.type==='paiement_marchand'){
+    var ci = contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+    sub = ci.nom;
+  }
   var montant=Number(tx.montant||0);
-  var sign = tx.type==='retrait' ? '-' : '+';
-  var col = tx.type==='retrait' ? '#c2410c' : cfg.color;
+  var sign = isIn ? '+' : '-';
+  var col = isIn ? cfg.color : '#c2410c';
   return '<div class="tx" onclick="voirDetailTx(\''+tx.id+'\')" style="cursor:pointer;background:'+col+'0d;border:1px solid '+col+'22">'
     +'<div style="display:flex;align-items:center;gap:10px">'
-    +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">'+cfg.icon+'</div>'
-    +'<div><div style="font-size:13px;font-weight:600">'+cfg.l+'</div><div style="color:var(--m);font-size:11px">'+FD(tx.dateCreation||tx.date_creation)+'</div></div></div>'
+    +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">'+icon+'</div>'
+    +'<div><div style="font-size:13px;font-weight:600">'+label+'</div><div style="color:var(--m);font-size:11px">'+(sub?sub+' · ':'')+FD(tx.dateCreation||tx.date_creation)+'</div></div></div>'
     +'<div style="text-align:right"><div style="color:'+col+';font-size:14px;font-weight:800;font-family:monospace">'+sign+F(montant)+'</div>'
     +(tx.reference?'<div style="color:var(--d);font-size:10px;font-family:monospace">'+tx.reference+'</div>':'')+'</div></div>';
 }
@@ -1056,6 +1119,14 @@ function voirDetailTx(id){
   var isIn = dstId && cid ? (dstId===cid) : (tx.type!=='retrait');
   var col = isIn?'#137a3f':'#c2410c';
   var sign = isIn?'+':'-';
+  var contre='', contreTel='';
+  if(tx.type==='transfert'){
+    var ci = isIn ? contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel) : contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+    contre=ci.nom; contreTel=ci.tel;
+  } else if(tx.type==='paiement_marchand'){
+    var ci = contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+    contre=ci.nom; contreTel=ci.tel;
+  }
   var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
   var ds=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   var frais=Number(tx.frais||0);
@@ -1086,6 +1157,9 @@ function voirDetailTx(id){
       +'<div style="width:56px;height:56px;border-radius:50%;background:'+col+'20;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px">'+cfg.icon+'</div>'
       +'<div style="font-size:34px;font-weight:900;color:'+col+'">'+sign+F(bigAmt)+'</div>'
       +(tx.type==='paiement_marchand'?'<div style="font-size:12px;color:#6b7280;margin-top:3px">'+(isIn?'Paiement reçu':'Paiement effectué')+'</div>':'')
+      +(tx.type==='transfert'?'<div style="font-size:12px;color:#6b7280;margin-top:3px;font-weight:700">'+(isIn?'📥 Transfert reçu':'📤 Transfert envoyé')+'</div>':'')
+      +(contre?'<div style="font-size:14px;color:#374151;margin-top:8px;font-weight:600">'+(isIn?'De ':'À ')+contre+'</div>':'')
+      +(contreTel?'<div style="font-size:12px;color:#9ca3af;margin-top:2px">'+contreTel+'</div>':'')
     +'</div>'
     +'<div style="margin:0 16px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+lignes+'</div>'
     +'<div style="text-align:center;color:#9ca3af;font-size:11px;padding:16px">ManiPay</div>';
@@ -1776,7 +1850,7 @@ var BUSINESS_DOCS=[
   {id:'selfie_gerant',label:'Selfie gérant',camera:'user',req:true},
   {id:'cni_r',label:'CNI gérant recto',camera:'environment',req:true},
   {id:'cni_v',label:'CNI gérant verso',camera:'environment',req:true},
-  {id:'rccm',label:'RCCM',camera:'environment',req:true},
+  {id:'rccm',label:'RCCM',camera:'environment',req:false},
   {id:'fiscal',label:'Déclaration fiscale (DFE)',camera:'environment',req:false}
 ];
 function ouvrirDocuments(){

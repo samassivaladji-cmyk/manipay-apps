@@ -791,6 +791,23 @@ async function doRefresh(){
 
 function T(msg,isErr){var el=document.getElementById('toast');el.textContent=msg;el.className=isErr?'on err':'on';clearTimeout(T._t);T._t=setTimeout(()=>el.className='',2800);}
 function F(n){return Number(n||0).toLocaleString('fr-FR');}
+function maskTel(tel){
+  if(!tel) return '—';
+  var s=String(tel).replace(/\s+/g,'');
+  var prefix='';
+  if(s.indexOf('+225')===0){prefix='+225 ';s=s.slice(4);}
+  if(s.length<=6) return prefix+s;
+  return prefix+s.slice(0,4)+'*'.repeat(s.length-6)+s.slice(-2);
+}
+// Nom + numéro à afficher pour un correspondant, selon SON rôle (pas le nôtre) :
+// - correspondant client → numéro complet
+// - correspondant professionnel (agent/business/master/mini_master) → nom commercial (ou nom civil) + numéro masqué
+function contactInfo(role, nomCommercial, prenom, nom, tel){
+  var civil=((prenom||'')+' '+(nom||'')).trim();
+  var nomAffiche=(nomCommercial&&nomCommercial.trim())?nomCommercial.trim():civil;
+  var isPro=['agent','business','master','mini_master'].includes(role);
+  return { nom: nomAffiche||'—', tel: isPro?maskTel(tel):(tel||'—') };
+}
 function FD(d){if(!d)return'—';return new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 
 function S(id){if(G.locked)return;document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);if(typeof fbLogScreen==='function')fbLogScreen(id);}
@@ -1119,15 +1136,13 @@ function txRow(tx){
   var label='', sublabel='';
   if(tx.type==='transfert'){
     if(isIn){
-      var srcNom=((tx.srcPrenom||'')+' '+(tx.srcNom||'')).trim();
-      var srcTel=tx.srcTel||'';
-      label='De '+(srcNom||srcTel||'—');
-      sublabel=srcNom&&srcTel?srcTel:'';
+      var ci=contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+      label='&#x1F4E5; Transfert reçu';
+      sublabel='De '+ci.nom;
     } else {
-      var dstNom=((tx.destPrenom||'')+' '+(tx.destNom||'')).trim();
-      var dstTel=tx.destTel||'';
-      label='À '+(dstNom||dstTel||'—');
-      sublabel=dstNom&&dstTel?dstTel:'';
+      var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+      label='&#x1F4E4; Transfert envoyé';
+      sublabel='À '+ci.nom;
     }
   } else if(tx.type==='paiement_marchand'){
     label='Paiement '+(tx.description||'Marchand');
@@ -1168,12 +1183,15 @@ function voirDetailTx(id) {
   var contre='', contreTel='';
   if(tx.type==='transfert'){
     if(isIn){
-      contre=((tx.srcPrenom||'')+' '+(tx.srcNom||'')).trim();
-      contreTel=tx.srcTel||'';
+      var ci=contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+      contre=ci.nom; contreTel=ci.tel;
     } else {
-      contre=((tx.destPrenom||'')+' '+(tx.destNom||'')).trim();
-      contreTel=tx.destTel||'';
+      var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+      contre=ci.nom; contreTel=ci.tel;
     }
+  } else if(tx.type==='paiement_marchand'){
+    var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+    contre=ci.nom; contreTel=ci.tel;
   }
   var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
   var ds=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -1193,6 +1211,7 @@ function voirDetailTx(id) {
   el.innerHTML=
     '<div style="text-align:center;padding:24px 20px 14px">'
       +'<div style="width:56px;height:56px;border-radius:50%;background:'+col+'20;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px">'+((TX_CFG[tx.type]||{i:'◈'}).i)+'</div>'
+      +(tx.type==='transfert'?'<div style="font-size:13px;font-weight:800;color:'+col+';text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">'+(isIn?'&#x1F4E5; Transfert reçu':'&#x1F4E4; Transfert envoyé')+'</div>':'')
       +'<div style="font-size:34px;font-weight:900;color:'+col+'">'+sign+F(bigAmt)+'</div>'
       +(frais>0&&(tx.type==='retrait'||tx.type==='paiement_marchand')?'<div style="font-size:12px;color:#6b7280;margin-top:3px">dont '+F(tx.type==='paiement_marchand'?fraisClientPart:frais)+' de frais</div>':'')
       +(contre?'<div style="font-size:14px;color:#374151;margin-top:8px;font-weight:600">'+(isIn?'De ':'À ')+contre+'</div>':'')
