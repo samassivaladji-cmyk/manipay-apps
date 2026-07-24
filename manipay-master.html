@@ -3844,6 +3844,21 @@ function calcSopRet(){
     btn.disabled=false;btn.style.opacity='1';
   }else{document.getElementById('sop-ret-calc').style.display='none';btn.disabled=true;btn.style.opacity='.4';}
 }
+function _demarrerCountdownSopOtp(expiresAt){
+  if(window._sopOtpInterval)clearInterval(window._sopOtpInterval);
+  function tick(){
+    var restant=Math.max(0,Math.floor((new Date(expiresAt).getTime()-Date.now())/1000));
+    var m=Math.floor(restant/60),s=restant%60;
+    var el=document.getElementById('sop-ret-otp-timer');
+    if(el)el.textContent=m+':'+(s<10?'0':'')+s;
+    if(restant<=0){
+      clearInterval(window._sopOtpInterval);
+      if(el){el.textContent='Expiré';el.style.color='#ef4444';el.style.borderColor='#fecaca';el.style.background='#fef2f2';}
+    }
+  }
+  tick();
+  window._sopOtpInterval=setInterval(tick,1000);
+}
 async function demanderOTPSop(){
   var client=_sopClient.ret;if(!client)return;
   var amt=Number(document.getElementById('sop-ret-amt').value);
@@ -3862,6 +3877,9 @@ async function demanderOTPSop(){
     document.getElementById('sop-ret-phase1').style.display='none';
     document.getElementById('sop-ret-phase2').style.display='';
     document.getElementById('sop-ret-otp-input').value='';
+    var elTimer=document.getElementById('sop-ret-otp-timer');
+    if(elTimer){elTimer.style.color='#92400e';elTimer.style.borderColor='#fbbf24';elTimer.style.background='#fff';}
+    _demarrerCountdownSopOtp(d.expiresAt);
     setTimeout(function(){document.getElementById('sop-ret-otp-input').focus();},100);
   }catch(e){
     loading.style.display='none';btn.disabled=false;btn.style.opacity='1';
@@ -3869,6 +3887,7 @@ async function demanderOTPSop(){
   }
 }
 function annulerOTPSop(){
+  if(window._sopOtpInterval){clearInterval(window._sopOtpInterval);window._sopOtpInterval=null;}
   document.getElementById('sop-ret-phase2').style.display='none';
   document.getElementById('sop-ret-phase1').style.display='';
   var btn=document.getElementById('sop-ret-btn1');btn.disabled=false;btn.style.opacity='1';
@@ -3884,6 +3903,7 @@ async function confirmerOTPSop(){
   btn.disabled=true;btn.textContent='...';loading.style.display='';err.style.display='none';
   try{
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
+    if(window._sopOtpInterval){clearInterval(window._sopOtpInterval);window._sopOtpInterval=null;}
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
@@ -4193,6 +4213,7 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px;margin-bottom:20px">
         <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
         <div id="sop-ret-otp-info" style="font-size:12px;color:#92400e;text-align:center;margin-bottom:10px"></div>
+        <div style="text-align:center;margin-bottom:10px"><span id="sop-ret-otp-timer" style="display:inline-block;background:#fff;border:1px solid #fbbf24;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:800;color:#92400e">3:00</span></div>
         <div id="sop-ret-otp-recap" style="font-size:13px;font-weight:700;color:#374151;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px;margin-bottom:14px"></div>
         <div style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:10px">Code OTP du client :</div>
         <input id="sop-ret-otp-input" type="number" inputmode="numeric" placeholder="&#9679;&#9679;&#9679;&#9679;" style="width:100%;border:2px solid #fbbf24;border-radius:12px;padding:14px;font-size:30px;font-weight:900;text-align:center;outline:none;color:#111;box-sizing:border-box;letter-spacing:.3em"/>

@@ -563,7 +563,8 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div id="enc-otp-view" style="display:none;text-align:center;padding:6px 0 20px">
       <div style="font-size:38px;margin-bottom:10px">🔐</div>
       <div style="font-size:17px;font-weight:800;margin-bottom:6px">Demandez le code au client</div>
-      <div style="color:var(--m);font-size:13px;margin-bottom:18px">Un code à 4 chiffres a été envoyé sur le compte de <span id="enc-otp-client" style="font-weight:700">—</span>. Il doit vous le communiquer de vive voix.</div>
+      <div style="color:var(--m);font-size:13px;margin-bottom:6px">Un code à 4 chiffres a été envoyé sur le compte de <span id="enc-otp-client" style="font-weight:700">—</span>. Il doit vous le communiquer de vive voix.</div>
+      <div id="enc-otp-timer" style="display:inline-block;background:#fff7ed;border:1px solid #fed7aa;border-radius:99px;padding:4px 14px;font-size:13px;font-weight:800;color:#c2410c;margin-bottom:14px">3:00</div>
       <input class="inp" id="enc-otp-input" type="tel" inputmode="numeric" maxlength="4" placeholder="- - - -" style="text-align:center;font-size:26px;letter-spacing:.3em;font-weight:800;margin-bottom:10px" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"/>
       <div id="enc-otp-err" style="display:none" class="info info-r"></div>
       <button class="btn btn-g" onclick="confirmerOtpEncaissement()">Confirmer l'encaissement</button>
@@ -1639,6 +1640,7 @@ var _encAmt='';var _encClientTel=null,_encClientNom=null;
 function openEncaisser(){rstEncaisser();openSh('encaisser');}
 function rstEncaisser(){
   _encAmt='';_encClientTel=null;_encClientNom=null;
+  if(window._encOtpInterval){clearInterval(window._encOtpInterval);window._encOtpInterval=null;}
   document.getElementById('enc-amt-disp').textContent='0';
   document.getElementById('enc-btn').disabled=true;document.getElementById('enc-btn').style.opacity='.4';
   document.getElementById('enc-amt-view').style.display='';
@@ -1685,6 +1687,21 @@ function lancerEncaisserScan(){
     }).catch(function(){document.getElementById('enc-conf-client').textContent=tel;});
   });
 }
+function _demarrerCountdownEncOtp(expiresAt){
+  if(window._encOtpInterval)clearInterval(window._encOtpInterval);
+  function tick(){
+    var restant=Math.max(0,Math.floor((new Date(expiresAt).getTime()-Date.now())/1000));
+    var m=Math.floor(restant/60),s=restant%60;
+    var el=document.getElementById('enc-otp-timer');
+    if(el)el.textContent=m+':'+(s<10?'0':'')+s;
+    if(restant<=0){
+      clearInterval(window._encOtpInterval);
+      if(el){el.textContent='Expiré';el.style.color='#ef4444';el.style.borderColor='#fecaca';el.style.background='#fef2f2';}
+    }
+  }
+  tick();
+  window._encOtpInterval=setInterval(tick,1000);
+}
 async function demanderOtpEncaissement(){
   var amt=Number(_encAmt);if(!amt||!_encClientTel)return;
   var errEl=document.getElementById('enc-conf-err');errEl.style.display='none';
@@ -1696,7 +1713,10 @@ async function demanderOtpEncaissement(){
     document.getElementById('enc-otp-client').textContent=r.data.clientNom||_encClientTel;
     document.getElementById('enc-otp-input').value='';
     document.getElementById('enc-otp-err').style.display='none';
+    var elTimer=document.getElementById('enc-otp-timer');
+    if(elTimer){elTimer.style.color='#c2410c';elTimer.style.borderColor='#fed7aa';elTimer.style.background='#fff7ed';}
     document.getElementById('enc-otp-view').style.display='';
+    _demarrerCountdownEncOtp(r.data.expiresAt);
   }catch(e){
     document.getElementById('enc-loading').style.display='none';
     document.getElementById('enc-confirm-view').style.display='';
@@ -1708,6 +1728,7 @@ async function confirmerOtpEncaissement(){
   var otp=(document.getElementById('enc-otp-input').value||'').trim();
   var errEl=document.getElementById('enc-otp-err');errEl.style.display='none';
   if(otp.length!==4){errEl.textContent='Code à 4 chiffres requis';errEl.style.display='';return;}
+  if(window._encOtpInterval){clearInterval(window._encOtpInterval);window._encOtpInterval=null;}
   document.getElementById('enc-otp-view').style.display='none';
   document.getElementById('enc-loading').style.display='';
   try{
