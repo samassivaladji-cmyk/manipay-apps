@@ -418,6 +418,13 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div><div class="params-label">Sécurité</div><div class="params-sub">Modifier le code PIN</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="toggleVisibiliteCarte()">
+      <div class="params-icon" style="background:#ecfdf5">📍</div>
+      <div><div class="params-label">Visible sur la carte</div><div class="params-sub" id="visibilite-carte-sub">Les clients peuvent vous localiser</div></div>
+      <div id="visibilite-carte-switch" style="margin-left:auto;flex-shrink:0;width:40px;height:24px;background:#1FAA59;border-radius:99px;position:relative;transition:.2s">
+        <div style="position:absolute;top:2px;left:18px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></div>
+      </div>
+    </button>
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin:10px 0 4px">
       <div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:4px">🛡️ Politique du code secret (PIN)</div>
       <div style="font-size:11px;color:#1e3a8a;line-height:1.5">Votre PIN à 4 chiffres ne peut pas être : des chiffres identiques (0000, 1111...), une suite logique (1234, 4321...), ni une année entre 1940 et 2025 (souvent une date de naissance, facile à deviner par un proche). Choisissez un code que vous seul pouvez deviner.</div>
@@ -933,6 +940,7 @@ async function doLogin(){
 // ── ACCUEIL ──────────────────────────────────────────────────────────────
 async function chargerAccueil(){
   var u=G.user;if(!u)return;
+  initPartagePosition();
   document.getElementById('h-name').textContent=(u.nomEntreprise||((u.prenom||'')+' '+(u.nom||'')));
   var hc=document.getElementById('h-code');if(hc)hc.textContent=u.codeParrainage||'—';
   try{var cr=await get('/accounts/me');G.compte=cr.data;var ur=await get('/users/me');G.user=ur.data;LS.set('mani_user',JSON.stringify(G.user));var hc2=document.getElementById('h-code');if(hc2)hc2.textContent=G.user.codeParrainage||'—';}catch(e){}
@@ -1326,8 +1334,43 @@ async function chargerReseau(){
 }
 
 // ── PROFIL ───────────────────────────────────────────────────────────────
+function initPartagePosition(){
+  if(window._positionShareStarted)return;
+  window._positionShareStarted=true;
+  if(!navigator.geolocation)return;
+  if(LS.get('mani_position_visible')==='false')return;
+  function envoyerPosition(){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      fetch(API+'/position/update',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
+        body:JSON.stringify({latitude:pos.coords.latitude,longitude:pos.coords.longitude})
+      }).catch(function(){});
+    },function(){},{enableHighAccuracy:false,maximumAge:120000,timeout:15000});
+  }
+  envoyerPosition();
+  setInterval(envoyerPosition,5*60*1000);
+}
+function toggleVisibiliteCarte(){
+  var cur=LS.get('mani_position_visible')!=='false';
+  var next=!cur;
+  LS.set('mani_position_visible',next?'true':'false');
+  majAffichageVisibiliteCarte();
+  fetch(API+'/position/visibilite',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},body:JSON.stringify({visible:next})}).catch(function(){});
+  if(next){window._positionShareStarted=false;initPartagePosition();}
+}
+function majAffichageVisibiliteCarte(){
+  var visible=LS.get('mani_position_visible')!=='false';
+  var sw=document.getElementById('visibilite-carte-switch');
+  var sub=document.getElementById('visibilite-carte-sub');
+  if(!sw)return;
+  sw.style.background=visible?'#1FAA59':'#d1d5db';
+  sw.firstElementChild.style.left=visible?'18px':'2px';
+  if(sub)sub.textContent=visible?'Les clients peuvent vous localiser':"Masqué — vous n'apparaissez pas sur la carte";
+}
 function chargerProfil(){
   var u=G.user;if(!u)return;
+  majAffichageVisibiliteCarte();
   var nom=u.nomEntreprise||((u.prenom||'')+' '+(u.nom||''));
   document.getElementById('prof-name-top').textContent=nom;
   document.getElementById('prof-tel-top').textContent=u.telephone||'';

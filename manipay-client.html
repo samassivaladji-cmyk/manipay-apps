@@ -72,12 +72,17 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 /* Grille 5 boutons */
 .act-grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
 .params-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:14px;border:1px solid #f3f4f6;cursor:pointer;margin-bottom:8px;text-align:left;width:100%;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.ta-chip{flex-shrink:0;padding:8px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;font-size:12.5px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ta-chip.on{background:#111827;border-color:#111827;color:#fff}
+.ta-card{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border:1px solid #f3f4f6;border-radius:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .params-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .params-label{font-size:14px;font-weight:700;color:#111827}
 .params-sub{font-size:12px;color:#6b7280;margin-top:1px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div id="app">
@@ -290,7 +295,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
             <div style="background:rgba(255,255,255,.88);width:46px;height:46px;font-size:22px;border-radius:14px;display:flex;align-items:center;justify-content:center">&#x1F3E6;</div>
             <span style="font-size:10px;font-weight:700;color:#fff;margin-top:4px">Banque</span>
           </button>
-          <button class="act-btn" onclick="T('Carte — bientôt disponible')">
+          <button class="act-btn" onclick="trouverAgents()">
             <div style="background:rgba(255,255,255,.88);width:46px;height:46px;font-size:22px;border-radius:14px;display:flex;align-items:center;justify-content:center">&#x1F4B3;</div>
             <span style="font-size:10px;font-weight:700;color:#fff;margin-top:4px">Carte</span>
           </button>
@@ -512,6 +517,32 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
     <button class="nb on" id="nb-commissions-c" onclick="setTab('commissions')"><svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Gains</button>
     <button class="nb" id="nb-profile-c" onclick="setTab('profile')"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Paramètres</button>
   </nav>
+</div>
+
+<div class="scr" id="s-trouver-agents" style="background:#fff;flex-direction:column">
+  <div style="background:#fff;padding:52px 20px 14px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px">
+    <button onclick="S('s-profile')" style="background:#f3f4f6;border:none;border-radius:10px;width:36px;height:36px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <svg width="18" height="18" fill="none" stroke="#111827" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div>
+      <div style="font-size:18px;font-weight:800">Trouver des agents</div>
+      <div style="font-size:12px;color:#6b7280">Agents, commerces et masters ManiPay près de vous</div>
+    </div>
+  </div>
+  <div id="ta-filters" style="display:flex;gap:8px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid #f3f4f6">
+    <button class="ta-chip on" data-role="all" onclick="filtrerAgentsProches('all')">Tous</button>
+    <button class="ta-chip" data-role="agent" onclick="filtrerAgentsProches('agent')">🟢 Agents</button>
+    <button class="ta-chip" data-role="business" onclick="filtrerAgentsProches('business')">🟠 Commerces</button>
+    <button class="ta-chip" data-role="mini_master" onclick="filtrerAgentsProches('mini_master')">🔵 Mini-Masters</button>
+    <button class="ta-chip" data-role="master" onclick="filtrerAgentsProches('master')">🟣 Masters</button>
+  </div>
+  <div id="ta-map" style="width:100%;height:38vh;background:#f3f4f6;flex-shrink:0"></div>
+  <div id="ta-list" style="flex:1;overflow-y:auto;padding:12px 16px 100px">
+    <div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px">
+      <div class="spin" style="margin:0 auto 12px"></div>
+      Localisation en cours…
+    </div>
+  </div>
 </div>
 
 <div class="scr" id="s-lock" style="background:#fff;justify-content:center;align-items:center;min-height:100vh;padding:32px 24px;">
@@ -1922,7 +1953,98 @@ function voirPlafond(){
     '<div class="srow"><span style="color:#6b7280;font-size:13px">Depot mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>'+
     '<div class="srow" style="border:none"><span style="color:#6b7280;font-size:13px">Retrait mensuel max</span><span style="font-weight:700">'+Number(p).toLocaleString('fr-FR')+' FCFA</span></div>';
 }
-function trouverAgents(){T('Fonctionnalite bientot disponible');}
+var _taMap=null, _taMarkers=[], _taUserMarker=null, _taData=[], _taRoleFiltre='all';
+var TA_ROLE_INFO={
+  agent:{label:'Agent',color:'#1FAA59',emoji:'🟢'},
+  business:{label:'Commerce',color:'#C9891A',emoji:'🟠'},
+  mini_master:{label:'Mini-Master',color:'#2563eb',emoji:'🔵'},
+  master:{label:'Master',color:'#7c3aed',emoji:'🟣'}
+};
+
+function trouverAgents(){
+  S('s-trouver-agents');
+  document.getElementById('ta-list').innerHTML='<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px"><div class="spin" style="margin:0 auto 12px"></div>Localisation en cours…</div>';
+  if(!navigator.geolocation){
+    document.getElementById('ta-list').innerHTML='<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px">La géolocalisation n\'est pas disponible sur cet appareil.</div>';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    chargerAgentsProches(pos.coords.latitude,pos.coords.longitude);
+  },function(){
+    document.getElementById('ta-list').innerHTML='<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px">Impossible d\'accéder à votre position. Vérifiez que la localisation est activée sur votre téléphone, puis réessayez.<br><br><button onclick="trouverAgents()" style="margin-top:8px;padding:8px 16px;background:#111827;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer">Réessayer</button></div>';
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
+
+async function chargerAgentsProches(lat,lng){
+  try{
+    var r=await api('/agents/proximite?lat='+lat+'&lng='+lng+'&rayon=15000');
+    _taData=(r.data&&r.data.agents)||[];
+    afficherCarteAgents(lat,lng);
+    _taRoleFiltre='all';
+    document.querySelectorAll('.ta-chip').forEach(function(c){c.classList.toggle('on',c.dataset.role==='all');});
+    afficherListeAgents();
+  }catch(e){
+    document.getElementById('ta-list').innerHTML='<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px">Erreur lors du chargement. Réessayez dans un instant.</div>';
+  }
+}
+
+function afficherCarteAgents(lat,lng){
+  var el=document.getElementById('ta-map');
+  if(!_taMap){
+    _taMap=L.map(el).setView([lat,lng],14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(_taMap);
+  }else{
+    _taMap.setView([lat,lng],14);
+  }
+  _taMarkers.forEach(function(m){_taMap.removeLayer(m);});
+  _taMarkers=[];
+  if(_taUserMarker)_taMap.removeLayer(_taUserMarker);
+  _taUserMarker=L.circleMarker([lat,lng],{radius:8,fillColor:'#111827',fillOpacity:1,color:'#fff',weight:3}).addTo(_taMap).bindPopup('Vous êtes ici');
+  _taData.forEach(function(a){
+    var info=TA_ROLE_INFO[a.role]||{color:'#6b7280',label:a.role};
+    var m=L.circleMarker([a.latitude,a.longitude],{radius:9,fillColor:info.color,fillOpacity:.9,color:'#fff',weight:2})
+      .addTo(_taMap)
+      .bindPopup('<b>'+a.nom+'</b><br>'+info.label+'<br>'+formatDistanceTA(a.distanceMetres));
+    m._role=a.role;
+    _taMarkers.push(m);
+  });
+  setTimeout(function(){_taMap.invalidateSize();},200);
+}
+
+function formatDistanceTA(m){
+  if(m<1000)return Math.round(m)+' m';
+  return (m/1000).toFixed(1)+' km';
+}
+
+function filtrerAgentsProches(role){
+  _taRoleFiltre=role;
+  document.querySelectorAll('.ta-chip').forEach(function(c){c.classList.toggle('on',c.dataset.role===role);});
+  _taMarkers.forEach(function(m){
+    var show=(role==='all'||m._role===role);
+    if(m._path)m._path.style.display=show?'':'none';
+  });
+  afficherListeAgents();
+}
+
+function afficherListeAgents(){
+  var list=_taRoleFiltre==='all'?_taData:_taData.filter(function(a){return a.role===_taRoleFiltre;});
+  var cont=document.getElementById('ta-list');
+  if(!list.length){
+    cont.innerHTML='<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:13px">Aucun agent trouvé à proximité pour le moment.</div>';
+    return;
+  }
+  cont.innerHTML=list.map(function(a){
+    var info=TA_ROLE_INFO[a.role]||{color:'#6b7280',label:a.role,emoji:'📍'};
+    return '<div class="ta-card">'
+      +'<div style="width:44px;height:44px;border-radius:12px;background:'+info.color+'22;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+info.emoji+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.nom+'</div>'
+        +'<div style="font-size:12px;color:#6b7280">'+info.label+' · '+formatDistanceTA(a.distanceMetres)+'</div>'
+      +'</div>'
+      +'<a href="https://www.google.com/maps/dir/?api=1&destination='+a.latitude+','+a.longitude+'" target="_blank" style="flex-shrink:0;padding:8px 12px;background:#111827;color:#fff;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none">Itinéraire</a>'
+    +'</div>';
+  }).join('');
+}
 function inviterAmi(){
   var u=G.user;if(!u)return;var code=u.codeParrainage||'';
   var msg='Rejoignez ManiPay avec mon code '+code+' !';
