@@ -1145,7 +1145,7 @@ async function doInscrireFilleul(){
     }
     var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode,selfieUrl});
     document.getElementById('insf-loading').style.display='none';document.getElementById('insf-success').style.display='';
-    document.getElementById('insf-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA.';
+    document.getElementById('insf-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA. Donnez-lui aussi son code de récupération ci-dessous pour qu\'il puisse se connecter plus facilement en cas de perte de son téléphone.';
     document.getElementById('insf-code-recup').textContent=r.data.codeRecuperation||'—';
   }catch(e){
     document.getElementById('insf-loading').style.display='none';document.getElementById('insf-form').style.display='';

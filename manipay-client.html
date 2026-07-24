@@ -1758,7 +1758,7 @@ async function doInscrire(){
     var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode:parrainCode||undefined,selfieUrl:selfieUrl||undefined});
     document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='';
     if(G.modeFilleul){
-      document.getElementById('ins-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA. Donnez-lui aussi son code de récupération ci-dessous pour qu\'il puisse se connecter et faire son KYC.';
+      document.getElementById('ins-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA. Donnez-lui aussi son code de récupération ci-dessous pour qu\'il puisse se connecter plus facilement en cas de perte de son téléphone.';
     } else {
       document.getElementById('ins-succ-txt').textContent='Votre compte a été créé ! Code parrainage : '+(r.data.codeParrainage||'');
     }
