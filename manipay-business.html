@@ -460,9 +460,20 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   <div style="width:100%;max-width:320px;text-align:center;display:flex;flex-direction:column;align-items:center;">
     <div style="width:72px;height:72px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-size:32px">📍</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:10px">Position obligatoire</div>
-    <div style="font-size:14px;color:#6b7280;line-height:1.5;margin-bottom:24px">Pour que les clients puissent vous trouver, ManiPay a besoin de connaître le lieu fixe de votre activité. Cette étape est obligatoire et ne peut pas être ignorée.</div>
-    <div id="pos-obl-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12.5px;padding:12px;border-radius:10px;margin-bottom:16px;text-align:left"></div>
-    <button id="pos-obl-btn" class="btn btn-a" style="width:100%" onclick="confirmerPositionObligatoire()">Activer ma position</button>
+    <div style="font-size:14px;color:#6b7280;line-height:1.5;margin-bottom:22px">Pour que les clients puissent vous trouver, ManiPay a besoin de connaître le lieu fixe de votre activité. Cette étape est obligatoire et ne peut pas être ignorée.</div>
+
+    <div id="pos-obl-question" style="width:100%">
+      <div style="font-size:14.5px;font-weight:700;margin-bottom:14px">Êtes-vous actuellement dans votre commerce ?</div>
+      <div style="display:flex;gap:10px;width:100%">
+        <button class="btn btn-ghost" style="flex:1" onclick="reponsePositionObligatoire(false)">Non, pas encore</button>
+        <button class="btn btn-a" style="flex:1" onclick="reponsePositionObligatoire(true)">Oui, j'y suis</button>
+      </div>
+    </div>
+
+    <div id="pos-obl-warning" style="display:none;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:13px;padding:14px;border-radius:10px;margin-top:14px;text-align:left;line-height:1.5"></div>
+
+    <div id="pos-obl-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12.5px;padding:12px;border-radius:10px;margin-top:16px;text-align:left"></div>
+    <button id="pos-obl-btn" class="btn btn-a" style="width:100%;display:none;margin-top:6px" onclick="confirmerPositionObligatoire()">Activer ma position</button>
     <div id="pos-obl-loading" style="display:none">
       <div class="spin" style="margin:12px auto"></div>
       <div style="font-size:13px;color:#6b7280">Enregistrement de votre position…</div>
@@ -490,6 +501,12 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <label class="lbl">Code parrainage</label>
       <input class="inp" id="insf-parrain" type="text" readonly style="margin-bottom:4px;background:#f3f4f6"/>
       <div style="font-size:11px;color:var(--m);margin-bottom:16px">Rempli automatiquement avec votre propre code — le nouveau compte sera immédiatement parrainé par vous.</div>
+      <label class="lbl">Selfie de la personne inscrite *</label>
+      <div style="font-size:11px;color:var(--m);margin-bottom:8px">Obligatoire : cela permet de vérifier que la personne est bien présente et évite les inscriptions faites avec le numéro de quelqu'un d'autre.</div>
+      <div id="insf-selfie-preview" style="width:100%;height:160px;border-radius:12px;border:1.5px dashed #d1d5db;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px;cursor:pointer" onclick="document.getElementById('insf-selfie-input').click()">
+        <span style="color:#9ca3af;font-size:13px">📷 Toucher pour prendre le selfie</span>
+      </div>
+      <input type="file" accept="image/*" capture="user" id="insf-selfie-input" style="display:none" onchange="previsualiserSelfieInsf(this)"/>
       <button class="btn btn-g" onclick="doInscrireFilleul()">Créer le compte</button>
     </div>
     <div id="insf-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
@@ -1076,7 +1093,21 @@ async function chargerTxns(){
 }
 function rafraichir(){chargerAccueil();chargerBadgeNotifs();}
 
-function rstInsFilleul(){['insf-prenom','insf-nom','insf-tel','insf-pin','insf-pin2'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('insf-err').style.display='none';document.getElementById('insf-form').style.display='';document.getElementById('insf-loading').style.display='none';document.getElementById('insf-success').style.display='none';var cb=document.getElementById('insf-code-confirm');if(cb)cb.checked=false;var bc=document.getElementById('insf-btn-continuer');if(bc){bc.disabled=true;bc.style.opacity='.4';}}
+function rstInsFilleul(){['insf-prenom','insf-nom','insf-tel','insf-pin','insf-pin2'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('insf-err').style.display='none';document.getElementById('insf-form').style.display='';document.getElementById('insf-loading').style.display='none';document.getElementById('insf-success').style.display='none';var cb=document.getElementById('insf-code-confirm');if(cb)cb.checked=false;var bc=document.getElementById('insf-btn-continuer');if(bc){bc.disabled=true;bc.style.opacity='.4';}
+  G.selfieFileInsf=null;
+  document.getElementById('insf-selfie-preview').innerHTML='<span style="color:#9ca3af;font-size:13px">📷 Toucher pour prendre le selfie</span>';
+  var siEl=document.getElementById('insf-selfie-input');if(siEl)siEl.value='';
+}
+function previsualiserSelfieInsf(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  G.selfieFileInsf=file;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('insf-selfie-preview').innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover"/>';
+  };
+  reader.readAsDataURL(file);
+}
 function ouvrirCreationFilleul(){
   if(!G.user||!G.user.codeParrainage){T('Code parrainage indisponible pour le moment',true);return;}
   rstInsFilleul();
@@ -1094,9 +1125,25 @@ async function doInscrireFilleul(){
   if(!prenom||!nom||!telephone||!pin){errEl.textContent='Tous les champs obligatoires doivent être remplis';errEl.style.display='';return;}
   if(!/^\d{4}$/.test(pin)){errEl.textContent='Le PIN doit contenir exactement 4 chiffres';errEl.style.display='';return;}
   if(pin!==pin2){errEl.textContent='Les codes secrets ne correspondent pas';errEl.style.display='';return;}
+  if(!G.selfieFileInsf){errEl.textContent='Le selfie de la personne inscrite est obligatoire';errEl.style.display='';return;}
   document.getElementById('insf-form').style.display='none';document.getElementById('insf-loading').style.display='';
   try{
-    var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode});
+    var selfieUrl;
+    try{
+      var fd=new FormData();
+      fd.append('file',G.selfieFileInsf);
+      fd.append('upload_preset','afrim-kyc');
+      fd.append('folder','manipay/selfies-inscription');
+      var rUp=await fetch('https://api.cloudinary.com/v1_1/dzofjvhwu/image/upload',{method:'POST',body:fd});
+      var dUp=await rUp.json();
+      if(!rUp.ok||!dUp.secure_url)throw new Error();
+      selfieUrl=dUp.secure_url;
+    }catch(eUp){
+      document.getElementById('insf-loading').style.display='none';document.getElementById('insf-form').style.display='';
+      errEl.textContent="Échec de l'envoi du selfie. Vérifiez votre connexion et réessayez.";errEl.style.display='';
+      return;
+    }
+    var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode,selfieUrl});
     document.getElementById('insf-loading').style.display='none';document.getElementById('insf-success').style.display='';
     document.getElementById('insf-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA.';
     document.getElementById('insf-code-recup').textContent=r.data.codeRecuperation||'—';
@@ -1343,6 +1390,16 @@ async function chargerReseau(){
 function afficherEcranApresConnexion(){
   if(G.user && G.user.positionConfirmee===false){ S('s-position-obligatoire'); }
   else { setTab('home'); }
+}
+function reponsePositionObligatoire(surPlace){
+  if(surPlace){
+    document.getElementById('pos-obl-question').style.display='none';
+    document.getElementById('pos-obl-warning').style.display='none';
+    document.getElementById('pos-obl-btn').style.display='';
+  }else{
+    document.getElementById('pos-obl-warning').textContent="Merci de vous rendre dans votre commerce avant de continuer : c'est ce qui permet à ManiPay de bien vous localiser pour les clients à proximité. Revenez répondre ici une fois sur place.";
+    document.getElementById('pos-obl-warning').style.display='';
+  }
 }
 function confirmerPositionObligatoire(){
   document.getElementById('pos-obl-btn').style.display='none';

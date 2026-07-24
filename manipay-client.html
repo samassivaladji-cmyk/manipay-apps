@@ -464,7 +464,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
     <div style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-top:18px;margin-bottom:10px">Services</div>
     <button class="params-item" onclick="trouverAgents()">
       <div class="params-icon" style="background:#fdf4ff">📍</div>
-      <div><div class="params-label">Trouver des agents</div><div class="params-sub">Agents ManiPay pres de vous</div></div>
+      <div><div class="params-label">Trouver des agents ou commerces</div><div class="params-sub">Agents ManiPay pres de vous</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
     <button class="params-item" onclick="inviterAmi()">
@@ -525,7 +525,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       <svg width="18" height="18" fill="none" stroke="#111827" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div>
-      <div style="font-size:18px;font-weight:800">Trouver des agents</div>
+      <div style="font-size:18px;font-weight:800">Trouver des agents ou commerces</div>
       <div style="font-size:12px;color:#6b7280">Agents, commerces et masters ManiPay près de vous</div>
     </div>
   </div>
@@ -778,6 +778,14 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
         <input class="inp" id="ins-pin2" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="margin-bottom:12px"/>
         <label class="lbl">Code parrainage (optionnel)</label>
         <input class="inp" id="ins-parrain" type="text" placeholder="Ex: VAL-430Y" style="margin-bottom:16px"/>
+        <div id="ins-selfie-wrap" style="margin-bottom:16px">
+          <label class="lbl">Selfie de la personne inscrite *</label>
+          <div style="font-size:11px;color:var(--m);margin-bottom:8px">Obligatoire : cela permet de vérifier que la personne est bien présente et évite les inscriptions faites avec le numéro de quelqu'un d'autre.</div>
+          <div id="ins-selfie-preview" style="width:100%;height:160px;border-radius:12px;border:1.5px dashed #d1d5db;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px;cursor:pointer" onclick="document.getElementById('ins-selfie-input').click()">
+            <span style="color:#9ca3af;font-size:13px">📷 Toucher pour prendre le selfie</span>
+          </div>
+          <input type="file" accept="image/*" capture="user" id="ins-selfie-input" style="display:none" onchange="previsualiserSelfieIns(this)"/>
+        </div>
         <button class="btn btn-g" onclick="doInscrire()">Créer mon compte</button>
       </div>
       <div id="ins-loading" style="display:none;text-align:center;padding:32px"><div class="spin"></div></div>
@@ -1682,9 +1690,22 @@ function rstPay(){}
 
 function rstIns(){['ins-prenom','ins-nom','ins-tel','ins-pin','ins-parrain'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('ins-err').style.display='none';document.getElementById('ins-form').style.display='';document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='none';
   G.modeFilleul=false;
+  G.selfieFileIns=null;
+  document.getElementById('ins-selfie-preview').innerHTML='<span style="color:#9ca3af;font-size:13px">📷 Toucher pour prendre le selfie</span>';
+  var siEl=document.getElementById('ins-selfie-input');if(siEl)siEl.value='';
   var pc=document.getElementById('ins-parrain');pc.readOnly=false;pc.style.background='';
   document.getElementById('ins-sh-title').textContent='Créer un compte';
   document.getElementById('ins-sh-sub').textContent='Client ManiPay';
+}
+function previsualiserSelfieIns(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  G.selfieFileIns=file;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('ins-selfie-preview').innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover"/>';
+  };
+  reader.readAsDataURL(file);
 }
 function ouvrirCreationFilleul(){
   if(!G.user||!G.user.codeParrainage){T('Code parrainage indisponible pour le moment');return;}
@@ -1709,12 +1730,32 @@ async function doInscrire(){
   if(pin.length!==4){errEl.textContent='Le code secret doit avoir exactement 4 chiffres';errEl.style.display='';return;}
   if(pin2val&&pin!==pin2val){errEl.textContent='Les codes secrets ne correspondent pas';errEl.style.display='';return;}
   if(!/^\d{4}$/.test(pin)){errEl.textContent='Le PIN doit contenir exactement 4 chiffres';errEl.style.display='';return;}
+  if(!G.selfieFileIns){errEl.textContent='Le selfie est obligatoire pour créer un compte';errEl.style.display='';return;}
   document.getElementById('ins-form').style.display='none';document.getElementById('ins-loading').style.display='';
   try{
-    // Compte créé directement en KYC1 — pas de photo requise à l'inscription.
+    var selfieUrl;
+    if(G.selfieFileIns){
+      try{
+        var fd=new FormData();
+        fd.append('file',G.selfieFileIns);
+        fd.append('upload_preset','afrim-kyc');
+        fd.append('folder','manipay/selfies-inscription');
+        var rUp=await fetch('https://api.cloudinary.com/v1_1/dzofjvhwu/image/upload',{method:'POST',body:fd});
+        var dUp=await rUp.json();
+        if(!rUp.ok||!dUp.secure_url)throw new Error();
+        selfieUrl=dUp.secure_url;
+      }catch(eUp){
+        document.getElementById('ins-loading').style.display='none';document.getElementById('ins-form').style.display='';
+        errEl.textContent="Échec de l'envoi du selfie. Vérifiez votre connexion et réessayez.";errEl.style.display='';
+        return;
+      }
+    }
+    // Compte créé directement en KYC1 — pas de photo d'identité requise à l'inscription.
     // La mise à niveau KYC2/KYC3 (avec pièce d'identité) se fait plus tard,
     // via la sheet dédiée, quand le client touche son plafond de gains.
-    var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode:parrainCode||undefined});
+    // Le selfie ci-dessus est distinct : il sert uniquement à vérifier la présence de la
+    // personne lors d'une création par un Client/Business (anti-fraude au parrainage).
+    var r=await post('/auth/register',{prenom,nom,telephone,pin,role:'client',kycNiveau:'KYC1',parrainCode:parrainCode||undefined,selfieUrl:selfieUrl||undefined});
     document.getElementById('ins-loading').style.display='none';document.getElementById('ins-success').style.display='';
     if(G.modeFilleul){
       document.getElementById('ins-succ-txt').textContent='Le compte de '+prenom+' '+nom+' a été créé avec succès et est désormais parrainé par vous. Pour finaliser son rattachement, invitez-le à effectuer un premier dépôt d\'au moins 500 FCFA. Donnez-lui aussi son code de récupération ci-dessous pour qu\'il puisse se connecter et faire son KYC.';
