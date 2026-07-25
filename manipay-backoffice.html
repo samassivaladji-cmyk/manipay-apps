@@ -1097,6 +1097,17 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
   <div style="padding:14px 16px 100px">
 
+    <!-- Recherche par numéro -->
+    <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔎 Recherche par numéro</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:10px">Tapez un numéro pour voir sa fiche complète : identité, appareils utilisés, refus, filleuls, volumes de transactions.</div>
+      <div style="display:flex;gap:8px">
+        <input id="seg-tel-lookup" type="tel" placeholder="Ex: 0707070707" class="inp" style="flex:1" onkeydown="if(event.key==='Enter')chercherProfilNumero()"/>
+        <button onclick="chercherProfilNumero()" style="flex-shrink:0;background:var(--y);color:#fff;border:none;border-radius:10px;padding:0 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Chercher</button>
+      </div>
+      <div id="seg-tel-profil" style="margin-top:14px"></div>
+    </div>
+
     <!-- Bloc critères -->
     <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:14px">
       <div style="font-size:13px;font-weight:800;margin-bottom:10px">Rôles</div>
@@ -1187,10 +1198,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 
       <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:16px">
         <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre de refus (minimum)</div>
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Sur la période choisie ci-dessus. Ex : 3 pour ne voir que les comptes ayant refusé au moins 3 fois.</div>
-        <input id="sec-min-refus" type="number" min="1" placeholder="1" class="inp" style="margin-bottom:14px"/>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Sur la période choisie ci-dessus. Ex : 2 pour ne voir que les comptes ayant refusé au moins 2 fois.</div>
+        <input id="sec-min-refus" type="number" min="1" placeholder="2" class="inp" style="margin-bottom:14px"/>
         <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre d'appareils (minimum)</div>
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes périodes confondues. Ex : 3 pour ne voir que les comptes utilisés depuis 3 appareils ou plus.</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes périodes confondues. Ex : 2 pour ne voir que les comptes utilisés depuis 2 appareils ou plus.</div>
         <input id="sec-min-appareils" type="number" min="2" placeholder="2" class="inp" style="margin-bottom:14px"/>
         <button onclick="chargerSecuriteStats()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher</button>
       </div>
@@ -4768,6 +4779,47 @@ function renderSansFilleul(list){
 // ═══ SEGMENTATION ═══
 var segRolesSel={},segKycSel={},segStatutSel={};
 var segResults=[];var segSelected={};
+async function chercherProfilNumero(){
+  var tel=document.getElementById('seg-tel-lookup').value.trim();
+  var el=document.getElementById('seg-tel-profil');
+  if(!tel){el.innerHTML='';return;}
+  el.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/securite/profil?telephone='+encodeURIComponent(tel));
+    var d=r.data, u=d.identite;
+    var roleTag=ROLE_LABELS_SEC[u.role]||u.role;
+    var dateInscr=u.createdAt?new Date(u.createdAt).toLocaleDateString('fr-FR'):'—';
+    var html='<div style="background:#f9fafb;border-radius:14px;padding:14px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+        +'<div><div style="font-size:15px;font-weight:900">'+(u.nomCommercial||((u.prenom||'')+' '+(u.nom||'')))+'</div>'
+        +'<div style="font-size:11px;color:#6b7280;font-family:monospace">'+u.telephone+'</div></div>'
+        +'<span style="font-size:10px;font-weight:700;color:#374151;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:3px 8px">'+roleTag+'</span></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:11px;color:#6b7280">'
+        +'<div>Statut : <b style="color:#374151">'+(u.statut||'—')+'</b></div>'
+        +'<div>KYC : <b style="color:#374151">'+(u.kycNiveau||'—')+'</b></div>'
+        +'<div>Inscrit le : <b style="color:#374151">'+dateInscr+'</b></div>'
+        +'<div>Code parrainage : <b style="color:#374151">'+(u.codeParrainage||'—')+'</b></div>'
+        +'</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af;text-transform:uppercase">Appareils</div><div style="font-size:16px;font-weight:900;color:#1e40af">'+d.nbAppareils+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af;text-transform:uppercase">Filleuls</div><div style="font-size:16px;font-weight:900;color:#059669">'+d.nbFilleuls+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af;text-transform:uppercase">Refus (comme client)</div><div style="font-size:16px;font-weight:900;color:#b91c1c">'+d.refusCommeClient.n+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af;text-transform:uppercase">Refus (comme opérateur)</div><div style="font-size:16px;font-weight:900;color:#7c2d12">'+d.refusCommeOperateur.n+'</div></div>';
+    html+='</div>';
+    html+='<div style="margin-top:10px;font-size:10px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em">Volumes (toutes périodes)</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af">Dépôts reçus</div><div style="font-size:13px;font-weight:800">'+F(d.volumes.depot)+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af">Retraits</div><div style="font-size:13px;font-weight:800">'+F(d.volumes.retrait)+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af">Transferts envoyés</div><div style="font-size:13px;font-weight:800">'+F(d.volumes.transfert)+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px"><div style="font-size:9px;color:#9ca3af">Paiement envoyé</div><div style="font-size:13px;font-weight:800">'+F(d.volumes.paiementEnvoye)+'</div></div>';
+    html+='<div style="background:#fff;border-radius:10px;padding:8px 10px;grid-column:span 2"><div style="font-size:9px;color:#9ca3af">Paiement marchand reçu (Business)</div><div style="font-size:13px;font-weight:800">'+F(d.volumes.paiementRecu)+'</div></div>';
+    html+='</div></div>';
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">'+(e.message||'Aucun compte trouvé pour ce numéro.')+'</div>';
+  }
+}
+
 function initSegmentationUI(){
   var isSup = G.user && G.user.role === 'superviseur';
   var rolesEl=document.getElementById('seg-roles');
@@ -4826,7 +4878,6 @@ function initSegmentationUI(){
       statutEl.appendChild(btn);
     });
   }
-  chargerSecuriteStats();
 }
 function segNum(id){var v=document.getElementById(id).value;return v===''?undefined:Number(v);}
 function segDate(id){var v=document.getElementById(id).value;return v?v:undefined;}
@@ -8960,60 +9011,103 @@ function setSecPeriod(p){
   });
   chargerSecuriteStats();
 }
+var _secPageClients=1, _secPageOperateurs=1, _secPageAppareils=1;
 async function chargerSecuriteStats(){
+  _secPageClients=1;_secPageOperateurs=1;_secPageAppareils=1;
   var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list'), apEl=document.getElementById('sec-appareils-list');
-  var minRefusEl=document.getElementById('sec-min-refus'), minAppEl=document.getElementById('sec-min-appareils');
-  var minRefus=(minRefusEl&&minRefusEl.value)?Math.max(1,parseInt(minRefusEl.value)):1;
-  var minApp=(minAppEl&&minAppEl.value)?Math.max(2,parseInt(minAppEl.value)):2;
   if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   if(opEl)opEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  await _chargerRefusStats(false);
+  await _chargerAppareilsStats(false);
+}
+async function _chargerRefusStats(append){
+  var minRefusEl=document.getElementById('sec-min-refus');
+  var minRefus=(minRefusEl&&minRefusEl.value)?Math.max(1,parseInt(minRefusEl.value)):2;
+  var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list');
   try{
-    var r=await apiGet('/securite/refus-stats?period='+_secPeriod+'&min='+minRefus);
-    _renderSecRefusList('sec-clients-list', r.data.clients, 'refus');
-    _renderSecRefusList('sec-operateurs-list', r.data.operateurs, 'refus');
+    var r=await apiGet('/securite/refus-stats?period='+_secPeriod+'&min='+minRefus+'&pageClients='+_secPageClients+'&pageOperateurs='+_secPageOperateurs);
+    _renderSecRefusList('sec-clients-list', r.data.clients, 'refus', r.data.totalClients, append, r.data.hasMoreClients, 'client');
+    _renderSecRefusList('sec-operateurs-list', r.data.operateurs, 'refus', r.data.totalOperateurs, append, r.data.hasMoreOperateurs, 'operateur');
   }catch(e){
     if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">Erreur de chargement</div>';
     if(opEl)opEl.innerHTML='';
   }
+}
+async function _chargerAppareilsStats(append){
+  var minAppEl=document.getElementById('sec-min-appareils');
+  var minApp=(minAppEl&&minAppEl.value)?Math.max(2,parseInt(minAppEl.value)):2;
+  var apEl=document.getElementById('sec-appareils-list');
   try{
-    var r2=await apiGet('/securite/appareils-stats?min='+minApp);
-    _renderSecAppareilsList(r2.data.comptes);
+    var r2=await apiGet('/securite/appareils-stats?min='+minApp+'&page='+_secPageAppareils);
+    _renderSecAppareilsList(r2.data.comptes, r2.data.totalComptes, append, r2.data.hasMore);
   }catch(e){
     if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">Erreur de chargement</div>';
   }
 }
+function voirPlusRefus(kind){
+  if(kind==='client')_secPageClients++;else _secPageOperateurs++;
+  _chargerRefusStats(true);
+}
+function voirPlusAppareils(){
+  _secPageAppareils++;
+  _chargerAppareilsStats(true);
+}
 var ROLE_LABELS_SEC={agent:'Agent',mini_master:'Mini-Master',master:'Master',business:'Business',client:'Client'};
-function _renderSecRefusList(elId, list, keyN){
+function _secTotalBanner(total){
+  return '<div style="font-size:10px;color:#6b7280;margin-bottom:8px">'+total+' compte(s) correspondant à ce seuil.</div>';
+}
+function _secMoreBtn(label, onclickFn){
+  return '<button onclick="'+onclickFn+'" style="width:100%;padding:10px;margin-top:8px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;color:#374151;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">'+label+'</button>';
+}
+function _renderSecRefusList(elId, list, keyN, total, append, hasMore, kind){
   var el=document.getElementById(elId);if(!el)return;
-  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil sur cette période.</div>';return;}
-  el.innerHTML='';
-  var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
-  list.forEach(function(row,i){
+  var oldBtn=el.querySelector('.sec-more-btn');if(oldBtn)oldBtn.remove();
+  if(!append){
+    if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil sur cette période.</div>';return;}
+    el.innerHTML=_secTotalBanner(total);
+    var tbl=document.createElement('div');tbl.className='sec-tbl';tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
+    el.appendChild(tbl);
+  }
+  var tbl=el.querySelector('.sec-tbl');
+  (list||[]).forEach(function(row,i){
     var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid #f9fafb';
     var roleTag = row.role ? '<span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:1px 6px;margin-left:6px">'+(ROLE_LABELS_SEC[row.role]||row.role)+'</span>' : '';
-    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(i+1)+'. '+(row.nom||'—')+roleTag+'</div>'
+    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(row.nom||'—')+roleTag+'</div>'
       +'<div style="font-size:10px;color:#9ca3af;font-family:monospace">'+(row.telephone||'numéro inconnu')+'</div></div>'
       +'<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;color:#b91c1c">'+row[keyN]+'</div><div style="font-size:9px;color:#9ca3af">refus · '+F(row.volumeTotal||0)+'</div></div>';
     tbl.appendChild(r);
   });
-  el.appendChild(tbl);
+  if(hasMore){
+    var btnWrap=document.createElement('div');btnWrap.className='sec-more-btn';
+    btnWrap.innerHTML=_secMoreBtn('Voir plus','voirPlusRefus(\''+kind+'\')');
+    el.appendChild(btnWrap);
+  }
 }
-function _renderSecAppareilsList(list){
+function _renderSecAppareilsList(list, total, append, hasMore){
   var el=document.getElementById('sec-appareils-list');if(!el)return;
-  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil.</div>';return;}
-  el.innerHTML='';
-  var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
-  list.forEach(function(row,i){
+  var oldBtn=el.querySelector('.sec-more-btn');if(oldBtn)oldBtn.remove();
+  if(!append){
+    if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil.</div>';return;}
+    el.innerHTML=_secTotalBanner(total);
+    var tbl=document.createElement('div');tbl.className='sec-tbl';tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
+    el.appendChild(tbl);
+  }
+  var tbl=el.querySelector('.sec-tbl');
+  (list||[]).forEach(function(row){
     var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid #f9fafb';
     var roleTag = row.role ? '<span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:1px 6px;margin-left:6px">'+(ROLE_LABELS_SEC[row.role]||row.role)+'</span>' : '';
     var derniere = row.derniereConnexion ? new Date(row.derniereConnexion).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(i+1)+'. '+(row.nom||'—')+roleTag+'</div>'
+    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(row.nom||'—')+roleTag+'</div>'
       +'<div style="font-size:10px;color:#9ca3af;font-family:monospace">'+(row.telephone||'numéro inconnu')+' · dernière connexion '+derniere+'</div></div>'
       +'<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;color:#1e40af">'+row.nbAppareils+'</div><div style="font-size:9px;color:#9ca3af">appareils</div></div>';
     tbl.appendChild(r);
   });
-  el.appendChild(tbl);
+  if(hasMore){
+    var btnWrap=document.createElement('div');btnWrap.className='sec-more-btn';
+    btnWrap.innerHTML=_secMoreBtn('Voir plus','voirPlusAppareils()');
+    el.appendChild(btnWrap);
+  }
 }
 
 async function chargerMonStats() {
