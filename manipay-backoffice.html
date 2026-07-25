@@ -258,6 +258,18 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <canvas id="flux-retrait-chart" height="140"></canvas>
     </div>
     <div id="flux-retraits-section" style="margin-bottom:18px"></div>
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">💳 Paiements marchands globaux</div>
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Courbe — Évolution des paiements marchands</div>
+      <canvas id="flux-paiement-chart" height="140"></canvas>
+    </div>
+    <div id="flux-paiement-section" style="margin-bottom:18px"></div>
+    <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🔁 Transferts Business ↔ Business globaux</div>
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Courbe — Évolution des transferts Business ↔ Business</div>
+      <canvas id="flux-b2b-chart" height="140"></canvas>
+    </div>
+    <div id="flux-b2b-section" style="margin-bottom:18px"></div>
   </div>
   <nav class="bnav" id="bnav-txns"></nav>
 </div>
@@ -5219,7 +5231,6 @@ var FLUX_TRANSFER_CATS=[
   {id:'agent↔mini_master',      label:'Mini-Masters ↔ Agents',       col:'#7c3aed'},
   {id:'agent↔master',           label:'Masters ↔ Agents',            col:'#be185d'},
   {id:'mini_master↔master',     label:'Masters ↔ Mini-Masters',      col:'#0e7490'},
-  {id:'agent↔business',         label:'Business ↔ Agents',           col:'#4f46e5'},
   {id:'business↔business',      label:'Business ↔ Business',         col:'#b45309'},
 ];
 
@@ -5266,21 +5277,21 @@ function _fluxAnalyticsInit(){
   }
   var dBar=document.getElementById('flux-depot-chart-btns');
   if(dBar&&dBar.childElementCount===0){
-    [{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'},{id:'autre',label:'Autres',col:'#9ca3af'}].forEach(function(cat){
+    [{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.dc=cat.id;
       var a=cat.id===_fluxDepotCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){_fluxDepotCat=this.dataset.dc;dBar.querySelectorAll('button').forEach(function(b2){var dCats=[{id:'master',col:'#92400e'},{id:'mini_master',col:'#2563eb'},{id:'agent',col:'#d97706'},{id:'autre',col:'#9ca3af'}];var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderDepotChart();});
+      btn.addEventListener('click',function(){_fluxDepotCat=this.dataset.dc;dBar.querySelectorAll('button').forEach(function(b2){var dCats=[{id:'master',col:'#92400e'},{id:'mini_master',col:'#2563eb'},{id:'agent',col:'#d97706'}];var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderDepotChart();});
       dBar.appendChild(btn);
     });
   }
   var rBar=document.getElementById('flux-retrait-chart-btns');
   if(rBar&&rBar.childElementCount===0){
-    [{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'},{id:'autre',label:'Autres',col:'#9ca3af'}].forEach(function(cat){
+    [{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.rc=cat.id;
       var a=cat.id===_fluxRetraitCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){_fluxRetraitCat=this.dataset.rc;rBar.querySelectorAll('button').forEach(function(b2){var rCats=[{id:'master',col:'#b91c1c'},{id:'mini_master',col:'#c2410c'},{id:'agent',col:'#ea580c'},{id:'autre',col:'#9ca3af'}];var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderRetraitChart();});
+      btn.addEventListener('click',function(){_fluxRetraitCat=this.dataset.rc;rBar.querySelectorAll('button').forEach(function(b2){var rCats=[{id:'master',col:'#b91c1c'},{id:'mini_master',col:'#c2410c'},{id:'agent',col:'#ea580c'}];var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderRetraitChart();});
       rBar.appendChild(btn);
     });
   }
@@ -5293,8 +5304,12 @@ async function _fluxAnalyticsLoad(){
     _fluxData=r.data||r;
     _fluxRenderChart();_fluxRenderTransferTable();_fluxRenderDepotChart();_fluxRenderRetraitChart();
     if (_fluxChartView === 'compare') _fluxRenderCompareChart();
-    _fluxRenderFlowSection('depots',_fluxData.depots,['master','mini_master','agent','autre'],['Masters','Mini-Masters','Agents','Autres'],['#92400e','#2563eb','#d97706','#9ca3af']);
-    _fluxRenderFlowSection('retraits',_fluxData.retraits,['master','mini_master','agent','autre'],['Masters','Mini-Masters','Agents','Autres'],['#b91c1c','#c2410c','#ea580c','#9ca3af']);
+    _fluxRenderFlowSection('depots',_fluxData.depots,['master','mini_master','agent'],['Masters','Mini-Masters','Agents'],['#92400e','#2563eb','#d97706']);
+    _fluxRenderFlowSection('retraits',_fluxData.retraits,['master','mini_master','agent'],['Masters','Mini-Masters','Agents'],['#b91c1c','#c2410c','#ea580c']);
+    _fluxRenderPaiementChart();
+    _fluxRenderSingleSection('paiement',_fluxData.paiements,'Paiements marchands (Business)','#7c3aed');
+    _fluxRenderB2BChart();
+    _fluxRenderSingleSection('b2b',_fluxData.business2business,'Business ↔ Business','#b45309');
   }catch(e){
     var msg='<div style="background:#fef3c7;border:1px solid var(--y);border-radius:12px;padding:14px;text-align:center;font-size:11px;color:#92400e">'+e.message+' <button onclick="_fluxAnalyticsLoad()" style="margin-left:8px;background:var(--y);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit">↻</button></div>';
     ['flux-transfer-table','flux-depots-section','flux-retraits-section'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML=msg;});
@@ -5417,14 +5432,38 @@ function _fluxRenderChart(){
 
 function _fluxRenderDepotChart(){
   if(_fluxDepotChartInst){try{_fluxDepotChartInst.destroy();}catch(e){}}
-  var colMap={master:'#92400e',mini_master:'#2563eb',agent:'#d97706',autre:'#9ca3af'};
+  var colMap={master:'#92400e',mini_master:'#2563eb',agent:'#d97706'};
   _fluxDepotChartInst=_fluxMakeChart('flux-depot-chart','depot_'+_fluxDepotCat,colMap[_fluxDepotCat]||'#15803d');
 }
 
 function _fluxRenderRetraitChart(){
   if(_fluxRetraitChartInst){try{_fluxRetraitChartInst.destroy();}catch(e){}}
-  var colMap={master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c',autre:'#9ca3af'};
+  var colMap={master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c'};
   _fluxRetraitChartInst=_fluxMakeChart('flux-retrait-chart','retrait_'+_fluxRetraitCat,colMap[_fluxRetraitCat]||'#dc2626');
+}
+
+var _fluxPaiementChartInst=null,_fluxB2BChartInst=null;
+
+function _fluxRenderPaiementChart(){
+  if(_fluxPaiementChartInst){try{_fluxPaiementChartInst.destroy();}catch(e){}}
+  _fluxPaiementChartInst=_fluxMakeChart('flux-paiement-chart','paiement','#7c3aed');
+}
+
+function _fluxRenderB2BChart(){
+  if(_fluxB2BChartInst){try{_fluxB2BChartInst.destroy();}catch(e){}}
+  _fluxB2BChartInst=_fluxMakeChart('flux-b2b-chart','business↔business','#b45309');
+}
+
+// Section résumé à une seule catégorie (pas de sélecteur, une seule série de données) —
+// utilisée pour Paiements Marchands et Business ↔ Business.
+function _fluxRenderSingleSection(sId,d,label,color){
+  var el=document.getElementById('flux-'+sId+'-section');if(!el||!d)return;
+  el.innerHTML='';
+  var evolCol=d.evol_vol>=0?'#16a34a':'#ef4444';
+  var card=document.createElement('div');card.style.cssText='background:#fff;border:1px solid #f3f4f6;border-left:3px solid '+color+';border-radius:12px;padding:10px 13px;margin-bottom:7px';
+  card.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#374151">'+label+'</div><div style="text-align:right"><div style="font-size:13px;font-weight:900;color:'+color+'">'+F(d.vol)+'</div><div style="font-size:9px;color:#9ca3af">'+d.n+' op. · moy. '+F(d.avg)+'</div></div></div>'
+    +'<div style="display:flex;justify-content:flex-end"><span style="font-size:9px;font-weight:700;color:'+evolCol+'">'+(d.evol_vol>=0?'▲':'▼')+Math.abs(d.evol_vol)+'% vs pér. préc.</span></div>';
+  el.appendChild(card);
 }
 
 function _fluxRenderTransferTable(){
