@@ -327,7 +327,6 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
         <div style="font-size:13px;color:#374151;margin-bottom:10px" id="h-pending-otp-txt">—</div>
         <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1.5px dashed #fdba74;border-radius:12px;padding:10px 14px;margin-bottom:10px">
           <div style="flex:1;font-size:24px;font-weight:900;letter-spacing:.15em;font-family:monospace;color:#c2410c" id="h-pending-otp-code">••••</div>
-          <button onclick="copierCodeOtp()" style="flex-shrink:0;padding:8px 12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;color:#c2410c;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Copier</button>
         </div>
         <div style="font-size:11px;color:#9a3412;margin-bottom:10px">Communiquez ce code uniquement si vous êtes d'accord avec le montant ci-dessus.</div>
         <button onclick="refuserDemandeOtp()" style="width:100%;padding:10px;background:#fff;border:1.5px solid #ef4444;border-radius:10px;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser cette demande</button>
@@ -1147,15 +1146,6 @@ function _demarrerCountdownOtp(expiresAt){
   tick();
   G._otpCountdownInterval=setInterval(tick,1000);
 }
-function copierCodeOtp(){
-  var code=(G._otpCourant||'').replace(/[^0-9]/g,'');
-  if(!code)return;
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(code).then(function(){T('Code copié');}).catch(function(){T('Code : '+code);});
-  }else{
-    T('Code : '+code);
-  }
-}
 function _pollSoldeSilencieux(){
   if(!G.token||!G.user||G.locked)return;
   get('/accounts/me').then(function(r){
@@ -1235,6 +1225,14 @@ function txRow(tx){
     }
   } else if(tx.type==='paiement_marchand'){
     label='Paiement '+(tx.description||'Marchand');
+  } else if(tx.type==='retrait'){
+    var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+    label='Retrait';
+    sublabel='Chez '+ci.nom;
+  } else if(tx.type==='depot'){
+    var ci=contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+    label='Dépôt';
+    sublabel='Par '+ci.nom;
   } else {
     label=cfg.l;
   }
@@ -1281,6 +1279,12 @@ function voirDetailTx(id) {
   } else if(tx.type==='paiement_marchand'){
     var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
     contre=ci.nom; contreTel=ci.tel;
+  } else if(tx.type==='retrait'){
+    var ci=contactInfo(tx.destRole,tx.destNomCommercial,tx.destPrenom,tx.destNom,tx.destTel);
+    contre=ci.nom; contreTel=ci.tel;
+  } else if(tx.type==='depot'){
+    var ci=contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
+    contre=ci.nom; contreTel=ci.tel;
   }
   var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
   var ds=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -1303,7 +1307,7 @@ function voirDetailTx(id) {
       +(tx.type==='transfert'?'<div style="font-size:13px;font-weight:800;color:'+col+';text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">'+(isIn?'&#x1F4E5; Transfert reçu':'&#x1F4E4; Transfert envoyé')+'</div>':'')
       +'<div style="font-size:34px;font-weight:900;color:'+col+'">'+sign+F(bigAmt)+'</div>'
       +(frais>0&&(tx.type==='retrait'||tx.type==='paiement_marchand')?'<div style="font-size:12px;color:#6b7280;margin-top:3px">dont '+F(tx.type==='paiement_marchand'?fraisClientPart:frais)+' de frais</div>':'')
-      +(contre?'<div style="font-size:14px;color:#374151;margin-top:8px;font-weight:600">'+(isIn?'De ':'À ')+contre+'</div>':'')
+      +(contre?'<div style="font-size:14px;color:#374151;margin-top:8px;font-weight:600">'+(tx.type==='retrait'?'Chez ':(tx.type==='depot'?'Par ':(isIn?'De ':'À ')))+contre+'</div>':'')
       +(contreTel?'<div style="font-size:12px;color:#9ca3af;margin-top:2px">'+contreTel+'</div>':'')
     +'</div>'
     +'<div style="margin:0 16px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">'
