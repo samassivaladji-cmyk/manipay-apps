@@ -1185,17 +1185,27 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
       </div>
 
+      <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre de refus (minimum)</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Sur la période choisie ci-dessus. Ex : 3 pour ne voir que les comptes ayant refusé au moins 3 fois.</div>
+        <input id="sec-min-refus" type="number" min="1" placeholder="1" class="inp" style="margin-bottom:14px"/>
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre d'appareils (minimum)</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes périodes confondues. Ex : 3 pour ne voir que les comptes utilisés depuis 3 appareils ou plus.</div>
+        <input id="sec-min-appareils" type="number" min="2" placeholder="2" class="inp" style="margin-bottom:14px"/>
+        <button onclick="chargerSecuriteStats()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher</button>
+      </div>
+
       <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">À surveiller : un refus occasionnel est normal, une fréquence élevée peut indiquer une mauvaise foi.</div>
-      <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+      <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
 
       <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
-      <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+      <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
 
       <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
-      <div id="sec-appareils-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+      <div id="sec-appareils-list"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
     </div>
   </div>
 </div>
@@ -8952,11 +8962,14 @@ function setSecPeriod(p){
 }
 async function chargerSecuriteStats(){
   var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list'), apEl=document.getElementById('sec-appareils-list');
+  var minRefusEl=document.getElementById('sec-min-refus'), minAppEl=document.getElementById('sec-min-appareils');
+  var minRefus=(minRefusEl&&minRefusEl.value)?Math.max(1,parseInt(minRefusEl.value)):1;
+  var minApp=(minAppEl&&minAppEl.value)?Math.max(2,parseInt(minAppEl.value)):2;
   if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   if(opEl)opEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   try{
-    var r=await apiGet('/securite/refus-stats?period='+_secPeriod);
+    var r=await apiGet('/securite/refus-stats?period='+_secPeriod+'&min='+minRefus);
     _renderSecRefusList('sec-clients-list', r.data.clients, 'refus');
     _renderSecRefusList('sec-operateurs-list', r.data.operateurs, 'refus');
   }catch(e){
@@ -8964,7 +8977,7 @@ async function chargerSecuriteStats(){
     if(opEl)opEl.innerHTML='';
   }
   try{
-    var r2=await apiGet('/securite/appareils-stats');
+    var r2=await apiGet('/securite/appareils-stats?min='+minApp);
     _renderSecAppareilsList(r2.data.comptes);
   }catch(e){
     if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">Erreur de chargement</div>';
@@ -8973,7 +8986,7 @@ async function chargerSecuriteStats(){
 var ROLE_LABELS_SEC={agent:'Agent',mini_master:'Mini-Master',master:'Master',business:'Business',client:'Client'};
 function _renderSecRefusList(elId, list, keyN){
   var el=document.getElementById(elId);if(!el)return;
-  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucune donnée sur cette période.</div>';return;}
+  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil sur cette période.</div>';return;}
   el.innerHTML='';
   var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
   list.forEach(function(row,i){
@@ -8988,7 +9001,7 @@ function _renderSecRefusList(elId, list, keyN){
 }
 function _renderSecAppareilsList(list){
   var el=document.getElementById('sec-appareils-list');if(!el)return;
-  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte utilisant plusieurs appareils.</div>';return;}
+  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte n\'atteint ce seuil.</div>';return;}
   el.innerHTML='';
   var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
   list.forEach(function(row,i){
