@@ -297,6 +297,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="mon-tab-admin"       onclick="setMonTab('admin')"       style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F451; Admin</button>
       <button id="mon-tab-global"      onclick="setMonTab('global')"      style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F30D; Global</button>
       <button id="mon-tab-stats"       onclick="setMonTab('stats')"       style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F4CA; Stats</button>
+      <button id="mon-tab-securite"    onclick="setMonTab('securite')"    style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F512; Sécurité</button>
     </div>
   </div>
   <div style="padding:14px 16px 100px">
@@ -590,6 +591,30 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Tickets ouverts par service</div>
         <div id="monst-gl-tickets-detail"></div>
       </div>
+    </div>
+
+    <!-- PANNEAU SÉCURITÉ -->
+    <div id="mon-panel-securite" style="display:none">
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">🔒 Segmentation Sécurité</div>
+
+      <div style="display:flex;gap:6px;margin-bottom:14px" id="sec-period-btns">
+        <button onclick="setSecPeriod('week')"  data-p="week"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Semaine</button>
+        <button onclick="setSecPeriod('month')" data-p="month" style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--y);background:var(--y);color:#fff">Ce mois</button>
+        <button onclick="setSecPeriod('year')"  data-p="year"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Année</button>
+        <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">À surveiller : un refus occasionnel est normal, une fréquence élevée peut indiquer une mauvaise foi.</div>
+      <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+      <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
+      <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+      <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
+      <div id="sec-appareils-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
     </div>
 
     <!-- PANNEAU GLOBAL -->
@@ -5222,7 +5247,7 @@ async function chargerTxns(){
 // ════════════════════════════════════════════════════════════
 var _fluxActiveTab='list',_fluxPeriod='month',_fluxStatut='complete',_fluxData=null;
 var _fluxChartInst=null,_fluxDepotChartInst=null,_fluxRetraitChartInst=null;
-var _fluxChartCat='client↔client',_fluxDepotCat='master',_fluxRetraitCat='master';
+var _fluxChartCat='client↔client',_fluxDepotCat='tous',_fluxRetraitCat='tous';
 var FLUX_TRANSFER_CATS=[
   {id:'client↔client',          label:'Clients ↔ Clients',           col:'#059669'},
   {id:'agent↔agent',            label:'Agents ↔ Agents',             col:'#d97706'},
@@ -5277,21 +5302,21 @@ function _fluxAnalyticsInit(){
   }
   var dBar=document.getElementById('flux-depot-chart-btns');
   if(dBar&&dBar.childElementCount===0){
-    [{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'}].forEach(function(cat){
+    [{id:'tous',label:'Tous',col:'#15803d'},{id:'master',label:'Masters',col:'#92400e'},{id:'mini_master',label:'Mini-Masters',col:'#2563eb'},{id:'agent',label:'Agents',col:'#d97706'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.dc=cat.id;
       var a=cat.id===_fluxDepotCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){_fluxDepotCat=this.dataset.dc;dBar.querySelectorAll('button').forEach(function(b2){var dCats=[{id:'master',col:'#92400e'},{id:'mini_master',col:'#2563eb'},{id:'agent',col:'#d97706'}];var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderDepotChart();});
+      btn.addEventListener('click',function(){_fluxDepotCat=this.dataset.dc;dBar.querySelectorAll('button').forEach(function(b2){var dCats=[{id:'tous',col:'#15803d'},{id:'master',col:'#92400e'},{id:'mini_master',col:'#2563eb'},{id:'agent',col:'#d97706'}];var bc=dCats.find(function(x){return x.id===b2.dataset.dc;})||{col:'#888'};var ia=b2.dataset.dc===_fluxDepotCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderDepotChart();});
       dBar.appendChild(btn);
     });
   }
   var rBar=document.getElementById('flux-retrait-chart-btns');
   if(rBar&&rBar.childElementCount===0){
-    [{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'}].forEach(function(cat){
+    [{id:'tous',label:'Tous',col:'#991b1b'},{id:'master',label:'Masters',col:'#b91c1c'},{id:'mini_master',label:'Mini-Masters',col:'#c2410c'},{id:'agent',label:'Agents',col:'#ea580c'}].forEach(function(cat){
       var btn=document.createElement('button');btn.textContent=cat.label;btn.dataset.rc=cat.id;
       var a=cat.id===_fluxRetraitCat;
       btn.style.cssText='padding:4px 9px;border-radius:99px;cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;white-space:nowrap;border:1.5px solid '+(a?cat.col:'#e5e7eb')+';background:'+(a?cat.col+'18':'#f9fafb')+';color:'+(a?cat.col:'#6b7280');
-      btn.addEventListener('click',function(){_fluxRetraitCat=this.dataset.rc;rBar.querySelectorAll('button').forEach(function(b2){var rCats=[{id:'master',col:'#b91c1c'},{id:'mini_master',col:'#c2410c'},{id:'agent',col:'#ea580c'}];var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderRetraitChart();});
+      btn.addEventListener('click',function(){_fluxRetraitCat=this.dataset.rc;rBar.querySelectorAll('button').forEach(function(b2){var rCats=[{id:'tous',col:'#991b1b'},{id:'master',col:'#b91c1c'},{id:'mini_master',col:'#c2410c'},{id:'agent',col:'#ea580c'}];var bc=rCats.find(function(x){return x.id===b2.dataset.rc;})||{col:'#888'};var ia=b2.dataset.rc===_fluxRetraitCat;b2.style.background=ia?bc.col+'18':'#f9fafb';b2.style.color=ia?bc.col:'#6b7280';b2.style.borderColor=ia?bc.col:'#e5e7eb';});_fluxRenderRetraitChart();});
       rBar.appendChild(btn);
     });
   }
@@ -5432,13 +5457,13 @@ function _fluxRenderChart(){
 
 function _fluxRenderDepotChart(){
   if(_fluxDepotChartInst){try{_fluxDepotChartInst.destroy();}catch(e){}}
-  var colMap={master:'#92400e',mini_master:'#2563eb',agent:'#d97706'};
+  var colMap={tous:'#15803d',master:'#92400e',mini_master:'#2563eb',agent:'#d97706'};
   _fluxDepotChartInst=_fluxMakeChart('flux-depot-chart','depot_'+_fluxDepotCat,colMap[_fluxDepotCat]||'#15803d');
 }
 
 function _fluxRenderRetraitChart(){
   if(_fluxRetraitChartInst){try{_fluxRetraitChartInst.destroy();}catch(e){}}
-  var colMap={master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c'};
+  var colMap={tous:'#991b1b',master:'#b91c1c',mini_master:'#c2410c',agent:'#ea580c'};
   _fluxRetraitChartInst=_fluxMakeChart('flux-retrait-chart','retrait_'+_fluxRetraitCat,colMap[_fluxRetraitCat]||'#dc2626');
 }
 
@@ -8724,7 +8749,7 @@ function _tkRender(el, list, listId) {
 // ════════════════════════════════════════════════════════════════
 function setMonTab(tab) {
   var role = G.user ? G.user.role : '';
-  var allTabs = ['alertes','bo','sup','tech','superviseur','admin','global','stats'];
+  var allTabs = ['alertes','bo','sup','tech','superviseur','admin','global','stats','securite'];
   allTabs.forEach(function(t) {
     var btn = document.getElementById('mon-tab-'+t);
     if (!btn) return;
@@ -8796,6 +8821,7 @@ function setMonTab(tab) {
     _tkLoadList('mon-global-admin', _monGlobalFilter, 'admin');
   }
   if (tab === 'stats') { chargerMonStats(); }
+  if (tab === 'securite') { chargerSecuriteStats(); }
 }
 
 // ── PANNEAU ADMIN — onglets internes ──
@@ -8911,6 +8937,71 @@ function setMonStatsView(view) {
   });
   if (view === 'bo')     _chargerMonStatsBO();
   if (view === 'global') _chargerMonStatsGlobal();
+}
+
+// ── SÉCURITÉ : segmentation refus & multi-appareils ──
+var _secPeriod = 'month';
+function setSecPeriod(p){
+  _secPeriod = p;
+  document.querySelectorAll('#sec-period-btns button').forEach(function(b){
+    var a = b.dataset.p === p;
+    b.style.background = a ? 'var(--y)' : '#fff';
+    b.style.color = a ? '#fff' : '#374151';
+    b.style.borderColor = a ? 'var(--y)' : '#e5e7eb';
+  });
+  chargerSecuriteStats();
+}
+async function chargerSecuriteStats(){
+  var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list'), apEl=document.getElementById('sec-appareils-list');
+  if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  if(opEl)opEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/securite/refus-stats?period='+_secPeriod);
+    _renderSecRefusList('sec-clients-list', r.data.clients, 'refus');
+    _renderSecRefusList('sec-operateurs-list', r.data.operateurs, 'refus');
+  }catch(e){
+    if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">Erreur de chargement</div>';
+    if(opEl)opEl.innerHTML='';
+  }
+  try{
+    var r2=await apiGet('/securite/appareils-stats');
+    _renderSecAppareilsList(r2.data.comptes);
+  }catch(e){
+    if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center;color:#ef4444;font-size:12px">Erreur de chargement</div>';
+  }
+}
+var ROLE_LABELS_SEC={agent:'Agent',mini_master:'Mini-Master',master:'Master',business:'Business',client:'Client'};
+function _renderSecRefusList(elId, list, keyN){
+  var el=document.getElementById(elId);if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucune donnée sur cette période.</div>';return;}
+  el.innerHTML='';
+  var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
+  list.forEach(function(row,i){
+    var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid #f9fafb';
+    var roleTag = row.role ? '<span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:1px 6px;margin-left:6px">'+(ROLE_LABELS_SEC[row.role]||row.role)+'</span>' : '';
+    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(i+1)+'. '+(row.nom||'—')+roleTag+'</div>'
+      +'<div style="font-size:10px;color:#9ca3af;font-family:monospace">'+(row.telephone||'numéro inconnu')+'</div></div>'
+      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;color:#b91c1c">'+row[keyN]+'</div><div style="font-size:9px;color:#9ca3af">refus · '+F(row.volumeTotal||0)+'</div></div>';
+    tbl.appendChild(r);
+  });
+  el.appendChild(tbl);
+}
+function _renderSecAppareilsList(list){
+  var el=document.getElementById('sec-appareils-list');if(!el)return;
+  if(!list||!list.length){el.innerHTML='<div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Aucun compte utilisant plusieurs appareils.</div>';return;}
+  el.innerHTML='';
+  var tbl=document.createElement('div');tbl.style.cssText='background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)';
+  list.forEach(function(row,i){
+    var r=document.createElement('div');r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 13px;border-bottom:1px solid #f9fafb';
+    var roleTag = row.role ? '<span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:1px 6px;margin-left:6px">'+(ROLE_LABELS_SEC[row.role]||row.role)+'</span>' : '';
+    var derniere = row.derniereConnexion ? new Date(row.derniereConnexion).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    r.innerHTML='<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(i+1)+'. '+(row.nom||'—')+roleTag+'</div>'
+      +'<div style="font-size:10px;color:#9ca3af;font-family:monospace">'+(row.telephone||'numéro inconnu')+' · dernière connexion '+derniere+'</div></div>'
+      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;color:#1e40af">'+row.nbAppareils+'</div><div style="font-size:9px;color:#9ca3af">appareils</div></div>';
+    tbl.appendChild(r);
+  });
+  el.appendChild(tbl);
 }
 
 async function chargerMonStats() {
