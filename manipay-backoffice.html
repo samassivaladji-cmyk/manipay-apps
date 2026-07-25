@@ -297,7 +297,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="mon-tab-admin"       onclick="setMonTab('admin')"       style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F451; Admin</button>
       <button id="mon-tab-global"      onclick="setMonTab('global')"      style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F30D; Global</button>
       <button id="mon-tab-stats"       onclick="setMonTab('stats')"       style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F4CA; Stats</button>
-      <button id="mon-tab-securite"    onclick="setMonTab('securite')"    style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">&#x1F512; Sécurité</button>
     </div>
   </div>
   <div style="padding:14px 16px 100px">
@@ -591,30 +590,6 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Tickets ouverts par service</div>
         <div id="monst-gl-tickets-detail"></div>
       </div>
-    </div>
-
-    <!-- PANNEAU SÉCURITÉ -->
-    <div id="mon-panel-securite" style="display:none">
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">🔒 Segmentation Sécurité</div>
-
-      <div style="display:flex;gap:6px;margin-bottom:14px" id="sec-period-btns">
-        <button onclick="setSecPeriod('week')"  data-p="week"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Semaine</button>
-        <button onclick="setSecPeriod('month')" data-p="month" style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--y);background:var(--y);color:#fff">Ce mois</button>
-        <button onclick="setSecPeriod('year')"  data-p="year"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Année</button>
-        <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
-      </div>
-
-      <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
-      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">À surveiller : un refus occasionnel est normal, une fréquence élevée peut indiquer une mauvaise foi.</div>
-      <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
-
-      <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
-      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
-      <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
-
-      <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
-      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
-      <div id="sec-appareils-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
     </div>
 
     <!-- PANNEAU GLOBAL -->
@@ -1197,6 +1172,30 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       </div>
       <div id="seg-results-list"></div>
       <button onclick="ouvrirNotifSegmentation()" id="seg-btn-notify" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">📣 Notifier la sélection (<span id="seg-selected-count">0</span>)</button>
+    </div>
+
+    <!-- SÉGMENTATION SÉCURITÉ — comptes à surveiller -->
+    <div style="border-top:1px solid #f3f4f6;margin-top:24px;padding-top:20px">
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">🔒 Comptes à surveiller</div>
+
+      <div style="display:flex;gap:6px;margin-bottom:14px" id="sec-period-btns">
+        <button onclick="setSecPeriod('week')"  data-p="week"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Semaine</button>
+        <button onclick="setSecPeriod('month')" data-p="month" style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--y);background:var(--y);color:#fff">Ce mois</button>
+        <button onclick="setSecPeriod('year')"  data-p="year"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Année</button>
+        <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">À surveiller : un refus occasionnel est normal, une fréquence élevée peut indiquer une mauvaise foi.</div>
+      <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+      <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
+      <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
+
+      <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
+      <div id="sec-appareils-list"><div style="padding:14px;text-align:center"><div class="spin"></div></div></div>
     </div>
   </div>
 </div>
@@ -4817,6 +4816,7 @@ function initSegmentationUI(){
       statutEl.appendChild(btn);
     });
   }
+  chargerSecuriteStats();
 }
 function segNum(id){var v=document.getElementById(id).value;return v===''?undefined:Number(v);}
 function segDate(id){var v=document.getElementById(id).value;return v?v:undefined;}
@@ -8749,7 +8749,7 @@ function _tkRender(el, list, listId) {
 // ════════════════════════════════════════════════════════════════
 function setMonTab(tab) {
   var role = G.user ? G.user.role : '';
-  var allTabs = ['alertes','bo','sup','tech','superviseur','admin','global','stats','securite'];
+  var allTabs = ['alertes','bo','sup','tech','superviseur','admin','global','stats'];
   allTabs.forEach(function(t) {
     var btn = document.getElementById('mon-tab-'+t);
     if (!btn) return;
@@ -8821,7 +8821,6 @@ function setMonTab(tab) {
     _tkLoadList('mon-global-admin', _monGlobalFilter, 'admin');
   }
   if (tab === 'stats') { chargerMonStats(); }
-  if (tab === 'securite') { chargerSecuriteStats(); }
 }
 
 // ── PANNEAU ADMIN — onglets internes ──
