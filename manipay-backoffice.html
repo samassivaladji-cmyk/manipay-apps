@@ -1189,21 +1189,19 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="border-top:1px solid #f3f4f6;margin-top:24px;padding-top:20px">
       <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">🔒 Comptes à surveiller</div>
 
-      <div style="display:flex;gap:6px;margin-bottom:14px" id="sec-period-btns">
-        <button onclick="setSecPeriod('week')"  data-p="week"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Semaine</button>
-        <button onclick="setSecPeriod('month')" data-p="month" style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--y);background:var(--y);color:#fff">Ce mois</button>
-        <button onclick="setSecPeriod('year')"  data-p="year"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Année</button>
-        <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
-      </div>
-
+      <!-- Bloc 1 : refus -->
       <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px">🙅 Recherche par refus</div>
+        <div style="display:flex;gap:6px;margin-bottom:14px" id="sec-period-btns">
+          <button onclick="setSecPeriod('week')"  data-p="week"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Semaine</button>
+          <button onclick="setSecPeriod('month')" data-p="month" style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--y);background:var(--y);color:#fff">Ce mois</button>
+          <button onclick="setSecPeriod('year')"  data-p="year"  style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Année</button>
+          <button onclick="setSecPeriod('all')"   data-p="all"   style="flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#374151">Tout</button>
+        </div>
         <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre de refus (minimum)</div>
         <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Sur la période choisie ci-dessus. Ex : 2 pour ne voir que les comptes ayant refusé au moins 2 fois.</div>
         <input id="sec-min-refus" type="number" min="1" placeholder="2" class="inp" style="margin-bottom:14px"/>
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px">Nombre d'appareils (minimum)</div>
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes périodes confondues. Ex : 2 pour ne voir que les comptes utilisés depuis 2 appareils ou plus.</div>
-        <input id="sec-min-appareils" type="number" min="2" placeholder="2" class="inp" style="margin-bottom:14px"/>
-        <button onclick="chargerSecuriteStats()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher</button>
+        <button onclick="chargerRefusStatsSeul()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher les refus</button>
       </div>
 
       <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
@@ -1213,6 +1211,14 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
       <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
+
+      <!-- Bloc 2 : appareils -->
+      <div style="background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px">📱 Recherche par appareils</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes périodes confondues. Ex : 2 pour ne voir que les comptes utilisés depuis 2 appareils ou plus.</div>
+        <input id="sec-min-appareils" type="number" min="2" placeholder="2" class="inp" style="margin-bottom:14px"/>
+        <button onclick="chargerAppareilsStatsSeul()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher les appareils</button>
+      </div>
 
       <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
@@ -9021,7 +9027,6 @@ function setSecPeriod(p){
     b.style.color = a ? '#fff' : '#374151';
     b.style.borderColor = a ? 'var(--y)' : '#e5e7eb';
   });
-  chargerSecuriteStats();
 }
 var _secPageClients=1, _secPageOperateurs=1, _secPageAppareils=1;
 var secSelected={}, secUserMeta={};
@@ -9063,14 +9068,19 @@ function ouvrirNotifSecurite(){
   document.getElementById('seg-notif-message').value='';
   openSh('seg-notif');
 }
-async function chargerSecuriteStats(){
-  _secPageClients=1;_secPageOperateurs=1;_secPageAppareils=1;
+async function chargerRefusStatsSeul(){
+  _secPageClients=1;_secPageOperateurs=1;
   secSelected={};secUserMeta={};_renderSecSelectedBar();
-  var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list'), apEl=document.getElementById('sec-appareils-list');
+  var clEl=document.getElementById('sec-clients-list'), opEl=document.getElementById('sec-operateurs-list');
   if(clEl)clEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   if(opEl)opEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
-  if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   await _chargerRefusStats(false);
+}
+async function chargerAppareilsStatsSeul(){
+  _secPageAppareils=1;
+  secSelected={};secUserMeta={};_renderSecSelectedBar();
+  var apEl=document.getElementById('sec-appareils-list');
+  if(apEl)apEl.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   await _chargerAppareilsStats(false);
 }
 async function _chargerRefusStats(append){
