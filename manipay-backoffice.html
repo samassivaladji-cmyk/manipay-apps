@@ -1204,11 +1204,23 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="chargerRefusStatsSeul()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher les refus</button>
       </div>
 
-      <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🙅 Clients qui refusent le plus de demandes</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.05em">🙅 Clients qui refusent le plus de demandes</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="secSelectAllList('sec-clients-list',true)" style="background:none;border:none;color:var(--y2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout cocher</button>
+          <button onclick="secSelectAllList('sec-clients-list',false)" style="background:none;border:none;color:#6b7280;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout décocher</button>
+        </div>
+      </div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">À surveiller : un refus occasionnel est normal, une fréquence élevée peut indiquer une mauvaise foi.</div>
       <div id="sec-clients-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
 
-      <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🎯 Opérateurs dont les demandes sont le plus refusées</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:10px;font-weight:700;color:#7c2d12;text-transform:uppercase;letter-spacing:.05em">🎯 Opérateurs dont les demandes sont le plus refusées</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="secSelectAllList('sec-operateurs-list',true)" style="background:none;border:none;color:var(--y2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout cocher</button>
+          <button onclick="secSelectAllList('sec-operateurs-list',false)" style="background:none;border:none;color:#6b7280;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout décocher</button>
+        </div>
+      </div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Agents, Mini-Masters, Masters, Business — un taux de refus élevé peut indiquer des tentatives d'opérations non autorisées sur des comptes clients.</div>
       <div id="sec-operateurs-list" style="margin-bottom:20px"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
 
@@ -1220,15 +1232,17 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <button onclick="chargerAppareilsStatsSeul()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Rechercher les appareils</button>
       </div>
 
-      <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📱 Comptes utilisés depuis plusieurs appareils</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:10px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.05em">📱 Comptes utilisés depuis plusieurs appareils</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="secSelectAllList('sec-appareils-list',true)" style="background:none;border:none;color:var(--y2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout cocher</button>
+          <button onclick="secSelectAllList('sec-appareils-list',false)" style="background:none;border:none;color:#6b7280;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">Tout décocher</button>
+        </div>
+      </div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Toutes catégories confondues — utile pour repérer les comptes qui se connectent régulièrement depuis un appareil qui n'est pas celui d'origine.</div>
       <div id="sec-appareils-list"><div style="padding:14px;text-align:center;color:#9ca3af;font-size:12px">Réglez le seuil ci-dessus puis touchez Rechercher.</div></div>
 
       <div id="sec-selected-bar" style="display:none;margin-top:16px">
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <button onclick="secSelectAll(true)" style="background:none;border:none;color:var(--y2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Tout cocher</button>
-          <button onclick="secSelectAll(false)" style="background:none;border:none;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Tout décocher</button>
-        </div>
         <button onclick="ouvrirNotifSecurite()" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">📣 Notifier la sélection (<span id="sec-selected-count">0</span>)</button>
       </div>
     </div>
@@ -9041,8 +9055,9 @@ function secToggle(id, nom, tel){
     el.style.background=secSelected[id]?'#fffbeb':'#fff';
   });
 }
-function secSelectAll(val){
-  document.querySelectorAll('[data-sec-id]').forEach(function(el){
+function secSelectAllList(containerId, val){
+  var container=document.getElementById(containerId);if(!container)return;
+  container.querySelectorAll('[data-sec-id]').forEach(function(el){
     var id=el.dataset.secId, nom=el.dataset.secNom, tel=el.dataset.secTel;
     secSelected[id]=val;
     if(val)secUserMeta[id]={nom:nom, telephone:tel};
