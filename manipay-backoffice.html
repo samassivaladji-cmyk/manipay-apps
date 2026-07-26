@@ -77,6 +77,27 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <label class="lbl">Numero de telephone</label>
     <input class="inp" id="lg-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:14px"/>
     <button class="btn btn-y" onclick="goPin()">Continuer</button>
+    <div style="text-align:center;margin-top:16px"><a onclick="showScr('s-recovery-bo')" style="color:var(--m);font-weight:600;cursor:pointer;text-decoration:underline;font-size:13px">PIN oublié ? Récupérer mon compte</a></div>
+  </div>
+</div>
+
+<div class="scr" id="s-recovery-bo" style="justify-content:center;align-items:center;padding:32px 24px;background:#fff">
+  <div style="width:100%;max-width:340px">
+    <button onclick="showScr('s-login')" style="background:none;border:none;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:24px">← Retour</button>
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:44px;margin-bottom:10px">🔑</div>
+      <div style="font-size:20px;font-weight:800">Récupérer mon compte</div>
+      <div style="color:var(--m);font-size:13px;margin-top:6px">Entrez votre numéro, votre code secret actuel, puis votre code de récupération.</div>
+    </div>
+    <div id="rec-bo-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:10px 16px;border-radius:12px;margin-bottom:14px;font-size:13px"></div>
+    <label class="lbl">Numéro de téléphone</label>
+    <input class="inp" id="rec-bo-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:14px"/>
+    <label class="lbl">Votre code secret actuel (PIN)</label>
+    <input class="inp" id="rec-bo-pin" type="password" placeholder="••••" inputmode="numeric" maxlength="4" style="margin-bottom:14px;letter-spacing:.3em;text-align:center" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,4)"/>
+    <label class="lbl">Code de récupération</label>
+    <input class="inp" id="rec-bo-code" type="text" placeholder="1234-ABCD" style="margin-bottom:20px;text-transform:uppercase;font-family:monospace" oninput="this.value=this.value.toUpperCase()"/>
+    <div id="rec-bo-loading" style="display:none;text-align:center;padding:12px"><div class="spin"></div></div>
+    <button class="btn btn-y" id="rec-bo-btn" onclick="doLoginRecoveryBO()">Récupérer mon compte</button>
   </div>
 </div>
 
@@ -2106,7 +2127,11 @@ async function callAPI(path,opts){
   finally{clearTimeout(timer);}
   var d=await r.json();
   if(!r.ok){
-    if(r.status===401){
+    // Un 401 ne signifie "session expirée" que s'il y avait déjà un token en cours d'usage
+    // (utilisateur déjà connecté). Sans token — ex. une tentative de connexion avec un PIN
+    // incorrect — un 401 est juste une erreur de connexion normale à afficher telle quelle,
+    // pas une session à rafraîchir/fermer.
+    if(r.status===401 && G.token){
       // Tenter refresh avant de déconnecter
       var refreshed=await refreshAccessToken();
       if(refreshed){
@@ -3838,7 +3863,11 @@ async function callAPI(path,opts){
   finally{clearTimeout(timer);}
   var d=await r.json();
   if(!r.ok){
-    if(r.status===401){
+    // Un 401 ne signifie "session expirée" que s'il y avait déjà un token en cours d'usage
+    // (utilisateur déjà connecté). Sans token — ex. une tentative de connexion avec un PIN
+    // incorrect — un 401 est juste une erreur de connexion normale à afficher telle quelle,
+    // pas une session à rafraîchir/fermer.
+    if(r.status===401 && G.token){
       // Tenter refresh avant de déconnecter
       var refreshed=await refreshAccessToken();
       if(refreshed){
@@ -4003,6 +4032,31 @@ function goPin(){
 function PIN(n){if(G.pin.length>=4)return;G.pin+=String(n);rDots();if(G.pin.length===4)setTimeout(doLogin,300);}
 function DELP(){G.pin=G.pin.slice(0,-1);rDots();}
 function rDots(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.classList.toggle('on',G.pin.length>i);}}
+
+async function doLoginRecoveryBO(){
+  var tel=(document.getElementById('rec-bo-tel').value||'').trim();
+  var pin=(document.getElementById('rec-bo-pin').value||'').trim();
+  var code=(document.getElementById('rec-bo-code').value||'').trim();
+  var errEl=document.getElementById('rec-bo-err');errEl.style.display='none';
+  if(!tel||!pin||!code){errEl.textContent='Numéro, PIN et code requis';errEl.style.display='';return;}
+  document.getElementById('rec-bo-btn').style.display='none';document.getElementById('rec-bo-loading').style.display='';
+  try{
+    var r=await apiPost('/auth/login-recovery',{telephone:tel,pin:pin,codeRecuperation:code});
+    var ok=['admin','superviseur','support_client','support_tech','backoffice'];
+    if(ok.indexOf(r.data.user.role)===-1)throw new Error('Acces non autorise');
+    G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
+    localStorage.setItem('mani_token',G.token);localStorage.setItem('mani_refresh',G.refresh);localStorage.setItem('mani_user',JSON.stringify(G.user));
+    var nouveauCode=r.data.nouveauCodeRecuperation;
+    document.getElementById('rec-bo-btn').style.display='';document.getElementById('rec-bo-loading').style.display='none';
+    enterApp();
+    setTimeout(function(){
+      alert('Compte récupéré !\n\nVotre code de récupération reste : '+(nouveauCode||'2008')+'\n\nPensez à vérifier que votre PIN actuel vous convient toujours.');
+    },300);
+  }catch(e){
+    document.getElementById('rec-bo-btn').style.display='';document.getElementById('rec-bo-loading').style.display='none';
+    errEl.textContent=e.message;errEl.style.display='';
+  }
+}
 
 async function doLogin(){
   var tel=document.getElementById('lg-tel').value.trim();
