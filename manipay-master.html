@@ -2546,14 +2546,15 @@ function confirmerPositionObligatoire(){
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
         body:JSON.stringify({latitude:pos.coords.latitude,longitude:pos.coords.longitude})
       });
-      if(!r.ok)throw new Error();
+      var d=await r.json().catch(function(){return null;});
+      if(!r.ok)throw new Error((d&&d.message)?d.message+' (code '+r.status+')':'Erreur serveur (code '+r.status+')');
       G.user.positionConfirmee=true;
       _ls.set('mani_user',JSON.stringify(G.user));
       S('s-home');chargerAccueil();genererQR();initAutoLock();
     }catch(e){
       document.getElementById('pos-obl-loading').style.display='none';
       document.getElementById('pos-obl-btn').style.display='';
-      document.getElementById('pos-obl-err').textContent="Erreur lors de l'enregistrement. Réessayez.";
+      document.getElementById('pos-obl-err').textContent=e.message||"Erreur lors de l'enregistrement. Réessayez.";
       document.getElementById('pos-obl-err').style.display='';
     }
   },function(){
