@@ -235,9 +235,10 @@ html,body{height:100%;background:#f5f5f5;font-family:'DM Sans',sans-serif;color:
 <!-- LOCK SCREEN -->
 <div id="s-lock">
   <div style="width:80px;height:80px;border-radius:20px;overflow:hidden;margin-bottom:16px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.2)"><img src="https://samassivaladji-cmyk.github.io/manipay-apps/icon-minimaster-512.png" style="width:100%;height:100%;object-fit:contain"/></div>
-  <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:4px">ManiPay</div>
+  <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:4px" id="lock-name">ManiPay</div>
   <div style="color:rgba(255,255,255,.8);font-size:13px;margin-bottom:28px">Mini-Master — Code PIN requis</div>
   <div id="ld-err" class="info info-r" style="display:none;margin-bottom:12px"></div>
+  <div id="lock-err" style="color:#ef4444;font-size:13px;margin-bottom:12px;display:none">PIN incorrect</div>
   <div style="display:flex;gap:14px;margin-bottom:28px">
     <div class="pin-dot" id="ld0"></div><div class="pin-dot" id="ld1"></div><div class="pin-dot" id="ld2"></div><div class="pin-dot" id="ld3"></div>
   </div>
@@ -3401,26 +3402,6 @@ function _pollSoldeSilencieux(){
       if(changed){ setSoldeVal(FN(cr.data.solde)); if(typeof chargerTxns==='function') chargerTxns(); }
     }
   }).catch(function(){});
-  get('/transactions/otp/pending').then(function(r){
-    var box=document.getElementById('h-pending-otp');
-    if(!box)return;
-    if(r&&r.data&&r.data.pending){
-      var libelle=r.data.type==='retrait'?'retirer':'encaisser';
-      document.getElementById('h-pending-otp-txt').textContent=
-        (r.data.demandeurNom||'Un professionnel')+' souhaite '+libelle+' '+F(r.data.montant)+' sur votre compte. Un code vous a été envoyé.';
-      box.style.display='';
-    } else {
-      box.style.display='none';
-    }
-  }).catch(function(){});
-}
-async function refuserDemandeOtp(){
-  if(!confirm('Refuser cette demande ? La personne sera notifiée et le code sera immédiatement invalidé.'))return;
-  try{
-    await post('/transactions/otp/refuser',{});
-    document.getElementById('h-pending-otp').style.display='none';
-    T('Demande refusée');
-  }catch(e){T(e.message,true);}
 }
 setInterval(_pollSoldeSilencieux, 10000);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) _pollSoldeSilencieux(); });
