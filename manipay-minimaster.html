@@ -3143,6 +3143,17 @@ function demarrerScan(){
   var video=document.getElementById('wqr-video');
   var msg=document.getElementById('wqr-scan-msg');
   if(!video)return;
+  function _jouerSonScan(){
+    try{
+      var ctx=new (window.AudioContext||window.webkitAudioContext)();
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
+      g.gain.setValueAtTime(0.3,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);
+      o.connect(g);g.connect(ctx.destination);
+      o.start();o.stop(ctx.currentTime+0.15);
+    }catch(e){}
+  }
   if('BarcodeDetector' in window){
     var bd=new BarcodeDetector({formats:['qr_code']});
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
@@ -3152,6 +3163,7 @@ function demarrerScan(){
         if(!video.srcObject){return;}
         bd.detect(video).then(function(codes){
           if(codes.length>0){
+            _jouerSonScan();
             var raw=codes[0].rawValue;
             var parts=raw.split('|');var tel=parts[0]||raw;
             var cb=_qrCallback;_qrCallback=null;
@@ -3180,6 +3192,7 @@ function demarrerScan(){
           var d=ctx.getImageData(0,0,canvas.width,canvas.height);
           var code=jsQR(d.data,d.width,d.height);
           if(code&&code.data){
+            _jouerSonScan();
             var raw=code.data;var parts=raw.split('|');var tel=parts[0]||raw;
             var cb=_qrCallback;_qrCallback=null;
             fermerPopupQR();
