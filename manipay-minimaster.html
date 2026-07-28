@@ -1551,6 +1551,13 @@ async function chargerAccueil(){
     var urP=await get('/users/me');
     G.user=urP.data;
     _ls.set('mani_user',JSON.stringify(G.user));
+    // Auto-correction : si un cache local corrompu/effacé avait affiché à tort l'écran de
+    // position obligatoire alors que le serveur confirme que c'est déjà fait, on se corrige
+    // silencieusement dès qu'on recontacte le serveur, sans obliger l'utilisateur à revalider.
+    if(G.user.positionConfirmee===true){
+      var posScr=document.getElementById('s-position-obligatoire');
+      if(posScr&&posScr.classList.contains('on')){S('s-home');}
+    }
   }catch(e){}
   // Charger compteurs réseau (Agents / Business / Clients rattachés)
   try{
@@ -3146,12 +3153,19 @@ function demarrerScan(){
   function _jouerSonScan(){
     try{
       var ctx=new (window.AudioContext||window.webkitAudioContext)();
-      var o=ctx.createOscillator(),g=ctx.createGain();
-      o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
-      g.gain.setValueAtTime(0.3,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);
-      o.connect(g);g.connect(ctx.destination);
-      o.start();o.stop(ctx.currentTime+0.15);
+      function beep(t,freq){
+        var o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='square';o.frequency.setValueAtTime(freq,t);
+        g.gain.setValueAtTime(0,t);
+        g.gain.linearRampToValueAtTime(0.7,t+0.008);
+        g.gain.setValueAtTime(0.7,t+0.07);
+        g.gain.linearRampToValueAtTime(0,t+0.09);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(t);o.stop(t+0.1);
+      }
+      var now=ctx.currentTime;
+      beep(now,1500);
+      beep(now+0.12,1800);
     }catch(e){}
   }
   if('BarcodeDetector' in window){
