@@ -818,7 +818,7 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
 </div>
 
 <script>
-const API='https://afrim-pay-backend.onrender.com/api/v1';
+const API='https://manipay-backend.bonto.run/api/v1';
 var LS={get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},remove:function(k){try{localStorage.removeItem(k);}catch(e){}}};
 
 function contacterSupport(){
@@ -2967,7 +2967,7 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
                       console.log('[FCM] Token obtenu');
                       // Sauvegarder le token sur le serveur
                       if(typeof G!=='undefined'&&G.token){
-                        var base='https://afrim-pay-backend.onrender.com';
+                        var base='https://manipay-backend.bonto.run';
                         fetch(base+'/api/v1/users/fcm-token',{
                           method:'POST',
                           headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},
