@@ -1853,6 +1853,12 @@ async function doLogin(){
       S('s-device-verify');
       return;
     }
+    var _u=r.data.user;
+    if(_u&&_u.role!=='client'&&_u.telephone!=='0505414751'){
+      document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();
+      document.getElementById('err-pin').textContent='Ce compte n\'est pas autorisé à utiliser l\'application Client.';document.getElementById('err-pin').style.display='';
+      return;
+    }
     var _pinUtilise=G.pin;
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;LS.set('mani_token',G.token);LS.set('mani_refresh',G.refresh);LS.set('mani_user',JSON.stringify(G.user));document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();if(typeof fbLogLogin==='function')fbLogLogin();setTab('home');chargerBadgeNotifs();
     if(G.user&&G.user.pinAChanger){
