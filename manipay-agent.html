@@ -757,6 +757,10 @@ function setTab(t){
       <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px">
         <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
         <div id="ret-otp-info" style="font-size:12px;color:#92400e;margin-bottom:8px;text-align:center"></div>
+        <div id="ret-otp-photo" style="display:none;margin-bottom:10px;text-align:center">
+          <div id="ret-otp-photo-label" style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"></div>
+          <div id="ret-otp-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
         <div id="ret-otp-timer" style="text-align:center;margin-bottom:8px"><span style="display:inline-block;background:#fff;border:1px solid #fbbf24;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:800;color:#92400e">3:00</span></div>
         <div id="ret-otp-recap" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:14px;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px"></div>
         <div style="font-size:12px;color:#6b7280;margin-bottom:8px;text-align:center">Saisissez le code OTP communiqu&#233; par le client :</div>
@@ -1212,6 +1216,12 @@ async function doRetrait(){
     document.getElementById('ret-otp-section').style.display='';
     document.getElementById('ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
     document.getElementById('ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
+    var photoEl=document.getElementById('ret-otp-photo'),photoLabel=document.getElementById('ret-otp-photo-label'),photoImgs=document.getElementById('ret-otp-photo-imgs');
+    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length){
+      photoLabel.textContent=d.photoVerification.type==='cni'?'Vérifiez la CNI du client':'Vérifiez le selfie du client';
+      photoImgs.innerHTML=d.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fbbf24"/>';}).join('');
+      photoEl.style.display='';
+    }else{photoEl.style.display='none';photoImgs.innerHTML='';}
     document.getElementById('ret-otp-input').value='';
     _demarrerCountdownRetOtp(d.expiresAt);
     setTimeout(function(){document.getElementById('ret-otp-input').focus();},100);
@@ -3282,6 +3292,12 @@ async function demanderOTPSop(){
     var d=r.data||{};
     document.getElementById('sop-ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
     document.getElementById('sop-ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
+    var sopPhotoEl=document.getElementById('sop-ret-otp-photo'),sopPhotoLabel=document.getElementById('sop-ret-otp-photo-label'),sopPhotoImgs=document.getElementById('sop-ret-otp-photo-imgs');
+    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length){
+      sopPhotoLabel.textContent=d.photoVerification.type==='cni'?'Vérifiez la CNI du client':'Vérifiez le selfie du client';
+      sopPhotoImgs.innerHTML=d.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fbbf24"/>';}).join('');
+      sopPhotoEl.style.display='';
+    }else{sopPhotoEl.style.display='none';sopPhotoImgs.innerHTML='';}
     document.getElementById('sop-ret-otp-err').style.display='none';
     document.getElementById('sop-ret-phase1').style.display='none';
     document.getElementById('sop-ret-phase2').style.display='';
@@ -3622,6 +3638,10 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;padding:16px;margin-bottom:20px">
         <div style="font-size:15px;font-weight:800;color:#92400e;margin-bottom:6px;text-align:center">&#128274; Autorisation requise</div>
         <div id="sop-ret-otp-info" style="font-size:12px;color:#92400e;text-align:center;margin-bottom:10px"></div>
+        <div id="sop-ret-otp-photo" style="display:none;margin-bottom:10px;text-align:center">
+          <div id="sop-ret-otp-photo-label" style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"></div>
+          <div id="sop-ret-otp-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
         <div style="text-align:center;margin-bottom:10px"><span id="sop-ret-otp-timer" style="display:inline-block;background:#fff;border:1px solid #fbbf24;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:800;color:#92400e">3:00</span></div>
         <div id="sop-ret-otp-recap" style="font-size:13px;font-weight:700;color:#374151;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px;margin-bottom:14px"></div>
         <div style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:10px">Code OTP du client :</div>

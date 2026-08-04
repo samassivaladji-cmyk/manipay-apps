@@ -1672,7 +1672,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 <div class="sh-ov" id="sh-edit-user">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">Modifier le compte</div><div style="color:var(--m);font-size:12px">Corriger nom / prénom</div></div><button class="sh-x" onclick="closeSh('edit-user')">✕</button></div>
+    <div class="sh-top"><div><div class="sh-title">Modifier le compte</div><div style="color:var(--m);font-size:12px">Nom, prénom et numéro personnel</div></div><button class="sh-x" onclick="closeSh('edit-user')">✕</button></div>
     <div class="sh-body">
       <input type="hidden" id="eu-id"/>
       <input type="hidden" id="eu-tel"/>
@@ -1683,6 +1683,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <div style="margin-bottom:14px">
         <div style="font-size:12px;color:var(--m);font-weight:700;margin-bottom:6px">Nom</div>
         <input id="eu-nom" type="text" style="width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
+      </div>
+      <div id="eu-tel-perso-bloc" style="margin-bottom:14px;display:none">
+        <div style="font-size:12px;color:var(--m);font-weight:700;margin-bottom:6px">Numero personnel <span style="font-weight:400;color:#9ca3af">(different du numero professionnel, visible par les clients)</span></div>
+        <input id="eu-tel-perso" type="tel" style="width:100%;border:1px solid #e5e7eb;border-radius:12px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"/>
       </div>
       <div id="eu-err" style="color:var(--r);font-size:12px;margin-bottom:10px;display:none"></div>
       <button onclick="sauvegarderEditUser()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Enregistrer</button>
@@ -1722,6 +1726,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
         <label class="lbl">Prenom *</label><input class="inp" id="ins-prenom" type="text" placeholder="Prenom" style="margin-bottom:12px"/>
         <label class="lbl">Nom *</label><input class="inp" id="ins-nom" type="text" placeholder="Nom" style="margin-bottom:12px"/>
         <label class="lbl">Telephone *</label><input class="inp" id="ins-tel" type="tel" placeholder="+225 07 XX XX XX" inputmode="numeric" style="margin-bottom:12px"/>
+        <div id="ins-tel-perso-bloc" style="display:none">
+          <label class="lbl">Numero personnel * <span style="font-weight:400;color:#9ca3af;font-size:11px">(different du numero professionnel, visible par les clients)</span></label>
+          <input class="inp" id="ins-tel-perso" type="tel" placeholder="+225 05 XX XX XX" inputmode="numeric" style="margin-bottom:12px"/>
+        </div>
         <label class="lbl">PIN *</label><input class="inp" id="ins-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="margin-bottom:12px"/>
         <label class="lbl">Zone</label><input class="inp" id="ins-zone" type="text" placeholder="Quartier / Ville" style="margin-bottom:12px"/>
         <!-- Champ parrain visible uniquement pour la création d'un agent -->
@@ -2636,7 +2644,7 @@ function voirU(id){
   if(canResetPin(u))mkBtn('🔓 Débloquer (garde son PIN)','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){debloquerClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
+  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom / numéro perso','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
@@ -2697,6 +2705,12 @@ function setInsRole(r){
   if(warn)warn.style.display=intern.indexOf(r)>=0?'':'none';
   var kycSel=document.getElementById('ins-kyc-select');
   if(kycSel)kycSel.style.display=r==='client'?'':'none';
+  var telPersoBloc=document.getElementById('ins-tel-perso-bloc');
+  if(telPersoBloc){
+    var rolesNumPerso=['master','mini_master','agent','business'];
+    telPersoBloc.style.display=rolesNumPerso.indexOf(r)>=0?'':'none';
+    if(rolesNumPerso.indexOf(r)<0){var tp=document.getElementById('ins-tel-perso');if(tp)tp.value='';}
+  }
   var parrainBloc=document.getElementById('ins-parrain-bloc');
   if(parrainBloc){
     parrainBloc.style.display=r==='agent'?'':'none';
@@ -2766,9 +2780,15 @@ function rstIns(){
 }
 async function doInscrire(){
   var prenom=document.getElementById('ins-prenom').value.trim(),nom=document.getElementById('ins-nom').value.trim(),tel=document.getElementById('ins-tel').value.trim(),pin=document.getElementById('ins-pin').value.trim(),zone=document.getElementById('ins-zone').value.trim();
+  var telPerso=document.getElementById('ins-tel-perso')?document.getElementById('ins-tel-perso').value.trim():'';
   var errEl=document.getElementById('ins-err');errEl.style.display='none';
   if(!prenom||!nom||!tel||!pin){errEl.textContent='Champs * requis';errEl.style.display='';return;}
   if(!/^\d{4}$/.test(pin)){errEl.textContent='PIN: 4 chiffres';errEl.style.display='';return;}
+  var rolesNumPerso=['master','mini_master','agent','business'];
+  if(rolesNumPerso.indexOf(insRole)>=0){
+    if(!telPerso){errEl.textContent='Numero personnel obligatoire pour ce type de compte';errEl.style.display='';return;}
+    if(telPerso===tel){errEl.textContent='Le numero personnel doit etre different du numero professionnel';errEl.style.display='';return;}
+  }
   // Verifier photos KYC requises
   var manquantes=kycPhotosValides(insRole,insKycNiveau);
   if(manquantes.length){errEl.textContent='Photos manquantes: '+manquantes.join(', ');errEl.style.display='';return;}
@@ -2776,6 +2796,7 @@ async function doInscrire(){
   document.getElementById('ins-loading').style.display='';
   try{
     var body={prenom:prenom,nom:nom,telephone:tel,pin:pin,role:insRole,zone:zone||undefined};
+    if(telPerso)body.telephonePersonnel=telPerso;
     if(insRole==='client')body.kycNiveau=insKycNiveau;
     var r=await apiPost('/auth/register',body);
     var userId=r.data.id||r.data.utilisateur_id;
@@ -5251,7 +5272,7 @@ function voirU(id){
   if(canResetPin(u))mkBtn('🔓 Débloquer (garde son PIN)','','background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){debloquerClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
-  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
+  if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom / numéro perso','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
@@ -5268,6 +5289,12 @@ function ouvrirEditUser(u){
   document.getElementById('eu-prenom').value=u.prenom||'';
   document.getElementById('eu-nom').value=u.nom||'';
   document.getElementById('eu-tel').value=u.telephone||'';
+  var telPersoBloc=document.getElementById('eu-tel-perso-bloc');
+  var rolesNumPerso=['master','mini_master','agent','business'];
+  if(telPersoBloc){
+    telPersoBloc.style.display=rolesNumPerso.indexOf(u.role)>=0?'':'none';
+    var tp=document.getElementById('eu-tel-perso');if(tp)tp.value=u.telephonePersonnel||u.telephone_personnel||'';
+  }
   document.getElementById('eu-err').style.display='none';
   closeSh('user');
   openSh('edit-user');
@@ -5277,14 +5304,19 @@ async function sauvegarderEditUser(){
   var prenom=document.getElementById('eu-prenom').value.trim();
   var nom=document.getElementById('eu-nom').value.trim();
   var telephone=document.getElementById('eu-tel').value;
+  var telPerso=document.getElementById('eu-tel-perso')?document.getElementById('eu-tel-perso').value.trim():'';
   var errEl=document.getElementById('eu-err');errEl.style.display='none';
   if(!prenom||!nom){errEl.textContent='Prénom et nom sont requis';errEl.style.display='';return;}
+  if(telPerso&&telPerso===telephone){errEl.textContent='Le numéro personnel doit être différent du numéro professionnel';errEl.style.display='';return;}
   try{
-    await apiPatch('/users/'+id+'/profile',{prenom:prenom,nom:nom,telephone:telephone});
+    var body={prenom:prenom,nom:nom,telephone:telephone};
+    var telPersoBloc2=document.getElementById('eu-tel-perso-bloc');
+    if(telPersoBloc2&&telPersoBloc2.style.display!=='none')body.telephonePersonnel=telPerso||null;
+    await apiPatch('/users/'+id+'/profile',body);
     toast('Compte mis à jour');
     closeSh('edit-user');
     var u=usersData.find(function(x){return x.id===id;});
-    if(u){u.prenom=prenom;u.nom=nom;}
+    if(u){u.prenom=prenom;u.nom=nom;if(telPersoBloc2&&telPersoBloc2.style.display!=='none')u.telephonePersonnel=telPerso;}
     try{ renderU(usersData); }catch(e){}
   }catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
@@ -5338,6 +5370,12 @@ function setInsRole(r){
   if(warn)warn.style.display=intern.indexOf(r)>=0?'':'none';
   var kycSel=document.getElementById('ins-kyc-select');
   if(kycSel)kycSel.style.display=r==='client'?'':'none';
+  var telPersoBloc=document.getElementById('ins-tel-perso-bloc');
+  if(telPersoBloc){
+    var rolesNumPerso=['master','mini_master','agent','business'];
+    telPersoBloc.style.display=rolesNumPerso.indexOf(r)>=0?'':'none';
+    if(rolesNumPerso.indexOf(r)<0){var tp=document.getElementById('ins-tel-perso');if(tp)tp.value='';}
+  }
   var parrainBloc=document.getElementById('ins-parrain-bloc');
   if(parrainBloc){
     parrainBloc.style.display=r==='agent'?'':'none';
@@ -5432,9 +5470,15 @@ function rstIns(){
 }
 async function doInscrire(){
   var prenom=document.getElementById('ins-prenom').value.trim(),nom=document.getElementById('ins-nom').value.trim(),tel=document.getElementById('ins-tel').value.trim(),pin=document.getElementById('ins-pin').value.trim(),zone=document.getElementById('ins-zone').value.trim();
+  var telPerso=document.getElementById('ins-tel-perso')?document.getElementById('ins-tel-perso').value.trim():'';
   var errEl=document.getElementById('ins-err');errEl.style.display='none';
   if(!prenom||!nom||!tel||!pin){errEl.textContent='Champs * requis';errEl.style.display='';return;}
   if(!/^\d{4}$/.test(pin)){errEl.textContent='PIN: 4 chiffres';errEl.style.display='';return;}
+  var rolesNumPerso=['master','mini_master','agent','business'];
+  if(rolesNumPerso.indexOf(insRole)>=0){
+    if(!telPerso){errEl.textContent='Numero personnel obligatoire pour ce type de compte';errEl.style.display='';return;}
+    if(telPerso===tel){errEl.textContent='Le numero personnel doit etre different du numero professionnel';errEl.style.display='';return;}
+  }
   // Verifier photos KYC requises
   var manquantes=kycPhotosValides(insRole,insKycNiveau);
   if(manquantes.length){errEl.textContent='Photos manquantes: '+manquantes.join(', ');errEl.style.display='';return;}
@@ -5442,6 +5486,7 @@ async function doInscrire(){
   document.getElementById('ins-loading').style.display='';
   try{
     var body={prenom:prenom,nom:nom,telephone:tel,pin:pin,role:insRole,zone:zone||undefined};
+    if(telPerso)body.telephonePersonnel=telPerso;
     if(insRole==='client')body.kycNiveau=insKycNiveau;
     if(insRole==='agent'){var parrainId=document.getElementById('ins-parrain-id').value;if(parrainId)body.parrainId=parrainId;}
     var r=await apiPost('/auth/register',body);
