@@ -1694,6 +1694,20 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
+<!-- SHEET COMPLETER KYC (compte existant, documents manquants) -->
+<div class="sh-ov" id="sh-kyc-complete">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Compléter les documents KYC</div><div id="kc-sub" style="color:var(--m);font-size:12px">--</div></div><button class="sh-x" onclick="closeSh('kyc-complete')">✕</button></div>
+    <div class="sh-body">
+      <div id="kyc-complete-photos"></div>
+      <div id="kc-err" style="color:var(--r);font-size:12px;margin-bottom:10px;display:none"></div>
+      <button onclick="soumettreCompleterKyc()" style="width:100%;background:var(--y);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Envoyer les documents</button>
+      <div style="font-size:11px;color:var(--m);margin-top:10px;text-align:center">Une fois envoyés, ouvrez la fiche du compte dans Support &#8594; Demandes KYC pour valider.</div>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET INSCRIPTION -->
 <div class="sh-ov" id="sh-inscription">
   <div class="sh">
@@ -2081,6 +2095,33 @@ async function uploadKycPhotos(userId, role, kycNiveau) {
 // Réinitialiser les photos
 function resetKycPhotos() {
   kycPhotos = {};
+}
+
+// ── Compléter documents KYC sur un compte déjà créé (photo manquante à l'origine) ──
+var _kycCompleteUser = null;
+function ouvrirCompleterKyc(u) {
+  _kycCompleteUser = u;
+  resetKycPhotos();
+  document.getElementById('kc-sub').textContent = (u.prenom||'') + ' ' + (u.nom||'') + ' — ' + (u.role||'');
+  document.getElementById('kc-err').style.display = 'none';
+  renderKycPhotos('kyc-complete-photos', u.role, u.kycNiveau || u.kycNiveauDemande || 'KYC1');
+  closeSh('user');
+  openSh('kyc-complete');
+}
+async function soumettreCompleterKyc() {
+  if (!_kycCompleteUser) return;
+  var errEl = document.getElementById('kc-err');
+  var niveau = _kycCompleteUser.kycNiveau || _kycCompleteUser.kycNiveauDemande || 'KYC1';
+  var cfg = getKycConfig(_kycCompleteUser.role, niveau);
+  var auMoinsUne = cfg.docs.some(function(d){ return !!kycPhotos[d.id]; });
+  if (!auMoinsUne) { errEl.textContent = 'Prenez au moins une photo avant d\'envoyer.'; errEl.style.display = ''; return; }
+  errEl.style.display = 'none';
+  try {
+    var resultats = await uploadKycPhotos(_kycCompleteUser.id, _kycCompleteUser.role, niveau);
+    var echecs = resultats.filter(function(r){ return r.ok === false; });
+    if (echecs.length) { toast(echecs.length + ' photo(s) en échec, réessayez', true); }
+    else { toast('Documents envoyés avec succès'); closeSh('kyc-complete'); }
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = ''; }
 }
 
 var API='https://manipay-backend.bonto.run/api/v1';
@@ -2649,6 +2690,7 @@ function voirU(id){
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom / numéro perso','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
+  if(canActOnUser(u))mkBtn('📸 Compléter documents KYC','','background:#fefce8;color:#a16207;border:1px solid #fde68a;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirCompleterKyc(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
@@ -5277,6 +5319,7 @@ function voirU(id){
   if(canResetPin(u))mkBtn('🔐 Réinitialiser le code PIN','','background:#f0fdf4;color:#15803d;border:1px solid #a7f3d0;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){resetPinClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canResetPin(u))mkBtn('📱 Téléphone perdu (réinit. appareils)','','background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){reinitialiserAppareilsClient(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canActOnUser(u))mkBtn('✏️ Modifier nom / prénom / numéro perso','','background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirEditUser(u);});
+  if(canActOnUser(u))mkBtn('📸 Compléter documents KYC','','background:#fefce8;color:#a16207;border:1px solid #fde68a;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){ouvrirCompleterKyc(u);});
   mkBtn('🔔 Historique notifications','','background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit',function(){afficherHistoriqueNotifs(u.id,(u.prenom||'')+' '+(u.nom||''));});
   if(canDeleteComptes() && u.telephone!==SUPER_ADMIN_TEL)mkBtn('Supprimer le compte','btn-r','margin-top:6px',function(){
     document.getElementById('sh-confirm-nom').textContent=(u.prenom||'')+' '+(u.nom||'');
