@@ -3236,7 +3236,13 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-av').textContent=(client.prenom||'?')[0].toUpperCase();
   document.getElementById('sop-ret-name').textContent=(client.prenom||'')+' '+(client.nom||'');
   document.getElementById('sop-ret-tel').textContent=client.telephone||'';
-  document.getElementById('sop-ret-kyc').textContent=client.kycNiveau?'KYC'+client.kycNiveau:'—';
+  document.getElementById('sop-ret-kyc').textContent=client.kycNiveau||'—';
+  var lgPhotoEl=document.getElementById('sop-ret-photo-lg'),lgLabel=document.getElementById('sop-ret-photo-lg-label'),lgImgs=document.getElementById('sop-ret-photo-lg-imgs');
+  if(client.photoVerification&&client.photoVerification.urls&&client.photoVerification.urls.length){
+    lgLabel.textContent=client.photoVerification.type==='cni'?'📇 Carte d\'identité du client':'🤳 Selfie du client';
+    lgImgs.innerHTML=client.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:100%;max-width:320px;border-radius:14px;border:2px solid #fb923c;object-fit:cover"/>';}).join('');
+    lgPhotoEl.style.display='';
+  }else{lgPhotoEl.style.display='none';lgImgs.innerHTML='';}
   document.getElementById('sop-ret-amt').value='';
   document.getElementById('sop-ret-calc').style.display='none';
   document.getElementById('sop-ret-err1').style.display='none';
@@ -3612,6 +3618,12 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
         <div style="color:#6b7280;font-size:12px" id="sop-ret-tel">—</div>
       </div>
       <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:#fff7ed;color:#f97316" id="sop-ret-kyc">—</div>
+    </div>
+
+    <!-- Photo de vérification d'identité — grande, dès l'identification du client -->
+    <div id="sop-ret-photo-lg" style="display:none;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;text-align:center" id="sop-ret-photo-lg-label"></div>
+      <div id="sop-ret-photo-lg-imgs" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
     </div>
 
     <!-- Montant -->
