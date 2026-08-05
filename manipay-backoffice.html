@@ -2855,7 +2855,7 @@ async function doInscrire(){
     }
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-success').style.display='';
-    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin;
+    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin+' - Code recuperation: '+(r.data.codeRecuperation||'?');
     if(!uploadOk)txt+=' (photos a reuploader)';
     document.getElementById('ins-txt').textContent=txt;
     toast(uploadOk?'Compte et photos enregistres':'Compte cree - verifier photos');
@@ -5547,7 +5547,7 @@ async function doInscrire(){
     }
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-success').style.display='';
-    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin;
+    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin+' - Code recuperation: '+(r.data.codeRecuperation||'?');
     if(!uploadOk)txt+=' (photos a reuploader)';
     document.getElementById('ins-txt').textContent=txt;
     toast(uploadOk?'Compte et photos enregistres':'Compte cree - verifier photos');
