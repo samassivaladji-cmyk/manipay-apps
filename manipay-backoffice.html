@@ -2153,8 +2153,12 @@ var KYC_LABELS = {
 };
 
 // Calcule le niveau KYC validable selon les docs soumis
+// (le selfie fourni à l'inscription est stocké sous 'selfie_inscription' — équivalent à 'selfie')
+function _normaliserDocsIds(docsExistants) {
+  return (docsExistants||[]).map(function(d){return d.typeDocument==='selfie_inscription'?'selfie':d.typeDocument;});
+}
 function niveauKycValidable(docsExistants) {
-  var ids = (docsExistants||[]).map(function(d){return d.typeDocument;});
+  var ids = _normaliserDocsIds(docsExistants);
   if (KYC_DOCS_REQUIS['KYC3'].every(function(r){return ids.indexOf(r)>=0;})) return 'KYC3';
   if (KYC_DOCS_REQUIS['KYC2'].every(function(r){return ids.indexOf(r)>=0;})) return 'KYC2';
   if (KYC_DOCS_REQUIS['KYC1'].every(function(r){return ids.indexOf(r)>=0;})) return 'KYC1';
@@ -2163,7 +2167,7 @@ function niveauKycValidable(docsExistants) {
 
 // Docs manquants pour un niveau donné
 function docsManquants(niveau, docsExistants) {
-  var ids = (docsExistants||[]).map(function(d){return d.typeDocument;});
+  var ids = _normaliserDocsIds(docsExistants);
   return (KYC_DOCS_REQUIS[niveau]||[]).filter(function(r){return ids.indexOf(r)<0;});
 }
 
@@ -3330,7 +3334,7 @@ async function effetuerRemboursement(txId, ref, montant) {
 
 async function chargerSupport(){
   var u=G.user;if(!u)return;
-  chargerKycPending();
+  chargerTicketsKyc();
   chargerCompteurTickets();
   setSupTab(_supTabActif || 'notif');
 }
