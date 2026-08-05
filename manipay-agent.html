@@ -1219,7 +1219,7 @@ async function doRetrait(){
     var photoEl=document.getElementById('ret-otp-photo'),photoLabel=document.getElementById('ret-otp-photo-label'),photoImgs=document.getElementById('ret-otp-photo-imgs');
     if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length){
       photoLabel.textContent=d.photoVerification.type==='cni'?'Vérifiez la CNI du client':'Vérifiez le selfie du client';
-      photoImgs.innerHTML=d.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fbbf24"/>';}).join('');
+      afficherPhotoSecurisee('ret-otp-photo-imgs', d.photoVerification.urls);
       photoEl.style.display='';
     }else{photoEl.style.display='none';photoImgs.innerHTML='';}
     document.getElementById('ret-otp-input').value='';
@@ -3231,6 +3231,57 @@ async function doSopDepot(){
 }
 function nouveauSopDep(){if(_sopClient.dep)ouvrirScreenDepot(_sopClient.dep);else S('s-home');}
 
+// ═══ Protection des photos de vérification d'identité (filigrane + masquage) ═══
+// La capture d'écran n'est pas techniquement bloquable depuis le web/WebView (nécessiterait
+// FLAG_SECURE côté natif Android, hors de portée sans recompilation). En remplacement :
+// filigrane nominatif+horodaté (trace l'opérateur en cas de fuite), masquage automatique après
+// 15s, et masquage immédiat si l'app passe en arrière-plan.
+window._photoZonesActives = window._photoZonesActives || {};
+window._photoZonesTimers = window._photoZonesTimers || {};
+function _watermarkTexte(){
+  var nom=(G.user?((G.user.prenom||'')+' '+(G.user.nom||'')):'').trim();
+  return (nom||'Opérateur')+' · '+new Date().toLocaleString('fr-FR');
+}
+function _construirePhotoHTML(urls){
+  var wm=_watermarkTexte();
+  return urls.map(function(u){
+    return '<div style="position:relative;display:inline-block;max-width:320px;width:100%">'
+      +'<img src="'+u+'" style="width:100%;border-radius:14px;border:2px solid #fb923c;object-fit:cover;display:block"/>'
+      +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;border-radius:14px">'
+        +'<div style="transform:rotate(-25deg);color:rgba(255,255,255,.6);font-size:10px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap;line-height:2.4;text-align:center">'
+          +Array(8).fill(wm).join('<br>')
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+function afficherPhotoSecurisee(imgsId, urls){
+  var el=document.getElementById(imgsId);
+  if(!el)return;
+  window._photoZonesActives[imgsId]=urls;
+  el.innerHTML=_construirePhotoHTML(urls);
+  if(window._photoZonesTimers[imgsId])clearTimeout(window._photoZonesTimers[imgsId]);
+  window._photoZonesTimers[imgsId]=setTimeout(function(){_masquerPhotoZone(imgsId);},15000);
+}
+function _masquerPhotoZone(imgsId){
+  var el=document.getElementById(imgsId);
+  if(!el||!window._photoZonesActives[imgsId])return;
+  el.innerHTML='<button type="button" onclick="_revelerPhotoZone(\''+imgsId+'\')" style="padding:12px 18px;background:#fef3c7;border:1.5px dashed #f59e0b;border-radius:12px;color:#92400e;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit">🔒 Photo masquée — Appuyer pour revoir</button>';
+}
+function _revelerPhotoZone(imgsId){
+  var urls=window._photoZonesActives[imgsId];
+  if(!urls)return;
+  var el=document.getElementById(imgsId);
+  el.innerHTML=_construirePhotoHTML(urls);
+  if(window._photoZonesTimers[imgsId])clearTimeout(window._photoZonesTimers[imgsId]);
+  window._photoZonesTimers[imgsId]=setTimeout(function(){_masquerPhotoZone(imgsId);},15000);
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    Object.keys(window._photoZonesActives).forEach(function(id){_masquerPhotoZone(id);});
+  }
+});
+
 function ouvrirScreenRetrait(client){
   _sopClient.ret=client;
   document.getElementById('sop-ret-av').textContent=(client.prenom||'?')[0].toUpperCase();
@@ -3240,7 +3291,7 @@ function ouvrirScreenRetrait(client){
   var lgPhotoEl=document.getElementById('sop-ret-photo-lg'),lgLabel=document.getElementById('sop-ret-photo-lg-label'),lgImgs=document.getElementById('sop-ret-photo-lg-imgs');
   if(client.photoVerification&&client.photoVerification.urls&&client.photoVerification.urls.length){
     lgLabel.textContent=client.photoVerification.type==='cni'?'📇 Carte d\'identité du client':'🤳 Selfie du client';
-    lgImgs.innerHTML=client.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:100%;max-width:320px;border-radius:14px;border:2px solid #fb923c;object-fit:cover"/>';}).join('');
+    afficherPhotoSecurisee('sop-ret-photo-lg-imgs', client.photoVerification.urls);
     lgPhotoEl.style.display='';
   }else{lgPhotoEl.style.display='none';lgImgs.innerHTML='';}
   document.getElementById('sop-ret-amt').value='';
@@ -3301,7 +3352,7 @@ async function demanderOTPSop(){
     var sopPhotoEl=document.getElementById('sop-ret-otp-photo'),sopPhotoLabel=document.getElementById('sop-ret-otp-photo-label'),sopPhotoImgs=document.getElementById('sop-ret-otp-photo-imgs');
     if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length){
       sopPhotoLabel.textContent=d.photoVerification.type==='cni'?'Vérifiez la CNI du client':'Vérifiez le selfie du client';
-      sopPhotoImgs.innerHTML=d.photoVerification.urls.map(function(u){return '<img src="'+u+'" style="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fbbf24"/>';}).join('');
+      afficherPhotoSecurisee('sop-ret-otp-photo-imgs', d.photoVerification.urls);
       sopPhotoEl.style.display='';
     }else{sopPhotoEl.style.display='none';sopPhotoImgs.innerHTML='';}
     document.getElementById('sop-ret-otp-err').style.display='none';
