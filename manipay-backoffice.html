@@ -1904,48 +1904,60 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 
 // Configuration KYC par type de compte
 var KYC_CONFIG = {
-  // CLIENT KYC1 : selfie uniquement
+  // CLIENT KYC1 : selfie obligatoire
   'client_kyc1': {
     label: 'Client KYC1',
     plafond: '20 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',          camera:'user',        requis:false,  icon:'🤳'},
+      {id:'selfie',    label:'Selfie',          camera:'user',        requis:true,  icon:'🤳'},
     ]
   },
-  // CLIENT KYC2 : selfie + CNI
+  // CLIENT KYC2 : selfie + CNI, les 3 obligatoires
   'client_kyc2': {
     label: 'Client KYC2',
     plafond: '50 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',          camera:'user',        requis:false,  icon:'🤳'},
-      {id:'cni_recto', label:'CNI Recto',       camera:'environment', requis:false,  icon:'🪪'},
-      {id:'cni_verso', label:'CNI Verso',       camera:'environment', requis:false,  icon:'🪪'},
+      {id:'selfie',    label:'Selfie',          camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',       camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',       camera:'environment', requis:true,  icon:'🪪'},
     ]
   },
-  // CLIENT KYC3 : selfie + CNI + justificatif domicile
+  // CLIENT KYC3 : selfie + CNI + justificatif domicile, tous obligatoires
   'client_kyc3': {
     label: 'Client KYC3',
     plafond: '100 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',                                      camera:'user',        requis:false,  icon:'🤳'},
-      {id:'cni_recto', label:'CNI Recto',                                   camera:'environment', requis:false,  icon:'🪪'},
-      {id:'cni_verso', label:'CNI Verso',                                   camera:'environment', requis:false,  icon:'🪪'},
-      {id:'justificatif_domicile', label:'Attestation résidence / Facture / Extrait naissance', camera:'environment', requis:false, icon:'📄'},
+      {id:'selfie',    label:'Selfie',                                      camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',                                   camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',                                   camera:'environment', requis:true,  icon:'🪪'},
+      {id:'justificatif_domicile', label:'Attestation résidence / Facture / Extrait naissance', camera:'environment', requis:true, icon:'📄'},
     ]
   },
-  // BUSINESS : CNI + RCCM ou attestation activité
+  // BUSINESS : selfie obligatoire, le reste optionnel
   'business': {
     label: 'Business / Marchand',
     plafond: '200 000 - 500 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie du gerant',            camera:'user',        requis:false, icon:'🤳'},
+      {id:'selfie',    label:'Selfie du gerant',            camera:'user',        requis:true,  icon:'🤳'},
       {id:'cni_recto', label:'CNI Gerant Recto',            camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Gerant Verso',            camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)', camera:'environment', requis:false, icon:'📋'},
       {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   },
-  // AGENT / MINI-MASTER / MASTER / SUPERVISEUR
+  // AGENT : les 3 premiers obligatoires, RCCM/DFE optionnels
+  'agent': {
+    label: 'Agent',
+    plafond: 'Illimite',
+    docs: [
+      {id:'selfie',    label:'Selfie',                        camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',                    camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',                    camera:'environment', requis:true,  icon:'🪪'},
+      {id:'rccm',      label:'RCCM (Registre de commerce)',  camera:'environment', requis:false, icon:'📋'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
+    ]
+  },
+  // MINI-MASTER / MASTER / SUPERVISEUR : les 5 documents obligatoires
   'operateur': {
     label: 'Operateur reseau',
     plafond: 'Illimite',
@@ -1970,7 +1982,8 @@ function getKycConfig(role, kycNiveau) {
     return KYC_CONFIG['client_kyc1']; // défaut KYC1
   }
   if (role === 'business') return KYC_CONFIG['business'];
-  // agent, mini_master, master, superviseur
+  if (role === 'agent') return KYC_CONFIG['agent'];
+  // mini_master, master, superviseur
   return KYC_CONFIG['operateur'];
 }
 
@@ -2185,7 +2198,7 @@ var ROLE_C={client:'#059669',agent:'#d97706',business:'#4f46e5',mini_master:'#25
 var KYC_DOCS_REQUIS = {
   'KYC1': ['selfie'],
   'KYC2': ['selfie','cni_recto','cni_verso'],
-  'KYC3': ['selfie','cni_recto','cni_verso','extrait_naissance','justificatif_domicile']
+  'KYC3': ['selfie','cni_recto','cni_verso','justificatif_domicile']
 };
 var KYC_LABELS = {
   selfie:'Selfie', cni_recto:'CNI Recto', cni_verso:'CNI Verso',
@@ -2855,7 +2868,7 @@ async function doInscrire(){
     }
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-success').style.display='';
-    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin+' - Code recuperation: '+(r.data.codeRecuperation||'?');
+    var txt=insRole+' cree. Code de recuperation (a transmettre au titulaire, ne sera plus jamais affiche) : '+(r.data.codeRecuperation||'?');
     if(!uploadOk)txt+=' (photos a reuploader)';
     document.getElementById('ins-txt').textContent=txt;
     toast(uploadOk?'Compte et photos enregistres':'Compte cree - verifier photos');
@@ -3758,48 +3771,60 @@ async function chargerPhotosKycClient(userId){
 
 // Configuration KYC par type de compte
 var KYC_CONFIG = {
-  // CLIENT KYC1 : selfie uniquement
+  // CLIENT KYC1 : selfie obligatoire
   'client_kyc1': {
     label: 'Client KYC1',
     plafond: '20 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',          camera:'user',        requis:false,  icon:'🤳'},
+      {id:'selfie',    label:'Selfie',          camera:'user',        requis:true,  icon:'🤳'},
     ]
   },
-  // CLIENT KYC2 : selfie + CNI
+  // CLIENT KYC2 : selfie + CNI, les 3 obligatoires
   'client_kyc2': {
     label: 'Client KYC2',
     plafond: '50 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',          camera:'user',        requis:false,  icon:'🤳'},
-      {id:'cni_recto', label:'CNI Recto',       camera:'environment', requis:false,  icon:'🪪'},
-      {id:'cni_verso', label:'CNI Verso',       camera:'environment', requis:false,  icon:'🪪'},
+      {id:'selfie',    label:'Selfie',          camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',       camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',       camera:'environment', requis:true,  icon:'🪪'},
     ]
   },
-  // CLIENT KYC3 : selfie + CNI + justificatif domicile
+  // CLIENT KYC3 : selfie + CNI + justificatif domicile, tous obligatoires
   'client_kyc3': {
     label: 'Client KYC3',
     plafond: '100 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie',                                      camera:'user',        requis:false,  icon:'🤳'},
-      {id:'cni_recto', label:'CNI Recto',                                   camera:'environment', requis:false,  icon:'🪪'},
-      {id:'cni_verso', label:'CNI Verso',                                   camera:'environment', requis:false,  icon:'🪪'},
-      {id:'justificatif_domicile', label:'Attestation résidence / Facture / Extrait naissance', camera:'environment', requis:false, icon:'📄'},
+      {id:'selfie',    label:'Selfie',                                      camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',                                   camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',                                   camera:'environment', requis:true,  icon:'🪪'},
+      {id:'justificatif_domicile', label:'Attestation résidence / Facture / Extrait naissance', camera:'environment', requis:true, icon:'📄'},
     ]
   },
-  // BUSINESS : CNI + RCCM ou attestation activité
+  // BUSINESS : selfie obligatoire, le reste optionnel
   'business': {
     label: 'Business / Marchand',
     plafond: '200 000 - 500 000 F/mois',
     docs: [
-      {id:'selfie',    label:'Selfie du gerant',            camera:'user',        requis:false, icon:'🤳'},
+      {id:'selfie',    label:'Selfie du gerant',            camera:'user',        requis:true,  icon:'🤳'},
       {id:'cni_recto', label:'CNI Gerant Recto',            camera:'environment', requis:false, icon:'🪪'},
       {id:'cni_verso', label:'CNI Gerant Verso',            camera:'environment', requis:false, icon:'🪪'},
       {id:'rccm',      label:'RCCM (Registre de commerce)', camera:'environment', requis:false, icon:'📋'},
       {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
     ]
   },
-  // AGENT / MINI-MASTER / MASTER / SUPERVISEUR
+  // AGENT : les 3 premiers obligatoires, RCCM/DFE optionnels
+  'agent': {
+    label: 'Agent',
+    plafond: 'Illimite',
+    docs: [
+      {id:'selfie',    label:'Selfie',                        camera:'user',        requis:true,  icon:'🤳'},
+      {id:'cni_recto', label:'CNI Recto',                    camera:'environment', requis:true,  icon:'🪪'},
+      {id:'cni_verso', label:'CNI Verso',                    camera:'environment', requis:true,  icon:'🪪'},
+      {id:'rccm',      label:'RCCM (Registre de commerce)',  camera:'environment', requis:false, icon:'📋'},
+      {id:'declaration_fiscale', label:'DFE (Declaration fiscale)', camera:'environment', requis:false, icon:'📄'},
+    ]
+  },
+  // MINI-MASTER / MASTER / SUPERVISEUR : les 5 documents obligatoires
   'operateur': {
     label: 'Operateur reseau',
     plafond: 'Illimite',
@@ -3824,7 +3849,8 @@ function getKycConfig(role, kycNiveau) {
     return KYC_CONFIG['client_kyc1']; // défaut KYC1
   }
   if (role === 'business') return KYC_CONFIG['business'];
-  // agent, mini_master, master, superviseur
+  if (role === 'agent') return KYC_CONFIG['agent'];
+  // mini_master, master, superviseur
   return KYC_CONFIG['operateur'];
 }
 
@@ -5547,7 +5573,7 @@ async function doInscrire(){
     }
     document.getElementById('ins-loading').style.display='none';
     document.getElementById('ins-success').style.display='';
-    var txt=insRole+' - Code: '+r.data.codeParrainage+' - PIN: '+pin+' - Code recuperation: '+(r.data.codeRecuperation||'?');
+    var txt=insRole+' cree. Code de recuperation (a transmettre au titulaire, ne sera plus jamais affiche) : '+(r.data.codeRecuperation||'?');
     if(!uploadOk)txt+=' (photos a reuploader)';
     document.getElementById('ins-txt').textContent=txt;
     toast(uploadOk?'Compte et photos enregistres':'Compte cree - verifier photos');
