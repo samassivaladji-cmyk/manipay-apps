@@ -10876,14 +10876,20 @@ async function chargerGainsSysteme(){
     var chargesReseau=pnl.commissions_reseau||0;
     var deductions=chargesJourna+chargesParrain+chargesReseau;
     var totalVirements = ap.totalVirements || 0;
-    var netMani=Math.max(0, gainsB - deductions - totalVirements);
+    var netMani = gainsB - deductions - totalVirements;
+    var netManiNeg = netMani <= 0;
 
     h+='<div id="mc-page-ap">';
     h+='<div style="background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:20px;padding:20px;margin-bottom:14px;color:#fff">';
     h+='<div style="font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Résultat net ManiPay</div>';
-    h+='<div style="font-size:32px;font-weight:800;margin-bottom:4px">'+F(netMani)+'</div>';
+    h+='<div style="font-size:32px;font-weight:800;margin-bottom:4px'+(netManiNeg?';color:#fecaca':'')+'">'+F(netMani)+'</div>';
     h+='<div style="font-size:11px;opacity:.7">Gains − charges — toutes opérations</div>';
-    h+='<button id="mc-btn-virer-mani" style="margin-top:14px;width:100%;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#128184; Virer ces fonds</button>';
+    if(netManiNeg){
+      h+='<button id="mc-btn-virer-mani" disabled style="margin-top:14px;width:100%;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:not-allowed;font-family:inherit">&#128184; Virer ces fonds</button>';
+      h+='<div style="font-size:10px;opacity:.7;margin-top:6px;text-align:center">Résultat négatif — aucun virement possible</div>';
+    } else {
+      h+='<button id="mc-btn-virer-mani" style="margin-top:14px;width:100%;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#128184; Virer ces fonds</button>';
+    }
     h+='</div>';
     // ── Tableau P&L détaillé
     h+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:14px">';
