@@ -10872,9 +10872,12 @@ async function chargerGainsSysteme(){
     var pnl=ap.pnl||{};
     var gainsB=(pnl.gains_retrait||0)+(pnl.gains_paiement||0);
     var chargesJourna=pnl.commissions_journalieres||0;
+    // Parrainage et réseau sont affichés à titre informatif uniquement : ils sont déjà déduits
+    // des gains ci-dessus (gain_plateforme_retrait/paiement = frais - parrainage - réseau) donc
+    // ne doivent PAS être resoustraits ici (double comptage).
     var chargesParrain=pnl.commissions_parrainage||0;
     var chargesReseau=pnl.commissions_reseau||0;
-    var deductions=chargesJourna+chargesParrain+chargesReseau;
+    var deductions=chargesJourna;
     var totalVirements = ap.totalVirements || 0;
     var netMani = gainsB - deductions - totalVirements;
     var netManiNeg = netMani <= 0;
@@ -10916,11 +10919,15 @@ async function chargerGainsSysteme(){
     h+='</div>';
     h+='<div style="margin-top:7px;padding-top:7px;border-top:1px solid #e5e7eb;color:#6b7280">Exemple : 400 000 F dépôt + 400 000 F retrait (800k total, palier 35%) &#8594; 800 F + 1 400 F = <strong>2 200 F</strong>. Le détail des 5 paliers avec exemples complets est visible par les agents/mini-masters/masters dans leur onglet \u00ab Palier et frais \u00bb.</div>';
     h+='</div>';
-    h+=pnlLigne('Commissions parrainage (5-10% selon r&#244;le)',chargesParrain,pnl.commissions_parrainage_nb||0,'#ef4444','-');
-    h+=pnlLigne('Commissions r&#233;seau Mini-Master/Master (5-20% selon activit&#233;)',chargesReseau,pnl.commissions_reseau_nb||0,'#ef4444','-');
     h+='<div style="display:flex;justify-content:space-between;padding:8px 0;margin-bottom:10px;border-top:2px solid #ef444422">';
     h+='<div style="font-size:12px;font-weight:800;color:#ef4444">Sous-total charges</div>';
     h+='<div style="font-size:13px;font-weight:800;color:#ef4444">-'+F(deductions)+'</div></div>';
+    // Info : parrainage/réseau déjà retirés des gains ci-dessus, affichés pour référence uniquement
+    h+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:11px 13px;margin-bottom:4px">';
+    h+='<div style="font-size:10px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">&#8505;&#65039; Déjà déduits des gains ci-dessus (pour info)</div>';
+    h+=pnlLigne('Commissions parrainage (5-10% selon r&#244;le)',chargesParrain,pnl.commissions_parrainage_nb||0,'#9ca3af','-');
+    h+=pnlLigne('Commissions r&#233;seau Mini-Master/Master (5-20% selon activit&#233;)',chargesReseau,pnl.commissions_reseau_nb||0,'#9ca3af','-');
+    h+='</div>';
     // Résultat net
     h+='<div style="background:#f5f3ff;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center">';
     h+='<div style="font-size:13px;font-weight:800;color:#7c3aed">Résultat net ManiPay</div>';
