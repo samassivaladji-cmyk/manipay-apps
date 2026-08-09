@@ -1015,6 +1015,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="tech-tab-alertes"  onclick="setTechTab('alertes')"  style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🚨 Alertes</button>
       <button id="tech-tab-stats"    onclick="setTechTab('stats')"    style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
       <button id="tech-tab-journal"  onclick="setTechTab('journal')"  style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📋 Journal</button>
+      <button id="tech-tab-retraits" onclick="setTechTab('retraits')" style="padding:9px 14px;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🚩 Retraits suspects</button>
     </div>
   </div>
 
@@ -1128,6 +1129,31 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div id="journal-list"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
     <div id="journal-more" style="text-align:center;margin-top:10px;display:none">
       <button onclick="chargerJournalPlus()" style="background:#f3f4f6;border:none;border-radius:8px;padding:6px 16px;font-size:11px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit">Charger plus</button>
+    </div>
+  </div>
+
+  <!-- ═══ ONGLET RETRAITS SUSPECTS ═══ -->
+  <div id="tech-panel-retraits" style="display:none;padding:16px 16px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:13px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em">🚩 Retraits suspects</div>
+      <button onclick="chargerTechRetraitsSuspects()" style="background:#f3f4f6;border:none;border-radius:8px;padding:4px 9px;font-size:10px;font-weight:700;color:#6b7280;cursor:pointer;font-family:inherit">↻ Actualiser</button>
+    </div>
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:14px">Deux types de traçabilité anti-abus, sans créer d'alerte urgente automatique</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:12px" id="tr-sub-tabs">
+      <button onclick="setTechRetraitsSubTab('insuffisant')" id="trs-insuffisant" style="flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #f59e0b;background:#fffbeb;color:#b45309">💸 Solde insuffisant</button>
+      <button onclick="setTechRetraitsSubTab('abandonnes')" id="trs-abandonnes" style="flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280">👻 OTP jamais validés</button>
+    </div>
+
+    <div id="tr-panel-insuffisant">
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">Retrait refusé automatiquement car le solde du client était insuffisant au moment de la demande.</div>
+      <input class="inp" id="tr-search-insuffisant" type="text" placeholder="🔍 Rechercher un agent/master par nom ou numéro..." style="width:100%;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="_trSearchDebounce('insuffisant')">
+      <div id="tr-list-insuffisant"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
+    </div>
+    <div id="tr-panel-abandonnes" style="display:none">
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:8px">OTP envoyé au client (solde suffisant), jamais confirmé ni refusé, expiré après 3 minutes.</div>
+      <input class="inp" id="tr-search-abandonnes" type="text" placeholder="🔍 Rechercher un agent/master par nom ou numéro..." style="width:100%;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="_trSearchDebounce('abandonnes')">
+      <div id="tr-list-abandonnes"><div style="padding:24px;text-align:center"><div class="spin"></div></div></div>
     </div>
   </div>
 
@@ -6300,8 +6326,8 @@ async function chargerTech(){
   setTechTab('systeme'); // Par défaut, onglet Système
 }
 
-function setTechTab(tab) {
-  ['systeme','tickets','alertes','stats','journal'].forEach(function(t) {
+async function setTechTab(tab) {
+  ['systeme','tickets','alertes','stats','journal','retraits'].forEach(function(t) {
     var panel = document.getElementById('tech-panel-'+t);
     var btn   = document.getElementById('tech-tab-'+t);
     var active = t === tab;
@@ -6316,6 +6342,7 @@ function setTechTab(tab) {
   if (tab === 'alertes')  chargerTechAlertes();
   if (tab === 'stats')    chargerTechStats();
   if (tab === 'journal')  chargerJournal();
+  if (tab === 'retraits') chargerTechRetraitsSuspects();
 }
 
 async function _chargerTechSysteme() {
@@ -6656,6 +6683,110 @@ async function chargerTechStats() {
     // Alertes par gravité
     _chargerTechStatsAlertes();
   } catch(e) { console.warn('Stats tech:', e.message); }
+}
+
+function setTechRetraitsSubTab(sub) {
+  ['insuffisant','abandonnes'].forEach(function(s){
+    var panel=document.getElementById('tr-panel-'+s);
+    var btn=document.getElementById('trs-'+s);
+    var active=s===sub;
+    if(panel) panel.style.display=active?'':'none';
+    if(btn){
+      btn.style.borderColor=active?(s==='insuffisant'?'#f59e0b':'#7c3aed'):'#e5e7eb';
+      btn.style.background=active?(s==='insuffisant'?'#fffbeb':'#f5f3ff'):'#fff';
+      btn.style.color=active?(s==='insuffisant'?'#b45309':'#7c3aed'):'#6b7280';
+    }
+  });
+}
+
+function _trFmtDate(d){
+  if(!d) return '--';
+  var dt=new Date(d);
+  return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' à '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function _trNomComplet(prenom,nom,fallbackTel){
+  var n=((prenom||'')+' '+(nom||'')).trim();
+  return n || (fallbackTel || 'Inconnu');
+}
+
+var _trSearchTimers = {};
+function _trSearchDebounce(sub) {
+  clearTimeout(_trSearchTimers[sub]);
+  _trSearchTimers[sub] = setTimeout(function(){
+    if (sub === 'insuffisant') chargerTechRetraitsInsuffisant();
+    else chargerTechRetraitsAbandonnes();
+  }, 350);
+}
+
+async function chargerTechRetraitsSuspects() {
+  setTechRetraitsSubTab('insuffisant');
+  chargerTechRetraitsInsuffisant();
+  chargerTechRetraitsAbandonnes();
+}
+
+async function chargerTechRetraitsInsuffisant() {
+  var elI=document.getElementById('tr-list-insuffisant');
+  var qEl=document.getElementById('tr-search-insuffisant');
+  var q=qEl?qEl.value.trim():'';
+  elI.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var r1=await apiGet('/admin/retraits-solde-insuffisant?limit=50'+(q?'&agent='+encodeURIComponent(q):''));
+    var list1=r1.data||[];
+    elI.innerHTML='';
+    if(!list1.length){
+      elI.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">✓ '+(q?'Aucun résultat pour "'+q+'"':'Aucune tentative recensée')+'</div>';
+    } else {
+      list1.forEach(function(t){
+        var div=document.createElement('div');
+        div.style.cssText='background:#fff;border:1px solid #fde68a;border-left:3px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-bottom:8px';
+        div.innerHTML=
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+          +'<div style="font-size:12px;font-weight:700;color:#374151">👤 Agent : '+_trNomComplet(t.agentPrenom,t.agentNom,t.agentTelephone)+' ('+(t.agentTelephone||'--')+')</div>'
+          +'<div style="font-size:10px;color:#9ca3af;white-space:nowrap;margin-left:8px">'+_trFmtDate(t.dateCreation)+'</div>'
+          +'</div>'
+          +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px">🎯 Client visé : '+_trNomComplet(t.clientPrenom,t.clientNom,t.clientTelephone)+' ('+(t.clientTelephone||'--')+')</div>'
+          +'<div style="display:flex;gap:14px;font-size:11px">'
+          +'<div><span style="color:#9ca3af">Demandé</span><br><strong>'+F(t.montantDemande)+'</strong></div>'
+          +'<div><span style="color:#9ca3af">Requis (frais inclus)</span><br><strong>'+F(t.totalRequis)+'</strong></div>'
+          +'<div><span style="color:#9ca3af">Solde dispo</span><br><strong style="color:#ef4444">'+F(t.soldeDisponible)+'</strong></div>'
+          +'</div>';
+        elI.appendChild(div);
+      });
+    }
+  } catch(e) { elI.innerHTML='<div style="color:var(--r);font-size:12px;padding:8px">'+e.message+'</div>'; }
+}
+
+async function chargerTechRetraitsAbandonnes() {
+  var elA=document.getElementById('tr-list-abandonnes');
+  var qEl=document.getElementById('tr-search-abandonnes');
+  var q=qEl?qEl.value.trim():'';
+  elA.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
+  try {
+    var r2=await apiGet('/admin/retraits-otp-abandonnes?limit=50'+(q?'&agent='+encodeURIComponent(q):''));
+    var list2=r2.data||[];
+    elA.innerHTML='';
+    if(!list2.length){
+      elA.innerHTML='<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:14px;text-align:center;color:#059669;font-size:13px;font-weight:600">✓ '+(q?'Aucun résultat pour "'+q+'"':'Aucun OTP abandonné recensé')+'</div>';
+    } else {
+      list2.forEach(function(o){
+        var div=document.createElement('div');
+        div.style.cssText='background:#fff;border:1px solid #e9d5ff;border-left:3px solid #7c3aed;border-radius:12px;padding:12px 14px;margin-bottom:8px';
+        div.innerHTML=
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+          +'<div style="font-size:12px;font-weight:700;color:#374151">👤 Agent : '+_trNomComplet(o.agentPrenom,o.agentNom,o.agentTelephone)+' ('+(o.agentTelephone||'--')+')</div>'
+          +'<div style="font-size:10px;color:#9ca3af;white-space:nowrap;margin-left:8px">'+_trFmtDate(o.dateDetection)+'</div>'
+          +'</div>'
+          +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px">🎯 Client : '+_trNomComplet(o.clientPrenom,o.clientNom,o.clientTelephone)+' ('+(o.clientTelephone||'--')+')</div>'
+          +'<div style="display:flex;gap:14px;font-size:11px">'
+          +'<div><span style="color:#9ca3af">Montant OTP</span><br><strong>'+F(o.montant)+'</strong></div>'
+          +'<div><span style="color:#9ca3af">Total (frais inclus)</span><br><strong>'+F(o.total)+'</strong></div>'
+          +'<div><span style="color:#9ca3af">Expiré à</span><br><strong>'+_trFmtDate(o.expiresAt)+'</strong></div>'
+          +'</div>';
+        elA.appendChild(div);
+      });
+    }
+  } catch(e) { elA.innerHTML='<div style="color:var(--r);font-size:12px;padding:8px">'+e.message+'</div>'; }
 }
 
 async function _chargerTechStatsChart() {
