@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v1.1-2026-08-08"/>
+<meta name="version" content="v1.2-2026-08-09"/>
 <meta name="theme-color" content="#DA7756"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Business v1</title>
@@ -936,7 +936,7 @@ async function doLoginRecovery(){
 async function doLogin(){
   document.getElementById('pin-keys').style.display='none';document.getElementById('pin-loading').style.display='';document.getElementById('err-pin').style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin,deviceId:getDeviceId()});
+    var r=await post('/auth/login',{telephone:G.loginTel,pin:G.pin,deviceId:getDeviceId(),app:'business'});
     if(r.data.needsDeviceVerification){
       document.getElementById('pin-loading').style.display='none';document.getElementById('pin-keys').style.display='';G.pin='';rDots();
       document.getElementById('dv-code').value='';document.getElementById('dv-err').style.display='none';
@@ -2071,7 +2071,7 @@ async function deverrouillerApp(){
   var errEl=document.getElementById('lock-err');var pin=_lockPin;if(pin.length!==4)return;
   function resetDots(){_lockPin='';for(var i=0;i<4;i++){var d=document.getElementById('lk'+i);if(d){d.style.background='rgba(255,255,255,.15)';d.style.borderColor='rgba(255,255,255,.4)';}}}
   try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin,deviceId:getDeviceId()});
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:pin,deviceId:getDeviceId(),app:'business'});
     if(r.data&&r.data.accessToken){G.token=r.data.accessToken;LS.set('mani_token',G.token);}
     resetDots();if(errEl)errEl.style.display='none';
     G.locked=false;document.getElementById('s-lock').classList.remove('on');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.1-2026-08-08"/>
+<meta name="version" content="v8.2-2026-08-09"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Mini-Master v8</title>
@@ -1461,7 +1461,7 @@ async function doLogin(){
   document.getElementById('pin-loading').style.display='';document.getElementById('pin-keys').style.display='none';
   var errEl=document.getElementById('err-pin');errEl.style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:tel,pin:G.pin,deviceId:getDeviceId()});
+    var r=await post('/auth/login',{telephone:tel,pin:G.pin,deviceId:getDeviceId(),app:'mini_master'});
     var d=r.data;
     if(d.needsDeviceVerification){
       _dvTel=tel;
@@ -3283,7 +3283,7 @@ function lockDEL(){_lockPin=_lockPin.slice(0,-1);rLockDots();}
 async function verifierLock(){
   var errEl=document.getElementById('lock-err');errEl.style.display='none';
   try{
-    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin,deviceId:getDeviceId()});
+    var r=await post('/auth/login',{telephone:G.user.telephone,pin:_lockPin,deviceId:getDeviceId(),app:'mini_master'});
     document.getElementById('s-lock').classList.remove('on');
     G.token=r.data.accessToken;_ls.set('mani_token',G.token);
     G.locked=false;resetIdleTimer();

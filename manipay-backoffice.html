@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.0-2026-08-08"/>
+<meta name="version" content="v1.1-2026-08-09"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -2433,7 +2433,7 @@ async function doLogin(){
   document.getElementById('pin-loading').style.display='';
   document.getElementById('pin-keys').style.display='none';
   try{
-    var r=await apiPost('/auth/login',{telephone:tel,pin:G.pin});
+    var r=await apiPost('/auth/login',{telephone:tel,pin:G.pin,app:'backoffice'});
     var ok=['admin','superviseur','support_client','support_tech','backoffice'];
     if(ok.indexOf(r.data.user.role)===-1)throw new Error('Acces non autorise');
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
@@ -4265,7 +4265,7 @@ async function doLogin(){
   document.getElementById('pin-loading').style.display='';
   document.getElementById('pin-keys').style.display='none';
   try{
-    var r=await apiPost('/auth/login',{telephone:tel,pin:G.pin});
+    var r=await apiPost('/auth/login',{telephone:tel,pin:G.pin,app:'backoffice'});
     var ok=['admin','superviseur','support_client','support_tech','backoffice'];
     if(ok.indexOf(r.data.user.role)===-1)throw new Error('Acces non autorise');
     G.token=r.data.accessToken;G.refresh=r.data.refreshToken;G.user=r.data.user;
@@ -4333,7 +4333,7 @@ function lockboDEL(){_lockboPin=_lockboPin.slice(0,-1);rLockboDots();}
 async function verifierLockBO(){
   var errEl=document.getElementById('lockbo-err');errEl.style.display='none';
   try{
-    var r=await apiPost('/auth/login',{telephone:G.user.telephone,pin:_lockboPin});
+    var r=await apiPost('/auth/login',{telephone:G.user.telephone,pin:_lockboPin,app:'backoffice'});
     G.token=r.data.accessToken;localStorage.setItem('mani_token',G.token);
     G.locked=false;_lockboPin='';rLockboDots();
     showScr('s-home');
@@ -8595,7 +8595,7 @@ async function boUnlock() {
   try {
     var r = await callAPI('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({telephone: G.user.telephone, pin: pin})
+      body: JSON.stringify({telephone: G.user.telephone, pin: pin, app: 'backoffice'})
     });
     if (r && r.data && r.data.accessToken) {
       G.token = r.data.accessToken;
