@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.2-2026-08-09"/>
+<meta name="version" content="v8.3-2026-08-09-b"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Mini-Master v8</title>
@@ -1262,6 +1262,14 @@ async function doDepot(){
   document.getElementById('dep-loading').style.display='';
   try{
     var r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt});
+    if(r.data&&r.data.needsConfirmation){
+      document.getElementById('dep-loading').style.display='none';
+      document.getElementById('dep-btn-valider').style.display='';
+      if(!confirm('⚠️ '+r.data.message))return;
+      document.getElementById('dep-btn-valider').style.display='none';
+      document.getElementById('dep-loading').style.display='';
+      r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt,confirmed:true});
+    }
     document.getElementById('dep-loading').style.display='none';
     document.getElementById('dep-success').style.display='';
     var shChoix=document.getElementById('sh-choix-op');if(shChoix)shChoix.classList.remove('on');
@@ -1290,6 +1298,14 @@ async function doRetrait(){
   document.getElementById('ret-loading').style.display='';
   try{
     var r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt});
+    if(r.data&&r.data.needsConfirmation){
+      document.getElementById('ret-loading').style.display='none';
+      document.getElementById('ret-btn-valider').style.display='';
+      if(!confirm('⚠️ '+r.data.message))return;
+      document.getElementById('ret-btn-valider').style.display='none';
+      document.getElementById('ret-loading').style.display='';
+      r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt,confirmed:true});
+    }
     document.getElementById('ret-loading').style.display='none';
     var d=r.data||{};
     document.getElementById('ret-otp-section').style.display='';
@@ -3715,6 +3731,12 @@ async function doSopDepot(){
   btn.disabled=true;btn.style.opacity='.4';loading.style.display='';err.style.display='none';
   try{
     var r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt});
+    if(r.data&&r.data.needsConfirmation){
+      loading.style.display='none';btn.disabled=false;btn.style.opacity='1';
+      if(!confirm('⚠️ '+r.data.message))return;
+      btn.disabled=true;btn.style.opacity='.4';loading.style.display='';
+      r=await post('/transactions/deposit',{telephone:client.telephone,montant:amt,confirmed:true});
+    }
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-dep-ok-txt').textContent='Dépôt de '+F(amt)+' pour '+(client.prenom||'')+' '+(client.nom||'');
@@ -3842,6 +3864,12 @@ async function demanderOTPSop(){
   btn.disabled=true;btn.style.opacity='.4';loading.style.display='';err.style.display='none';
   try{
     var r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt});
+    if(r.data&&r.data.needsConfirmation){
+      loading.style.display='none';btn.disabled=false;btn.style.opacity='1';
+      if(!confirm('⚠️ '+r.data.message))return;
+      btn.disabled=true;btn.style.opacity='.4';loading.style.display='';
+      r=await post('/transactions/withdraw/request',{telephone:client.telephone,montant:amt,confirmed:true});
+    }
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
