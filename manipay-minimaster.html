@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.3-2026-08-09-b"/>
+<meta name="version" content="v8.4-2026-08-09-c"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Mini-Master v8</title>
@@ -1432,6 +1432,12 @@ async function doSopTransfert(){
   btn.disabled=true;btn.style.opacity='.4';loading.style.display='';errEl.style.display='none';
   try{
     var r=await post('/transactions/transfer',{telephone:client.telephone,montant:amt,motif:'Transfert liquidité'});
+    if(r.data&&r.data.needsConfirmation){
+      loading.style.display='none';btn.disabled=false;btn.style.opacity='1';
+      if(!confirm('⚠️ '+r.data.message))return;
+      btn.disabled=true;btn.style.opacity='.4';loading.style.display='';
+      r=await post('/transactions/transfer',{telephone:client.telephone,montant:amt,motif:'Transfert liquidité',confirmed:true});
+    }
     loading.style.display='none';
     var d=r.data||{};
     document.getElementById('sop-trf-ok-txt').textContent='Transfert de '+F(amt)+' vers '+(client.prenom||'')+' '+(client.nom||'');

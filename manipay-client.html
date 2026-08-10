@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.1-2026-08-09"/>
+<meta name="version" content="v1.2-2026-08-09-c"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1469,7 +1469,7 @@ var sendDest=null;
 function selDest(tel){if(!tel)return;closeSh('send');ouvrirSendWave(tel,tel);}
 function setSendAmt(v){document.getElementById('send-amt').value=v;calcSend();doSend();}
 function calcSend(){var v=Number(document.getElementById('send-amt').value),ok=v>0;document.getElementById('send-recap').style.display=ok?'':'none';if(ok)document.getElementById('send-recap').innerHTML='<div class="srow"><span style="color:var(--m);font-size:13px">Montant</span><span style="font-weight:700">'+F(v)+'</span></div><div class="srow"><span style="color:var(--m);font-size:13px">Frais</span><span style="color:var(--g);font-weight:700">Gratuit ✓</span></div><div class="row" style="padding-top:10px"><span style="font-weight:700">Total débité</span><span style="color:var(--g);font-size:18px;font-weight:900">'+F(v)+'</span></div>';document.getElementById('btn-send').disabled=!ok;document.getElementById('btn-send').style.opacity=ok?'1':'.4';}
-async function doSend(){var amt=Number(document.getElementById('send-amt').value);var motif=undefined;var solde=G.compte?Number(G.compte.solde):0;if(amt>solde){document.getElementById('send-err2').textContent='Solde insuffisant ('+F(solde)+' disponible)';document.getElementById('send-err2').style.display='';return;}document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='';try{var r=await post('/transactions/transfer',{telephone:sendDest.tel,montant:amt,});document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='';document.getElementById('send-succ-txt').textContent=F(amt)+' envoyés à '+sendDest.tel;document.getElementById('send-succ-ref').textContent=r.data.reference;if(typeof fbLogTransaction==='function')fbLogTransaction('transfert',amt);rafraichir();}catch(e){document.getElementById('send-loading').style.display='none';document.getElementById('send-s2').style.display='';document.getElementById('send-err2').textContent=e.message;document.getElementById('send-err2').style.display='';}}
+async function doSend(){var amt=Number(document.getElementById('send-amt').value);var motif=undefined;var solde=G.compte?Number(G.compte.solde):0;if(amt>solde){document.getElementById('send-err2').textContent='Solde insuffisant ('+F(solde)+' disponible)';document.getElementById('send-err2').style.display='';return;}document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='';try{var r=await post('/transactions/transfer',{telephone:sendDest.tel,montant:amt,});if(r.data&&r.data.needsConfirmation){document.getElementById('send-loading').style.display='none';document.getElementById('send-s2').style.display='';if(!confirm('⚠️ '+r.data.message))return;document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='';r=await post('/transactions/transfer',{telephone:sendDest.tel,montant:amt,confirmed:true});}document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='';document.getElementById('send-succ-txt').textContent=F(amt)+' envoyés à '+sendDest.tel;document.getElementById('send-succ-ref').textContent=r.data.reference;if(typeof fbLogTransaction==='function')fbLogTransaction('transfert',amt);rafraichir();}catch(e){document.getElementById('send-loading').style.display='none';document.getElementById('send-s2').style.display='';document.getElementById('send-err2').textContent=e.message;document.getElementById('send-err2').style.display='';}}
 function rstSend(){var cl=document.getElementById('contacts-list');if(cl)cl.innerHTML='';var cb=document.getElementById('contacts-btn');if(cb)cb.style.display='';sendDest=null;['send-tel','send-amt'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});document.getElementById('send-s1').style.display='';document.getElementById('send-s2').style.display='none';document.getElementById('send-loading').style.display='none';document.getElementById('send-success').style.display='none';document.getElementById('send-recap').style.display='none';document.getElementById('send-err1').style.display='none';document.getElementById('send-err2').style.display='none';document.getElementById('btn-send').disabled=true;document.getElementById('btn-send').style.opacity='.4';document.getElementById('send-ok-btn').disabled=true;document.getElementById('send-ok-btn').style.opacity='.4';}
 
 // ——— PAGE PAIEMENTS STYLE WAVE ———
@@ -1664,6 +1664,14 @@ async function doSW() {
   document.getElementById('sw-loading').style.display = '';
   try {
     var r = await post('/transactions/transfer', {telephone: window._swTel, montant: amt});
+    if(r.data&&r.data.needsConfirmation){
+      document.getElementById('sw-loading').style.display = 'none';
+      document.getElementById('sw-form').style.display = '';
+      if(!confirm('⚠️ '+r.data.message))return;
+      document.getElementById('sw-form').style.display = 'none';
+      document.getElementById('sw-loading').style.display = '';
+      r = await post('/transactions/transfer', {telephone: window._swTel, montant: amt, confirmed:true});
+    }
     document.getElementById('sw-loading').style.display = 'none';
     document.getElementById('sw-success').style.display = '';
     document.getElementById('sw-succ-txt').textContent = F(amt)+' envoyés à ' + window._swTel;

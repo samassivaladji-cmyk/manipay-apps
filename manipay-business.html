@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v1.2-2026-08-09"/>
+<meta name="version" content="v1.3-2026-08-09-c"/>
 <meta name="theme-color" content="#DA7756"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Business v1</title>
@@ -1781,6 +1781,12 @@ async function doTransfert(){
   document.getElementById('tr-form').style.display='none';document.getElementById('tr-loading').style.display='';
   try{
     var r=await post('/transactions/transfer',{telephone:tel,montant:amt});
+    if(r.data&&r.data.needsConfirmation){
+      document.getElementById('tr-loading').style.display='none';document.getElementById('tr-form').style.display='';
+      if(!confirm('⚠️ '+r.data.message))return;
+      document.getElementById('tr-form').style.display='none';document.getElementById('tr-loading').style.display='';
+      r=await post('/transactions/transfer',{telephone:tel,montant:amt,confirmed:true});
+    }
     document.getElementById('tr-loading').style.display='none';document.getElementById('tr-success').style.display='';
     document.getElementById('tr-succ-txt').textContent=F(amt)+' transférés à '+tel;
     document.getElementById('tr-succ-ref').textContent='Réf: '+(r.data.reference||'');
