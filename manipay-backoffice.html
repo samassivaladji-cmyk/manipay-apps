@@ -6138,7 +6138,7 @@ async function chargerPhotosKycClient(userId){
     var r=await apiGet('/kyc/documents?userId='+userId);
     var docs=r.data||[];
     if(!docs.length){el.innerHTML='<div style="font-size:11px;color:#9ca3af;padding:4px 0">Aucun document KYC soumis</div>';return;}
-    var labels={selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',rccm:'RCCM',dfe:'DFE',justificatif_domicile:'Justif. domicile',extrait_naissance:'Extrait naissance'};
+    var labels={selfie:'Selfie',selfie_inscription:'Selfie (inscription)',cni_recto:'CNI Recto',cni_verso:'CNI Verso',rccm:'RCCM',declaration_fiscale:'DFE',justificatif_domicile:'Justif. domicile',extrait_naissance:'Extrait naissance'};
     // Séparer les documents déjà approuvés (validés lors d'un niveau KYC précédent) des
     // documents encore en attente d'examen — pour que l'équipe ne confonde jamais les deux
     // et ne pense pas devoir re-valider une photo déjà traitée.

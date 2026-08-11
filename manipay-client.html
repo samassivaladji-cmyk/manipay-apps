@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.3-2026-08-09-d"/>
+<meta name="version" content="v1.4-2026-08-09-g"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -2629,7 +2629,12 @@ async function soumettreKyc(niv){
       var uid=G.user&&G.user.id;
       var docsBase=await get('/kyc/documents?userId='+uid);
       var docsIds=(docsBase.data||[]).map(function(d){return d.typeDocument||d.type_document;});
-      var manqPrereq=prerequis.filter(function(id){return !docsIds.includes(id);});
+      // Le selfie pris à l'inscription est stocké sous l'étiquette 'selfie_inscription' —
+      // à traiter comme équivalent de 'selfie' ici (même logique que côté serveur).
+      var manqPrereq=prerequis.filter(function(id){
+        if(id==='selfie')return !docsIds.includes('selfie')&&!docsIds.includes('selfie_inscription');
+        return !docsIds.includes(id);
+      });
       if(manqPrereq.length){
         T('Documents pré-requis manquants en base : '+manqPrereq.join(', ')+'. Soumettez KYC1 en premier.',true);
         return;
