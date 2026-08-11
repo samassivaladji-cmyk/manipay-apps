@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.5-2026-08-09-h"/>
+<meta name="version" content="v1.6-2026-08-09-i"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -2562,6 +2562,7 @@ function _checkKycBtn(niv){
   var btn=document.getElementById('btn-kyc-'+niv);
   if(btn){
     btn.style.opacity=tous?'1':'.5';
+    btn.disabled=!tous;
     btn.textContent=tous?'Soumettre pour '+niv+' →':'Upgrade vers '+niv+' ('+docs.filter(function(id){return !photos[niv+'-'+id];}).length+' document(s) manquant)';
   }
 }
