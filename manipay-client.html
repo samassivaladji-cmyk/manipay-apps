@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.2-2026-08-09-c"/>
+<meta name="version" content="v1.3-2026-08-09-d"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -2331,12 +2331,15 @@ function ouvrirKycUpgrade(){
   var el=document.getElementById('kyc-body');
   if(!el)return;
   el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
-  // Charger les docs déjà soumis depuis le backend → source de vérité permanente
+  // Toujours repartir du statut KYC le plus frais possible avant d'afficher l'écran — sinon,
+  // si le back-office vient de valider un document pendant que l'app était déjà ouverte, le
+  // G.user en mémoire resterait périmé et redemanderait un document déjà validé.
   var uid=G.user&&G.user.id;
-  get('/kyc/documents?userId='+uid).then(function(r){
-    _renderKyc(r.data||[]);
-  }).catch(function(){
-    _renderKyc([]);
+  Promise.all([
+    get('/users/me').then(function(r){ if(r.data){ G.user=r.data; LS.set('mani_user',JSON.stringify(G.user)); } }).catch(function(){}),
+    get('/kyc/documents?userId='+uid).catch(function(){ return {data:[]}; })
+  ]).then(function(results){
+    _renderKyc(results[1].data||[]);
   });
 }
 

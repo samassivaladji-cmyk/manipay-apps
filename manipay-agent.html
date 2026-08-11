@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v1.3-2026-08-09-c"/>
+<meta name="version" content="v1.5-2026-08-09-f"/>
 <meta name="theme-color" content="#d97706"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Agent</title>
@@ -593,6 +593,11 @@ function setTab(t){
       <div><div class="params-label">Modifier le code secret</div><div class="params-sub">Changer votre PIN de connexion</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="params-item" onclick="ouvrirCompleterProfil()">
+      <div class="params-icon" style="background:#ecfdf5">📋</div>
+      <div><div class="params-label">Compléter mon profil</div><div class="params-sub">RCCM, DFE — facultatif mais recommandé</div></div>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin:10px 0 4px">
       <div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:4px">🛡️ Politique du code secret (PIN)</div>
       <div style="font-size:11px;color:#1e3a8a;line-height:1.5">Votre PIN à 4 chiffres ne peut pas être : des chiffres identiques (0000, 1111...), une suite logique (1234, 4321...), ni une année entre 1940 et 2025 (souvent une date de naissance, facile à deviner par un proche). Choisissez un code que vous seul pouvez deviner.</div>
@@ -963,15 +968,24 @@ function setTab(t){
   </div>
 </div>
 
+<!-- SHEET COMPLÉTER PROFIL (RCCM / DFE optionnels) -->
+<div class="sh-ov" id="sh-completer-profil">
+  <div class="sh">
+    <div class="sh-bar"></div>
+    <div class="sh-top"><div><div class="sh-title">Compléter mon profil</div></div><button class="sh-x" onclick="closeSh('completer-profil')">✕</button></div>
+    <div style="padding:0 16px 40px" id="cp-body"></div>
+  </div>
+</div>
+
 
 <script>
 // ══ PHOTOS CONFIG ════════════════════════════════════════════════
 var PHOTOS_CFG={
   client_KYC1:[{id:'selfie',label:'Selfie',req:true,selfie:true}],
-  client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
-  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'naissance',label:'Extrait naissance',req:true,selfie:false},{id:'domicile',label:'Justif. domicile',req:true,selfie:false}],
-  business:[{id:'selfie_gerant',label:'Selfie gérant',req:true,selfie:true},{id:'cni_r',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_v',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:false,selfie:false},{id:'fiscal',label:'Déclaration fiscale',req:false,selfie:false}],
-  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
+  client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false}],
+  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false},{id:'extrait_naissance',label:'Extrait naissance',req:true,selfie:false},{id:'justificatif_domicile',label:'Justif. domicile',req:true,selfie:false}],
+  business:[{id:'selfie',label:'Selfie gérant',req:true,selfie:true},{id:'cni_recto',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_verso',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:false,selfie:false},{id:'declaration_fiscale',label:'Déclaration fiscale',req:false,selfie:false}],
+  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false}],
 };
 var insType=null,insKyc='KYC1',insPhotos={};
 
@@ -1058,7 +1072,7 @@ async function doInscrire(){
     var kycLevel=insType==='client'?insKyc:'KYC1';
     // Le selfie (déjà capturé et requis dans le formulaire ci-dessus) doit accompagner la
     // création du compte elle-même : le serveur l'exige désormais pour toute inscription.
-    var selfieKey=insType==='business'?'selfie_gerant':'selfie';
+    var selfieKey='selfie';
     var selfieUrl=insPhotos[selfieKey]?await fileToBase64(insPhotos[selfieKey]):undefined;
     // Étape 1 : créer le compte en JSON (texte uniquement, pas de fichiers)
     var body={prenom:prenom,nom:nom,telephone:telephone,pin:pin,role:insType,kycNiveau:kycLevel,selfieUrl:selfieUrl};
@@ -2598,6 +2612,110 @@ function ouvrirInfos(){
   var h=rows.map(function(r){return '<div class="srow"><span style="color:var(--m);font-size:13px">'+r.l+'</span><span style="font-weight:700;font-size:13px">'+r.v+'</span></div>';}).join('');
   document.getElementById('sh-infos-body').innerHTML=h;
   openSh('infos');
+}
+
+// ══ COMPLÉTER LE PROFIL — documents optionnels (RCCM / DFE) ══════════
+// Ces documents ne sont pas exigés à l'inscription, mais peuvent le devenir plus tard
+// (ex. montée en volume). Contrairement au KYC client, on ne bloque rien : chaque document
+// peut être ajouté indépendamment, sans changer le niveau ou le statut du compte.
+var CP_DOCS=[
+  {id:'rccm',               label:'RCCM (Registre de commerce)', icon:'📋', camera:'environment'},
+  {id:'declaration_fiscale',label:'DFE (Déclaration fiscale)',   icon:'📄', camera:'environment'}
+];
+window._cpPhotos={};
+function ouvrirCompleterProfil(){
+  openSh('completer-profil');
+  var el=document.getElementById('cp-body');
+  if(!el)return;
+  el.innerHTML='<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
+  var uid=G.user&&G.user.id;
+  get('/kyc/documents?userId='+uid).then(function(r){
+    _renderCompleterProfil(r.data||[]);
+  }).catch(function(){
+    _renderCompleterProfil([]);
+  });
+}
+function _renderCompleterProfil(docsExistants){
+  window._cpPhotos={};
+  var docsMap={};
+  (docsExistants||[]).forEach(function(d){docsMap[d.typeDocument||d.type_document]=d;});
+  var h='<div style="font-size:12px;color:var(--m);margin-bottom:14px;line-height:1.5">Ces documents sont facultatifs pour commencer, mais recommandés — ils peuvent devenir nécessaires selon votre volume d\'activité.</div>';
+  CP_DOCS.forEach(function(doc){
+    var existant=docsMap[doc.id];
+    var key='cp-'+doc.id;
+    if(existant&&existant.statut==='approuve'){
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:10px;border:1px solid #a7f3d0;margin-bottom:8px">';
+      h+='<div style="width:38px;height:38px;border-radius:10px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#15803d">'+doc.label+'</div>';
+      h+='<div style="font-size:11px;color:#22c55e">Validé ✓</div></div><div style="font-size:20px">✅</div></div>';
+    } else {
+      var dejaSoumis=!!existant;
+      var enAttente=existant&&existant.statut!=='rejete';
+      var bg=enAttente?'#fef3c7':'#f9fafb';
+      var borderC=enAttente?'#fde68a':'#e5e7eb';
+      var desc=existant&&existant.statut==='rejete'?'Rejeté — appuyer pour renvoyer':enAttente?'Soumis — en attente de validation':'Appuyer pour prendre la photo';
+      var textColor=enAttente?'#92400e':'#6b7280';
+      h+='<div id="cps-'+key+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+bg+';border-radius:10px;border:1px solid '+borderC+';margin-bottom:8px;cursor:pointer">';
+      h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+textColor+'">'+doc.label+'</div>';
+      h+='<div id="cpl-'+key+'" style="font-size:11px;color:'+textColor+'">'+desc+'</div></div>';
+      h+='<div id="cpc-'+key+'" style="font-size:18px">'+(enAttente?'🔄':'📷')+'</div></div>';
+      h+='<input type="file" accept="image/*" capture="'+doc.camera+'" id="cpi-'+key+'" style="display:none"/>';
+    }
+  });
+  h+='<button id="cp-btn-valider" onclick="soumettreCompleterProfil()" style="width:100%;padding:14px;background:var(--a);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5" disabled>Envoyer les documents</button>';
+  var el=document.getElementById('cp-body');
+  el.innerHTML=h;
+  el.querySelectorAll('[data-doc]').forEach(function(slot){
+    slot.addEventListener('click',function(){
+      var inp=document.getElementById('cpi-cp-'+slot.dataset.doc);
+      if(inp)inp.click();
+    });
+  });
+  CP_DOCS.forEach(function(doc){
+    var inp=document.getElementById('cpi-cp-'+doc.id);
+    if(!inp)return;
+    inp.addEventListener('change',function(){
+      if(!this.files||!this.files[0])return;
+      window._cpPhotos[doc.id]=this.files[0];
+      var sl=document.getElementById('cps-cp-'+doc.id);
+      if(sl){sl.style.background='#f0fdf4';sl.style.borderColor='#22c55e';}
+      var lb=document.getElementById('cpl-cp-'+doc.id);
+      if(lb){lb.textContent='Photo prise ✓';lb.style.color='#22c55e';}
+      var ck=document.getElementById('cpc-cp-'+doc.id);
+      if(ck)ck.textContent='✅';
+      var btn=document.getElementById('cp-btn-valider');
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+    });
+  });
+}
+async function soumettreCompleterProfil(){
+  var photos=window._cpPhotos||{};
+  var ids=Object.keys(photos);
+  if(!ids.length)return;
+  var btn=document.getElementById('cp-btn-valider');
+  if(btn){btn.disabled=true;btn.textContent='Envoi en cours...';}
+  var uid=G.user&&G.user.id;
+  for(var i=0;i<ids.length;i++){
+    var docId=ids[i];var file=photos[docId];
+    try{
+      var fd=new FormData();
+      fd.append('file',file);
+      fd.append('upload_preset','afrim-kyc');
+      fd.append('folder','manipay/kyc');
+      var r=await fetch('https://api.cloudinary.com/v1_1/dzofjvhwu/image/upload',{method:'POST',body:fd});
+      var d=await r.json();
+      if(!r.ok||!d.secure_url)throw new Error('Upload échoué pour '+docId);
+      await post('/kyc/documents',{userId:uid,typeDocument:docId,urlFichier:d.secure_url});
+    }catch(e){
+      T('Erreur '+docId+': '+e.message,true);
+      if(btn){btn.disabled=false;btn.textContent='Envoyer les documents';}
+      return;
+    }
+  }
+  window._cpPhotos={};
+  T('✓ Documents envoyés — validation sous 48h.');
+  closeSh('completer-profil');
 }
 
 async function chargerReseau(){

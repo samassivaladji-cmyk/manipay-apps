@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.4-2026-08-09-c"/>
+<meta name="version" content="v8.5-2026-08-09-f"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Master v1</title>
@@ -1042,11 +1042,11 @@ function setTab(t){
 // ══ PHOTOS CONFIG ════════════════════════════════════════════════
 var PHOTOS_CFG={
   client_KYC1:[{id:'selfie',label:'Selfie',req:true,selfie:true}],
-  client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false}],
-  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'naissance',label:'Extrait naissance',req:true,selfie:false},{id:'domicile',label:'Justif. domicile',req:true,selfie:false}],
-  business:[{id:'selfie_gerant',label:'Selfie gérant',req:true,selfie:true},{id:'cni_r',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_v',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:false,selfie:false},{id:'fiscal',label:'Déclaration fiscale',req:false,selfie:false}],
-  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:false,selfie:false},{id:'rccm',label:'Registre de commerce',req:false,selfie:false}],
-  mini_master:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_r',label:'CNI recto',req:true,selfie:false},{id:'cni_v',label:'CNI verso',req:true,selfie:false},{id:'dfe',label:'DFE (Décl. fiscale)',req:true,selfie:false},{id:'rccm',label:'Registre de commerce',req:true,selfie:false}],
+  client_KYC2:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false}],
+  client_KYC3:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false},{id:'extrait_naissance',label:'Extrait naissance',req:true,selfie:false},{id:'justificatif_domicile',label:'Justif. domicile',req:true,selfie:false}],
+  business:[{id:'selfie',label:'Selfie gérant',req:true,selfie:true},{id:'cni_recto',label:'CNI gérant recto',req:true,selfie:false},{id:'cni_verso',label:'CNI gérant verso',req:true,selfie:false},{id:'rccm',label:'RCCM',req:false,selfie:false},{id:'declaration_fiscale',label:'Déclaration fiscale',req:false,selfie:false}],
+  agent:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false},{id:'declaration_fiscale',label:'DFE (Décl. fiscale)',req:false,selfie:false},{id:'rccm',label:'Registre de commerce',req:false,selfie:false}],
+  mini_master:[{id:'selfie',label:'Selfie',req:true,selfie:true},{id:'cni_recto',label:'CNI recto',req:true,selfie:false},{id:'cni_verso',label:'CNI verso',req:true,selfie:false},{id:'declaration_fiscale',label:'DFE (Décl. fiscale)',req:true,selfie:false},{id:'rccm',label:'Registre de commerce',req:true,selfie:false}],
 };
 var insType=null,insKyc='KYC1',insPhotos={};
 
@@ -1141,7 +1141,7 @@ async function doInscrire(){
     var kycLevel=insType==='client'?insKyc:'KYC1';
     // Le selfie (déjà capturé et requis dans le formulaire ci-dessus) doit accompagner la
     // création du compte elle-même : le serveur l'exige désormais pour toute inscription.
-    var selfieKey=insType==='business'?'selfie_gerant':'selfie';
+    var selfieKey='selfie';
     var selfieUrl=insPhotos[selfieKey]?await fileToBase64(insPhotos[selfieKey]):undefined;
     // Étape 1 : créer le compte en JSON (texte uniquement, pas de fichiers)
     var body={prenom:prenom,nom:nom,telephone:telephone,pin:pin,role:insType,kycNiveau:kycLevel,selfieUrl:selfieUrl};
