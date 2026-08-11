@@ -2606,7 +2606,7 @@ async function chargerUsers(){
     if(uFilter==='super_bo') data=data.filter(function(u){return u.telephone===SUPER_ADMIN_TEL;});
     usersData=data;
     // Exclure le Super BO de la liste "Tous" sauf pour lui-même
-    var toRender=isSuperAdmin()?usersData:usersData.filter(function(u){return u.telephone!==SUPER_ADMIN_TEL;});
+    var toRender=isSuperAdmin()?usersData:usersData.filter(function(u){return u.telephone!==SUPER_ADMIN_TEL||u.statut==='bloque';});
     renderU(toRender);
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
@@ -2614,7 +2614,7 @@ function setUFilter(r){uFilter=r;chargerUsers();}
 function filtrerUsers(q){
   // Toujours exclure le Super BO de la vue admin/backoffice (sauf si on est Super BO)
   var base=usersData.filter(function(u){
-    if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL) return false;
+    if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL && u.statut!=='bloque') return false;
     return true;
   });
   if(!q){renderU(base);return;}
@@ -4484,7 +4484,7 @@ async function chargerUsers(){
     if(uFilter==='super_bo') data=data.filter(function(u){return u.telephone===SUPER_ADMIN_TEL;});
     usersData=data;
     // Exclure le Super BO de la liste "Tous" sauf pour lui-même
-    var toRender=isSuperAdmin()?usersData:usersData.filter(function(u){return u.telephone!==SUPER_ADMIN_TEL;});
+    var toRender=isSuperAdmin()?usersData:usersData.filter(function(u){return u.telephone!==SUPER_ADMIN_TEL||u.statut==='bloque';});
     renderU(toRender);
   }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
@@ -4547,7 +4547,7 @@ async function chargerRembComptes(){
 function filtrerUsers(q){
   // Toujours exclure le Super BO de la vue admin/backoffice (sauf si on est Super BO)
   var base=usersData.filter(function(u){
-    if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL) return false;
+    if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL && u.statut!=='bloque') return false;
     return true;
   });
   if(!q){renderU(base);return;}
@@ -5300,6 +5300,22 @@ function voirU(id){
     info.appendChild(div);
   });
   body.appendChild(info);
+  // ── Cas particulier : compte super admin, bloqué, vu par un membre du Back-office qui
+  // n'est PAS lui-même le super admin. On l'a exceptionnellement laissé apparaître dans la
+  // liste UNIQUEMENT pour ce cas précis — donc on n'expose ici QUE le bouton "Débloquer",
+  // rien d'autre (pas d'édition, pas de reset PIN, pas de suppression, pas de KYC).
+  if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL && u.statut==='bloque'){
+    var noteDiv=document.createElement('div');
+    noteDiv.style.cssText='background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#92400e';
+    noteDiv.textContent='\ud83d\udd12 Compte protégé — visible uniquement car bloqué. Seul le déblocage est possible ici ; aucune autre action.';
+    body.appendChild(noteDiv);
+    var btnDeb=document.createElement('button');
+    btnDeb.className='btn btn-g';btnDeb.textContent='\ud83d\udd13 Débloquer';
+    btnDeb.style.cssText='width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px';
+    btnDeb.addEventListener('click',function(){chgStatut(id,'actif');});
+    body.appendChild(btnDeb);
+    return;
+  }
   if(perm('txns') && ['agent','mini_master','master','business'].indexOf(u.role)>=0){
     var btnDetail=document.createElement('button');
     btnDetail.textContent='📊 Voir en détail — solde, transactions, réseau';
