@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.4-2026-08-09-g"/>
+<meta name="version" content="v1.5-2026-08-09-h"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -2345,9 +2345,8 @@ function ouvrirKycUpgrade(){
 
 function _renderKyc(docsExistants){
   var u=G.user||{};
-  var kycRaw=u.kycNiveau||u.kycNiveauDemande||'KYC1';
-  var kyc=['KYC1','KYC2','KYC3'].includes(kycRaw)?kycRaw:'KYC1';
-  var statut=u.statut||'';        // 'actif' ou 'en_attente'
+  var kyc=['KYC1','KYC2','KYC3'].includes(u.kycNiveau)?u.kycNiveau:'KYC1';
+  var demande=['KYC1','KYC2','KYC3'].includes(u.kycNiveauDemande)?u.kycNiveauDemande:null;
   var el=document.getElementById('kyc-body');
   if(!el)return;
 
@@ -2363,12 +2362,6 @@ function _renderKyc(docsExistants){
           {id:'extrait_naissance',     label:'Extrait de naissance',    icon:'📄',camera:'environment'},
           {id:'justificatif_domicile', label:'Justificatif de domicile',icon:'🏠',camera:'environment'}]
   };
-  // Docs propres à chaque niveau (ceux qu'on soumet pour ce niveau)
-  var DOCS_NIVEAU={
-    KYC1:['selfie'],
-    KYC2:['cni_recto','cni_verso'],
-    KYC3:['extrait_naissance','justificatif_domicile']
-  };
   var PLAFONDS={KYC1:'20 000',KYC2:'50 000',KYC3:'100 000'};
   var KYC_CONDITIONS={
     KYC1:{filleuls:0,  desc:'Accès de base — Un simple selfie suffit'},
@@ -2380,64 +2373,50 @@ function _renderKyc(docsExistants){
   var niveaux=['KYC1','KYC2','KYC3'];
   var nbRatt=Number(u.nbRattaches||0);
 
-  // Docs soumis en base (pour référence uniquement sur le niveau en_attente)
-  var docsSoumis={};
-  (docsExistants||[]).forEach(function(d){
-    docsSoumis[d.typeDocument||d.type_document]=true;
-  });
-
-  // Docs définitivement validés par niveau (règle métier fixe — indépendante de l'API)
-  // Si KYC1 actif → selfie validé
-  // Si KYC2 actif → selfie + cni_recto + cni_verso validés
-  // Si KYC3 actif → tous validés
+  // Docs définitivement validés : tout niveau <= niveau confirmé (kyc_niveau). Ce champ est la
+  // seule source de vérité pour "déjà validé" — on ne se base plus jamais sur le statut global
+  // du compte, qui peut légitimement passer à autre chose sans que ça dégrade un niveau acquis.
   var DOCS_VALIDES_PAR_NIVEAU={
     KYC1:['selfie'],
     KYC2:['selfie','cni_recto','cni_verso'],
     KYC3:['selfie','cni_recto','cni_verso','extrait_naissance','justificatif_domicile']
   };
-  // Ensemble de tous les docs validés définitivement
   var docsDefinitivementValides={};
-  // Un doc est validé définitivement si son niveau d'appartenance <= niveau actuel ET actif
-  // OU si son niveau d'appartenance < niveau actuel (toujours vrai peu importe statut)
   niveaux.forEach(function(n){
-    var docsN=DOCS_VALIDES_PAR_NIVEAU[n]||[];
-    if(ORDER[n]<ORDER[kyc]){
-      // Niveaux passés → forcément validés
-      docsN.forEach(function(id){docsDefinitivementValides[id]=true;});
-    } else if(ORDER[n]===ORDER[kyc]&&statut==='actif'){
-      // Niveau actuel validé
-      docsN.forEach(function(id){docsDefinitivementValides[id]=true;});
+    if(ORDER[n]<=ORDER[kyc]){
+      (DOCS_VALIDES_PAR_NIVEAU[n]||[]).forEach(function(id){docsDefinitivementValides[id]=true;});
     }
   });
 
   window._kycPhotos={};
 
-  function docVerrouille(niv, docId){
-    // Un doc est verrouillé s'il est dans les docs définitivement validés
-    return !!docsDefinitivementValides[docId];
+  // État de chaque section de niveau — un seul calcul, quatre issues possibles :
+  //  'valide'            → niveau déjà validé (passé, ou niveau confirmé actuel) — verrouillé
+  //  'attente_validation' → c'est LE niveau en cours d'examen — figé, non modifiable
+  //  'bloque_attente'     → au-delà du niveau en cours d'examen — figé, il faut d'abord son issue
+  //  'ouvert'             → prochain niveau accessible, aucune demande en cours — modifiable
+  //  'verrouille_futur'   → plus loin qu'accessible pour l'instant (compléter l'étape d'avant)
+  function etatNiveau(niv){
+    var ord=ORDER[niv], actOrd=ORDER[kyc];
+    if(ord<=actOrd) return 'valide';
+    if(demande && niv===demande) return 'attente_validation';
+    if(demande && ord>ORDER[demande]) return 'bloque_attente';
+    if(!demande && ord===actOrd+1) return 'ouvert';
+    return 'verrouille_futur';
   }
 
-  function docModifiable(niv, docId){
-    // Niveau actuel EN ATTENTE → les docs de ce niveau sont modifiables
-    return ORDER[niv]===ORDER[kyc] && statut!=='actif';
-  }
-
-  function docAFournir(niv, docId){
-    // Prochain niveau → docs à fournir pour upgrade
-    return ORDER[niv]===ORDER[kyc]+1;
-  }
-
-  // ── Barre de progression ─────────────────────────────────────────
-  var statutLabel = statut==='actif'
-    ? '<span style="color:#22c55e;font-size:11px;font-weight:700">● Actif</span>'
-    : '<span style="color:#f59e0b;font-size:11px;font-weight:700">● En attente</span>';
+  // ── Barre de progression + info demande en cours ─────────────────
   var h='<div style="background:#f9fafb;border-radius:14px;padding:14px;margin-bottom:16px">';
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
   h+='<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase">Niveau actuel : '+kyc+'</div>';
-  h+=statutLabel+'</div>';
+  h+='<span style="color:#22c55e;font-size:11px;font-weight:700">● Actif</span></div>';
   h+='<div style="background:#e5e7eb;border-radius:99px;height:8px">';
   h+='<div style="background:var(--g);border-radius:99px;height:8px;transition:.4s;width:'+(kyc==='KYC1'?'33':kyc==='KYC2'?'66':'100')+'%"></div>';
-  h+='</div></div>';
+  h+='</div>';
+  if(demande){
+    h+='<div style="margin-top:10px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 10px">⏳ Demande <b>'+demande+'</b> en cours d\'examen — validation sous 48h. Vos documents sont figés en attendant.</div>';
+  }
+  h+='</div>';
 
   // ── Rendu de chaque niveau ───────────────────────────────────────
   niveaux.forEach(function(niv){
@@ -2445,48 +2424,45 @@ function _renderKyc(docsExistants){
     var ord=ORDER[niv];
     var actOrd=ORDER[kyc];
     var allDocs=KYC_DOCS[niv]||[];
-    var docsNiv=DOCS_NIVEAU[niv]||[];
-    var estNiveauActuel=(ord===actOrd);
-    var estNiveauSuivant=(ord===actOrd+1);
-    var estNiveauFutur=(ord>actOrd+1);
-    var estNiveauPasse=(ord<actOrd);
-    var estActif=(estNiveauActuel && statut==='actif');
-    var estEnAttente=(estNiveauActuel && statut!=='actif');
+    var etat=etatNiveau(niv);
 
-    // Style bordure
     var border;
-    if(estActif||estNiveauPasse) border='2px solid '+col;
-    else if(estEnAttente)        border='2px solid #f59e0b';
-    else if(estNiveauSuivant)    border='1.5px solid '+col+'66';
-    else                         border='1.5px solid #e5e7eb';
+    if(etat==='valide')                 border='2px solid '+col;
+    else if(etat==='attente_validation')border='2px solid #f59e0b';
+    else if(etat==='ouvert')            border='1.5px solid '+col+'66';
+    else                                 border='1.5px solid #e5e7eb';
 
-    var opacity=estNiveauFutur?'opacity:.4;':'';
+    var opacity=(etat==='bloque_attente'||etat==='verrouille_futur')?'opacity:.4;':'';
     h+='<div style="'+opacity+'border:'+border+';border-radius:16px;padding:16px;margin-bottom:12px">';
 
     // En-tête
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     h+='<div style="font-size:16px;font-weight:900;color:'+col+'">'+niv+'</div>';
-    if(estActif){
+    if(etat==='valide'&&ord===actOrd){
       h+='<span style="background:'+col+'18;color:'+col+';padding:4px 12px;border-radius:99px;font-size:10px;font-weight:800">✓ Actif</span>';
-    } else if(estNiveauPasse){
+    } else if(etat==='valide'){
       h+='<span style="background:#f0fdf4;color:#15803d;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">✓ Validé</span>';
-    } else if(estEnAttente){
+    } else if(etat==='attente_validation'){
       h+='<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">⏳ En attente</span>';
+    } else if(etat==='bloque_attente'){
+      h+='<span style="background:#f3f4f6;color:#9ca3af;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700">🔒 Bloqué</span>';
     } else {
       h+='<span style="background:#f3f4f6;color:#6b7280;padding:4px 12px;border-radius:99px;font-size:10px">'+PLAFONDS[niv]+' F/mois</span>';
     }
     h+='</div>';
 
     // Message informatif
-    if(estActif){
+    if(etat==='valide'){
       h+='<div style="background:#f0fdf4;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#15803d">✅ Dossier validé par le back-office. Documents verrouillés.</div>';
-    } else if(estEnAttente){
-      h+='<div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#92400e">⏳ En attente de validation (délai : 48h). Vous pouvez encore remplacer vos photos.</div>';
+    } else if(etat==='attente_validation'){
+      h+='<div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#92400e">⏳ Dossier soumis, en attente de validation (délai : 48h). Vos documents sont figés — vous ne pouvez pas les modifier tant que la décision n\'est pas rendue.</div>';
+    } else if(etat==='bloque_attente'){
+      h+='<div style="background:#f3f4f6;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#6b7280">🔒 En attente de la validation du '+demande+' avant de pouvoir continuer.</div>';
     }
 
-    // Conditions filleuls pour le niveau suivant
+    // Conditions filleuls pour le niveau ouvert
     var cond=KYC_CONDITIONS[niv];
-    if(cond&&estNiveauSuivant&&cond.filleuls>0){
+    if(cond&&etat==='ouvert'&&cond.filleuls>0){
       var condOk=nbRatt>=cond.filleuls;
       h+='<div style="background:'+(condOk?'#f0fdf4':'#fef3c7')+';border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:'+(condOk?'#15803d':'#92400e')+'">';
       h+=(condOk?'✅ ':'⚠️ ')+cond.desc+' <b>('+nbRatt+'/'+cond.filleuls+')</b>';
@@ -2496,9 +2472,7 @@ function _renderKyc(docsExistants){
     // Documents
     allDocs.forEach(function(doc){
       var key=niv+'-'+doc.id;
-      var verr=docVerrouille(niv,doc.id);
-      var modif=docModifiable(niv,doc.id);
-      var afournir=docAFournir(niv,doc.id);
+      var verr=!!docsDefinitivementValides[doc.id];
 
       if(verr){
         // ✅ Verrouillé — validé définitivement
@@ -2507,22 +2481,22 @@ function _renderKyc(docsExistants){
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:#15803d">'+doc.label+'</div>';
         h+='<div style="font-size:11px;color:#22c55e">Validé ✓</div></div>';
         h+='<div style="font-size:20px">✅</div></div>';
-      } else if(modif){
-        // 🔄 Modifiable — soumis mais en attente, peut remplacer
-        var dejaSoumis=docsSoumis[doc.id];
-        var bg=dejaSoumis?'#fef3c7':'#f9fafb';
-        var borderC=dejaSoumis?'#fde68a':'#e5e7eb';
-        var textColor=dejaSoumis?'#92400e':'#6b7280';
-        var desc=dejaSoumis?'Soumis — Appuyer pour remplacer':'Appuyer pour prendre la photo';
-        var icon=dejaSoumis?'🔄':'📷';
-        h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+bg+';border-radius:10px;border:1px solid '+borderC+';margin-bottom:6px;cursor:pointer">';
+      } else if(etat==='attente_validation'){
+        // 🔒 Soumis, figé — en attente de décision du back-office, non modifiable
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a;margin-bottom:6px;opacity:.85">';
         h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
-        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+textColor+'">'+doc.label+'</div>';
-        h+='<div id="kl-'+key+'" style="font-size:11px;color:'+textColor+'">'+desc+'</div></div>';
-        h+='<div id="kc-'+key+'" style="font-size:18px">'+icon+'</div></div>';
-        h+='<input type="file" accept="image/*" capture="'+doc.camera+'" id="ki-'+key+'" style="display:none"/>';
-      } else if(afournir){
-        // 📷 À fournir pour le niveau suivant
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#92400e">'+doc.label+'</div>';
+        h+='<div style="font-size:11px;color:#92400e">Soumis — en attente de validation</div></div>';
+        h+='<div style="font-size:18px">🔒</div></div>';
+      } else if(etat==='bloque_attente'||etat==='verrouille_futur'){
+        // 🔒 Pas encore accessible
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:6px">';
+        h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;filter:grayscale(1)">'+doc.icon+'</div>';
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#9ca3af">'+doc.label+'</div>';
+        h+='<div style="font-size:11px;color:#9ca3af">Verrouillé</div></div>';
+        h+='<div style="font-size:18px">🔒</div></div>';
+      } else if(etat==='ouvert'){
+        // 📷 À fournir — modifiable
         h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:6px;cursor:pointer">';
         h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+doc.label+'</div>';
@@ -2532,18 +2506,17 @@ function _renderKyc(docsExistants){
       }
     });
 
-    // Boutons d'action
-    if(estEnAttente){
-      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:#f59e0b;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5">Resoumettre le dossier →</button>';
-    } else if(estNiveauSuivant){
-      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:'+col+';color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5">Upgrade vers '+niv+' →</button>';
+    // Bouton d'action — uniquement pour le niveau réellement ouvert à la soumission
+    if(etat==='ouvert'){
+      h+='<button data-niv="'+niv+'" id="btn-kyc-'+niv+'" style="width:100%;padding:14px;background:'+col+';color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;opacity:.5" disabled>Upgrade vers '+niv+' →</button>';
     }
     h+='</div>';
   });
 
   el.innerHTML=h;
 
-  // Clic slot → ouvre caméra directement
+  // Clic slot → ouvre caméra directement (uniquement pour les slots réellement rendus, donc
+  // seulement ceux du niveau 'ouvert' — les autres n'ont pas de data-niv/data-doc)
   el.querySelectorAll('[data-niv][data-doc]').forEach(function(slot){
     slot.addEventListener('click',function(){
       var inp=document.getElementById('ki-'+slot.dataset.niv+'-'+slot.dataset.doc);
@@ -2553,6 +2526,7 @@ function _renderKyc(docsExistants){
 
   // Photo prise → aperçu + vérification bouton
   niveaux.forEach(function(niv){
+    if(etatNiveau(niv)!=='ouvert')return;
     KYC_DOCS[niv].forEach(function(doc){
       var inp=document.getElementById('ki-'+niv+'-'+doc.id);
       if(!inp)return;
