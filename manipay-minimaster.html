@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.5-2026-08-09-f"/>
+<meta name="version" content="v8.6-2026-08-09-j"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Mini-Master v8</title>
@@ -2243,7 +2243,33 @@ async function showTxDetail(txId){
   if(tx.reference)h+=row('R&#233;f&#233;rence','<span style="font-family:monospace;font-size:11px">'+tx.reference+'</span>');
   h+='</div>';
 
+  // Bouton d'annulation — uniquement dépôt/transfert, encore "complete", et initié par MOI
+  var monCompteId=G.compte?String(G.compte.id):'';
+  var estInitiateur=String(tx.compteSourceId||tx.compte_source_id||'')===monCompteId;
+  var estAnnulable=['depot','transfert'].includes(type) && (tx.statut||'').toLowerCase()==='complete' && estInitiateur;
+  if(estAnnulable){
+    h+='<button id="btn-annuler-tx" onclick="annulerTransaction(\'+(tx.id||txId)+\')" style="width:100%;padding:14px;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">↩️ Annuler cette op&#233;ration</button>';
+    h+='<div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:6px">'+(type==='depot'?'Possible jusqu’&#224; minuit le jour m&#234;me':'Possible dans les 24h suivant l’op&#233;ration')+'</div>';
+  }
+
   el2.innerHTML=h;
+}
+
+async function annulerTransaction(txId){
+  if(!confirm('Confirmez-vous l’annulation de cette opération ? Les fonds seront restitués immédiatement si possible.'))return;
+  var btn=document.getElementById('btn-annuler-tx');
+  if(btn){btn.disabled=true;btn.textContent='Annulation en cours...';btn.style.opacity='.6';}
+  try{
+    var r=await post('/transactions/'+txId+'/annuler',{});
+    T('✓ '+(r.data&&r.data.message?r.data.message:'Opération annulée.'));
+    closeSh('tx-detail');
+    delete _txCache[txId];
+    chargerHistorique();
+    chargerAccueil();
+  }catch(e){
+    T(e.message,true);
+    if(btn){btn.disabled=false;btn.textContent='↩️ Annuler cette opération';btn.style.opacity='1';}
+  }
 }
 
 // ══ STATISTIQUES ═════════════════════════════════════════════════

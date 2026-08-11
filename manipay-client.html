@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.6-2026-08-09-i"/>
+<meta name="version" content="v1.7-2026-08-09-j"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1325,7 +1325,31 @@ function voirDetailTx(id) {
       +'<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px"><span style="color:#6b7280;font-size:13px">R&#233;f&#233;rence</span><span style="font-weight:600;font-size:11px;font-family:monospace;color:#374151">'+(tx.reference||tx.id||'')+'</span></div>'
     +'</div>'
     +'<div style="text-align:center;color:#9ca3af;font-size:11px;padding:16px">ManiPay</div>';
+  // Bouton d'annulation — uniquement pour un transfert QUE J'AI ENVOYÉ, encore "complete"
+  var estAnnulable = tx.type==='transfert' && !isIn && (tx.statut||'complete').toLowerCase()==='complete';
+  if(estAnnulable){
+    el.innerHTML += '<div style="margin:14px 16px 0">'
+      +'<button id="btn-annuler-tx" onclick="annulerTransaction(\''+(tx.id||id)+'\')" style="width:100%;padding:14px;background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">↩️ Annuler ce transfert</button>'
+      +'<div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:6px">Possible dans les 24h suivant l\u2019opération</div>'
+      +'</div>';
+  }
   setTab('tx-detail');
+}
+async function annulerTransaction(txId){
+  if(!confirm('Confirmez-vous l\u2019annulation de ce transfert ? Les fonds seront restitués immédiatement si possible.'))return;
+  var btn=document.getElementById('btn-annuler-tx');
+  if(btn){btn.disabled=true;btn.textContent='Annulation en cours...';btn.style.opacity='.6';}
+  try{
+    var r=await post('/transactions/'+txId+'/annuler',{});
+    T('✓ '+(r.data&&r.data.message?r.data.message:'Opération annulée.'));
+    setTab('accueil');
+    delete _txCache[txId];
+    if(typeof chargerHistorique==='function')chargerHistorique();
+    if(typeof rafraichir==='function')rafraichir();
+  }catch(e){
+    T(e.message,true);
+    if(btn){btn.disabled=false;btn.textContent='↩️ Annuler ce transfert';btn.style.opacity='1';}
+  }
 }
 
 async function chargerTxns(){

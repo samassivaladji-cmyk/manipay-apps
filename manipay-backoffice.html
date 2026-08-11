@@ -4503,9 +4503,9 @@ async function chargerRembComptes(){
   var delai=_delaiRembRole();
   var labelDelai=isSuperAdmin()?'Illimité (> 3 mois)':delai===90?'3 derniers mois — Back-Office':delai===30?'30 derniers jours — Admin':'7 derniers jours';
   el.innerHTML=''
-    +'<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:12px;color:#dc2626;font-weight:700">⏱ '+labelDelai+' — Dépôts & Transferts remboursables</div>'
+    +'<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:12px;color:#dc2626;font-weight:700">⏱ '+labelDelai+' — Dépôts, retraits, transferts & paiements marchands remboursables</div>'
     +'<div style="display:flex;gap:6px;margin-bottom:10px">'
-      +'<select id="remb-comptes-type" onchange="chargerRembComptes()" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;font-size:12px;font-family:inherit;font-weight:700;color:#374151;background:#fff"><option value="">Tous types</option><option value=\"depot\">Dépôts</option><option value=\"transfert\">Transferts</option></select>'
+      +'<select id="remb-comptes-type" onchange="chargerRembComptes()" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;font-size:12px;font-family:inherit;font-weight:700;color:#374151;background:#fff"><option value="">Tous types</option><option value="depot">Dépôts</option><option value="retrait">Retraits</option><option value="transfert">Transferts</option><option value="paiement_marchand">Paiements marchands</option></select>'
       +'<input id="remb-comptes-tel" type="tel" placeholder="Filtrer par numéro..." style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:8px 12px;font-size:12px;font-family:inherit" oninput="chargerRembComptes()"/>'
     +'</div>'
     +'<div id="remb-comptes-list"><div style="text-align:center;padding:24px"><div class="spin"></div></div></div>';
@@ -4525,9 +4525,9 @@ async function chargerRembComptes(){
     list.forEach(function(tx){
       var age=Math.floor((Date.now()-new Date(tx.dateCreation||tx.date_creation))/86400000);
       var ageLabel=age===0?'Aujourd\'hui':age+' j';
-      var typeLabel=tx.type==='depot'?'↓ Dépôt':'→ Transfert';
-      var typeBg=tx.type==='depot'?'#dcfce7':'#eff6ff';
-      var typeCol=tx.type==='depot'?'#15803d':'#1d4ed8';
+      var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
+      var typeCfgRemb=TYPE_REMB_CFG[tx.type]||{l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
+      var typeLabel=typeCfgRemb.l, typeBg=typeCfgRemb.bg, typeCol=typeCfgRemb.col;
       html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
           +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+typeBg+';color:'+typeCol+'">'+typeLabel+'</span><span style="font-size:11px;font-weight:700;color:#374151">'+FD(tx.dateCreation||tx.date_creation)+'</span><span style="font-size:10px;color:#9ca3af">'+ageLabel+'</span></div>'
