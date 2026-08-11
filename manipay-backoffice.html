@@ -8613,11 +8613,16 @@ async function boUnlock() {
       method: 'POST',
       body: JSON.stringify({telephone: G.user.telephone, pin: pin, app: 'backoffice'})
     });
-    if (r && r.data && r.data.accessToken) {
-      G.token = r.data.accessToken;
-      if (r.data.refreshToken) G.refresh = r.data.refreshToken;
-      try { localStorage.setItem('mani_token', G.token); } catch(e2) {}
+    // Sécurité : ne déverrouiller QUE si le serveur a réellement renvoyé un nouveau token
+    // valide pour ce PIN précis. callAPI peut, dans certains cas (401 avec un token déjà en
+    // mémoire), résoudre sans lever d'erreur même si le PIN est incorrect — donc l'absence
+    // d'exception ne suffit pas à elle seule à prouver que le code est bon.
+    if (!(r && r.data && r.data.accessToken)) {
+      throw new Error('Code incorrect');
     }
+    G.token = r.data.accessToken;
+    if (r.data.refreshToken) G.refresh = r.data.refreshToken;
+    try { localStorage.setItem('mani_token', G.token); } catch(e2) {}
     _boResetDots();
     if (err) err.style.display = 'none';
     _boLocked = false;
