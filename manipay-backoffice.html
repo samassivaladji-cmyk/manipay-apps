@@ -965,9 +965,10 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
           <option value="paiement_marchand">Paiements marchands uniquement</option>
         </select>
       </div>
-      <!-- Barre de recherche numéro -->
-      <div style="position:relative;margin-bottom:10px">
-        <input id="remb-search" type="tel" placeholder="Filtrer par numéro de téléphone..." style="width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:13px;font-family:inherit;box-sizing:border-box" oninput="chargerTxRemb()"/>
+      <!-- Barre de recherche numéro + montant — filtrage local instantané, aucun appel réseau -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="remb-search" type="tel" placeholder="Numéro (expéditeur ou destinataire)..." style="flex:1;min-width:0;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:13px;font-family:inherit;box-sizing:border-box" oninput="filtrerTxRembLocal()"/>
+        <input id="remb-search-montant" type="number" inputmode="numeric" placeholder="Montant..." style="width:110px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 10px;font-size:13px;font-family:inherit;box-sizing:border-box" oninput="filtrerTxRembLocal()"/>
       </div>
       <div id="remb-list"><div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Chargement...</div></div>
     </div>
@@ -3353,55 +3354,74 @@ async function chargerTxRemb() {
       : '7 derniers jours — Support Client';
     lblEl.textContent = '⏱ ' + lbl;
   }
-  document.getElementById('remb-periode').value = delaiRole;
-  var jours = delaiRole;
-  var type  = document.getElementById('remb-type').value;
-  var tel   = (document.getElementById('remb-search').value || '').trim();
+  var type = document.getElementById('remb-type').value;
   try {
-    var url = '/admin/transactions/remboursables?jours=' + Math.min(jours,999);
+    // On charge TOUTE la période/type une seule fois (sans filtre numéro/montant) — le
+    // filtrage par numéro et montant se fait ensuite localement, instantanément, sans
+    // nouvel appel réseau à chaque frappe.
+    var url = '/admin/transactions/remboursables?jours=' + Math.min(delaiRole,999);
     if (type) url += '&type=' + type;
-    if (tel)  url += '&telephone=' + encodeURIComponent(tel);
     var r = await apiGet(url);
-    var list = r.data || [];
-    _rembTxCache = list;
-    if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune transaction trouvée sur cette période</div>'; return; }
-    var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
-    var html = '';
-    list.forEach(function(tx) {
-      var age = Math.floor((Date.now() - new Date(tx.dateCreation||tx.date_creation)) / 86400000);
-      var ageLabel = age === 0 ? 'Aujourd\'hui' : age + ' j';
-      var canRemb = age <= delaiRole;
-      var typeCfgRemb = TYPE_REMB_CFG[tx.type] || {l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
-      var typeLabel = typeCfgRemb.l, typeBg = typeCfgRemb.bg, typeCol = typeCfgRemb.col;
-      html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-          + '<div style="display:flex;align-items:center;gap:8px">'
-            + '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+typeBg+';color:'+typeCol+'">'+typeLabel+'</span>'
-            + '<span style="font-size:11px;font-weight:700;color:#374151">'+FD(tx.dateCreation||tx.date_creation)+'</span>'
-            + '<span style="font-size:10px;color:#9ca3af">'+ageLabel+'</span>'
-          + '</div>'
-          + '<span style="font-size:11px;font-family:monospace;color:#6b7280">'+tx.reference+'</span>'
-        + '</div>'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-          + '<div>'
-            + '<div style="font-size:13px;font-weight:700">'+(tx.prenomSrc||'')+' '+(tx.nomSrc||'')+' <span style="color:#9ca3af;font-weight:400">→</span> '+(tx.prenomDst||'')+' '+(tx.nomDst||'')+'</div>'
-            + '<div style="font-size:11px;color:#6b7280">'+(tx.telSrc||'')+'</div>'
-          + '</div>'
-          + '<div style="font-size:16px;font-weight:800;color:#374151">'+F(tx.montant)+'</div>'
-        + '</div>';
-      if (tx.rembourse) {
-        html += '<div style="font-size:11px;font-weight:700;color:#9ca3af;text-align:center;padding:6px;background:#f9fafb;border-radius:8px">✓ Déjà remboursé</div>';
-      } else if (canRemb) {
-        html += '<button onclick="confirmerRemboursement(\''+tx.id+'\',\''+tx.reference+'\','+tx.montant+',\''+tx.type+'\')" style="width:100%;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:9px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">↩ Rembourser</button>';
-      } else {
-        html += '<div style="font-size:11px;color:#9ca3af;text-align:center;padding:6px">Hors délai pour votre rôle (max '+delaiRole+'j)</div>';
-      }
-      html += '</div>';
-    });
-    el.innerHTML = html;
+    _rembTxCache = r.data || [];
+    _rembTxDelaiRole = delaiRole;
+    filtrerTxRembLocal();
   } catch(e) {
     el.innerHTML = '<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';
   }
+}
+
+function filtrerTxRembLocal() {
+  var el = document.getElementById('remb-list');
+  if (!el) return;
+  var list = _rembTxCache || [];
+  var delaiRole = _rembTxDelaiRole || 7;
+  var tel = (document.getElementById('remb-search').value || '').replace(/\s+/g,'').trim();
+  var montantStr = (document.getElementById('remb-search-montant').value || '').trim();
+  var montantNum = montantStr ? Number(montantStr) : null;
+  if (tel) {
+    list = list.filter(function(tx){
+      var ts=(tx.telSrc||'').replace(/\s+/g,''), td=(tx.telDst||'').replace(/\s+/g,'');
+      return ts.indexOf(tel)>=0 || td.indexOf(tel)>=0;
+    });
+  }
+  if (montantNum !== null && !isNaN(montantNum)) {
+    list = list.filter(function(tx){ return String(Math.round(tx.montant)).indexOf(String(montantNum))>=0; });
+  }
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune transaction trouvée'+(tel||montantStr?' pour ce filtre':' sur cette période')+'</div>'; return; }
+  var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
+  var html = '';
+  list.forEach(function(tx) {
+    var age = Math.floor((Date.now() - new Date(tx.dateCreation||tx.date_creation)) / 86400000);
+    var ageLabel = age === 0 ? 'Aujourd\'hui' : age + ' j';
+    var canRemb = age <= delaiRole;
+    var typeCfgRemb = TYPE_REMB_CFG[tx.type] || {l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
+    var typeLabel = typeCfgRemb.l, typeBg = typeCfgRemb.bg, typeCol = typeCfgRemb.col;
+    html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        + '<div style="display:flex;align-items:center;gap:8px">'
+          + '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+typeBg+';color:'+typeCol+'">'+typeLabel+'</span>'
+          + '<span style="font-size:11px;font-weight:700;color:#374151">'+FD(tx.dateCreation||tx.date_creation)+'</span>'
+          + '<span style="font-size:10px;color:#9ca3af">'+ageLabel+'</span>'
+        + '</div>'
+        + '<span style="font-size:11px;font-family:monospace;color:#6b7280">'+tx.reference+'</span>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        + '<div>'
+          + '<div style="font-size:13px;font-weight:700">'+(tx.prenomSrc||'')+' '+(tx.nomSrc||'')+' <span style="color:#9ca3af;font-weight:400">→</span> '+(tx.prenomDst||'')+' '+(tx.nomDst||'')+'</div>'
+          + '<div style="font-size:11px;color:#6b7280">📤 '+(tx.telSrc||'—')+' &nbsp;→&nbsp; 📥 '+(tx.telDst||'—')+'</div>'
+        + '</div>'
+        + '<div style="font-size:16px;font-weight:800;color:#374151">'+F(tx.montant)+'</div>'
+      + '</div>';
+    if (tx.rembourse) {
+      html += '<div style="font-size:11px;font-weight:700;color:#9ca3af;text-align:center;padding:6px;background:#f9fafb;border-radius:8px">✓ Déjà remboursé</div>';
+    } else if (canRemb) {
+      html += '<button onclick="confirmerRemboursement(\''+tx.id+'\',\''+tx.reference+'\','+tx.montant+',\''+tx.type+'\')" style="width:100%;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:9px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">↩ Rembourser</button>';
+    } else {
+      html += '<div style="font-size:11px;color:#9ca3af;text-align:center;padding:6px">Hors délai pour votre rôle (max '+delaiRole+'j)</div>';
+    }
+    html += '</div>';
+  });
+  el.innerHTML = html;
 }
 
 function confirmerRemboursement(txId, ref, montant, type) {
@@ -4517,43 +4537,69 @@ async function chargerRembComptes(){
     +'<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:12px;color:#dc2626;font-weight:700">⏱ '+labelDelai+' — Dépôts, retraits, transferts & paiements marchands remboursables</div>'
     +'<div style="display:flex;gap:6px;margin-bottom:10px">'
       +'<select id="remb-comptes-type" onchange="chargerRembComptes()" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;font-size:12px;font-family:inherit;font-weight:700;color:#374151;background:#fff"><option value="">Tous types</option><option value="depot">Dépôts</option><option value="retrait">Retraits</option><option value="transfert">Transferts</option><option value="paiement_marchand">Paiements marchands</option></select>'
-      +'<input id="remb-comptes-tel" type="tel" placeholder="Filtrer par numéro..." style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:8px 12px;font-size:12px;font-family:inherit" oninput="chargerRembComptes()"/>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px">'
+      +'<input id="remb-comptes-tel" type="tel" placeholder="Numéro (expéditeur ou destinataire)..." style="flex:1;min-width:0;border:1px solid #e5e7eb;border-radius:10px;padding:8px 12px;font-size:12px;font-family:inherit" oninput="filtrerRembComptesLocal()"/>'
+      +'<input id="remb-comptes-montant" type="number" inputmode="numeric" placeholder="Montant..." style="width:100px;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;font-size:12px;font-family:inherit" oninput="filtrerRembComptesLocal()"/>'
     +'</div>'
     +'<div id="remb-comptes-list"><div style="text-align:center;padding:24px"><div class="spin"></div></div></div>';
   var sel=document.getElementById('remb-comptes-type');
-  var telEl=document.getElementById('remb-comptes-tel');
   var type=sel?sel.value:'';
-  var tel=telEl?telEl.value.trim():'';
   try{
+    // Chargement complet une seule fois (sans filtre numéro/montant) — le filtrage se fait
+    // ensuite localement, instantanément, sans nouvel appel réseau à chaque frappe.
     var url='/admin/transactions/remboursables?jours='+Math.min(delai,999);
     if(type) url+='&type='+type;
-    if(tel) url+='&telephone='+encodeURIComponent(tel);
     var r=await apiGet(url);
-    var list=r.data||[];
-    var listEl=document.getElementById('remb-comptes-list');
-    if(!list.length){listEl.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune transaction remboursable</div>';return;}
-    var html='';
-    list.forEach(function(tx){
-      var age=Math.floor((Date.now()-new Date(tx.dateCreation||tx.date_creation))/86400000);
-      var ageLabel=age===0?'Aujourd\'hui':age+' j';
-      var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
-      var typeCfgRemb=TYPE_REMB_CFG[tx.type]||{l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
-      var typeLabel=typeCfgRemb.l, typeBg=typeCfgRemb.bg, typeCol=typeCfgRemb.col;
-      html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-          +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+typeBg+';color:'+typeCol+'">'+typeLabel+'</span><span style="font-size:11px;font-weight:700;color:#374151">'+FD(tx.dateCreation||tx.date_creation)+'</span><span style="font-size:10px;color:#9ca3af">'+ageLabel+'</span></div>'
-          +'<span style="font-size:10px;color:#9ca3af;font-family:monospace">'+tx.reference+'</span>'
-        +'</div>'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-          +'<div><div style="font-size:13px;font-weight:700">'+(tx.prenomSrc||'')+' '+(tx.nomSrc||'')+' <span style="color:#9ca3af">→</span> '+(tx.prenomDst||'')+' '+(tx.nomDst||'')+'</div><div style="font-size:11px;color:#6b7280">'+(tx.telSrc||'')+'</div></div>'
-          +'<div style="font-size:16px;font-weight:800;color:#374151">'+F(tx.montant)+'</div>'
-        +'</div>';
-      if(tx.rembourse){html+='<div style="font-size:11px;font-weight:700;color:#9ca3af;text-align:center;padding:6px;background:#f9fafb;border-radius:8px">\u2713 D\u00e9j\u00e0 rembours\u00e9</div>';}
-      else{html+='<button data-txid="'+tx.id+'" data-ref="'+tx.reference+'" data-m="'+tx.montant+'" onclick="effetuerRemboursementC(this)" style="width:100%;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:9px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">\u21a9 Rembourser</button>';}
-      html+='</div>';
-    });
-    listEl.innerHTML=html;
+    _rembComptesCache=r.data||[];
+    _rembComptesDelai=delai;
+    filtrerRembComptesLocal();
   }catch(e){var le=document.getElementById('remb-comptes-list');if(le)le.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
+}
+
+var _rembComptesCache=[], _rembComptesDelai=7;
+function filtrerRembComptesLocal(){
+  var listEl=document.getElementById('remb-comptes-list');
+  if(!listEl)return;
+  var list=_rembComptesCache||[];
+  var telEl=document.getElementById('remb-comptes-tel');
+  var montEl=document.getElementById('remb-comptes-montant');
+  var tel=telEl?telEl.value.replace(/\s+/g,'').trim():'';
+  var montantStr=montEl?montEl.value.trim():'';
+  var montantNum=montantStr?Number(montantStr):null;
+  if(tel){
+    list=list.filter(function(tx){
+      var ts=(tx.telSrc||'').replace(/\s+/g,''), td=(tx.telDst||'').replace(/\s+/g,'');
+      return ts.indexOf(tel)>=0||td.indexOf(tel)>=0;
+    });
+  }
+  if(montantNum!==null && !isNaN(montantNum)){
+    list=list.filter(function(tx){return String(Math.round(tx.montant)).indexOf(String(montantNum))>=0;});
+  }
+  if(!list.length){listEl.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune transaction '+(tel||montantStr?'pour ce filtre':'remboursable')+'</div>';return;}
+  var html='';
+  list.forEach(function(tx){
+    var age=Math.floor((Date.now()-new Date(tx.dateCreation||tx.date_creation))/86400000);
+    var ageLabel=age===0?'Aujourd\'hui':age+' j';
+    var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
+    var typeCfgRemb=TYPE_REMB_CFG[tx.type]||{l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
+    var typeLabel=typeCfgRemb.l, typeBg=typeCfgRemb.bg, typeCol=typeCfgRemb.col;
+    html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+typeBg+';color:'+typeCol+'">'+typeLabel+'</span><span style="font-size:11px;font-weight:700;color:#374151">'+FD(tx.dateCreation||tx.date_creation)+'</span><span style="font-size:10px;color:#9ca3af">'+ageLabel+'</span></div>'
+        +'<span style="font-size:10px;color:#9ca3af;font-family:monospace">'+tx.reference+'</span>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        +'<div><div style="font-size:13px;font-weight:700">'+(tx.prenomSrc||'')+' '+(tx.nomSrc||'')+' <span style="color:#9ca3af">→</span> '+(tx.prenomDst||'')+' '+(tx.nomDst||'')+'</div><div style="font-size:11px;color:#6b7280">📤 '+(tx.telSrc||'—')+' &nbsp;→&nbsp; 📥 '+(tx.telDst||'—')+'</div></div>'
+        +'<div style="font-size:16px;font-weight:800;color:#374151">'+F(tx.montant)+'</div>'
+      +'</div>';
+    var canRembC=age<=(_rembComptesDelai||7);
+    if(tx.rembourse){html+='<div style="font-size:11px;font-weight:700;color:#9ca3af;text-align:center;padding:6px;background:#f9fafb;border-radius:8px">\u2713 D\u00e9j\u00e0 rembours\u00e9</div>';}
+    else if(canRembC){html+='<button data-txid="'+tx.id+'" data-ref="'+tx.reference+'" data-m="'+tx.montant+'" onclick="effetuerRemboursementC(this)" style="width:100%;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:9px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">\u21a9 Rembourser</button>';}
+    else{html+='<div style="font-size:11px;color:#9ca3af;text-align:center;padding:6px">Hors délai pour votre rôle (max '+(_rembComptesDelai||7)+'j)</div>';}
+    html+='</div>';
+  });
+  listEl.innerHTML=html;
 }
 function filtrerUsers(q){
   // Toujours exclure le Super BO de la vue admin/backoffice (sauf si on est Super BO)
