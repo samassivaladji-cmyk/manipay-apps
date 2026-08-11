@@ -952,15 +952,17 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <!-- PANNEAU 5 : STATS -->
     <!-- PANNEAU REMBOURSEMENTS -->
     <div id="sup-panel-remb" style="display:none">
-      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">💸 Remboursements — Dépôts & Transferts erronés</div>
-      <div style="font-size:11px;color:#9ca3af;margin-bottom:12px">⏱ Support client · 7 derniers jours maximum</div>
-      <!-- Filtre type seulement (période fixée à 7j pour support) -->
+      <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">💸 Remboursements — Dépôts, retraits, transferts & paiements marchands erronés</div>
+      <div id="remb-periode-label" style="font-size:11px;color:#9ca3af;margin-bottom:12px">⏱ Chargement...</div>
+      <!-- Filtre type seulement (période calculée selon le rôle) -->
       <div style="display:flex;gap:6px;margin-bottom:10px">
         <input type="hidden" id="remb-periode" value="7"/>
         <select id="remb-type" onchange="chargerTxRemb()" style="padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;font-size:12px;font-family:inherit;font-weight:700;color:#374151;background:#fff">
           <option value="">Tous types</option>
           <option value="depot">Dépôts uniquement</option>
+          <option value="retrait">Retraits uniquement</option>
           <option value="transfert">Transferts uniquement</option>
+          <option value="paiement_marchand">Paiements marchands uniquement</option>
         </select>
       </div>
       <!-- Barre de recherche numéro -->
@@ -3342,26 +3344,35 @@ async function chargerTxRemb() {
   var el = document.getElementById('remb-list');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:24px"><div class="spin"></div></div>';
-  var jours = parseInt(document.getElementById('remb-periode').value) || 7;
+  var delaiRole = _delaiRembRole();
+  var lblEl = document.getElementById('remb-periode-label');
+  if (lblEl) {
+    var lbl = isSuperAdmin() ? 'Illimité (Super Back-office)'
+      : delaiRole===90 ? '3 derniers mois — Back-Office'
+      : delaiRole===30 ? '30 derniers jours — Admin'
+      : '7 derniers jours — Support Client';
+    lblEl.textContent = '⏱ ' + lbl;
+  }
+  document.getElementById('remb-periode').value = delaiRole;
+  var jours = delaiRole;
   var type  = document.getElementById('remb-type').value;
   var tel   = (document.getElementById('remb-search').value || '').trim();
   try {
-    var url = '/admin/transactions/remboursables?jours=' + jours;
+    var url = '/admin/transactions/remboursables?jours=' + Math.min(jours,999);
     if (type) url += '&type=' + type;
     if (tel)  url += '&telephone=' + encodeURIComponent(tel);
     var r = await apiGet(url);
     var list = r.data || [];
     _rembTxCache = list;
     if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune transaction trouvée sur cette période</div>'; return; }
-    var canRemb30 = ['admin','backoffice'].includes(G.user.role);
+    var TYPE_REMB_CFG={depot:{l:'↓ Dépôt',bg:'#dcfce7',col:'#15803d'},retrait:{l:'↑ Retrait',bg:'#ffedd5',col:'#c2410c'},transfert:{l:'→ Transfert',bg:'#eff6ff',col:'#1d4ed8'},paiement_marchand:{l:'◈ Paiement marchand',bg:'#f3e8ff',col:'#7e22ce'}};
     var html = '';
     list.forEach(function(tx) {
       var age = Math.floor((Date.now() - new Date(tx.dateCreation||tx.date_creation)) / 86400000);
       var ageLabel = age === 0 ? 'Aujourd\'hui' : age + ' j';
-      var canRemb = age <= 7 || canRemb30;
-      var typeLabel = tx.type === 'depot' ? '↓ Dépôt' : '→ Transfert';
-      var typeBg = tx.type === 'depot' ? '#dcfce7' : '#eff6ff';
-      var typeCol = tx.type === 'depot' ? '#15803d' : '#1d4ed8';
+      var canRemb = age <= delaiRole;
+      var typeCfgRemb = TYPE_REMB_CFG[tx.type] || {l:tx.type,bg:'#f3f4f6',col:'#6b7280'};
+      var typeLabel = typeCfgRemb.l, typeBg = typeCfgRemb.bg, typeCol = typeCfgRemb.col;
       html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
           + '<div style="display:flex;align-items:center;gap:8px">'
@@ -3383,7 +3394,7 @@ async function chargerTxRemb() {
       } else if (canRemb) {
         html += '<button onclick="confirmerRemboursement(\''+tx.id+'\',\''+tx.reference+'\','+tx.montant+',\''+tx.type+'\')" style="width:100%;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:9px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">↩ Rembourser</button>';
       } else {
-        html += '<div style="font-size:11px;color:#9ca3af;text-align:center;padding:6px">Hors délai pour le support (max 7j) — réservé au Back-Office</div>';
+        html += '<div style="font-size:11px;color:#9ca3af;text-align:center;padding:6px">Hors délai pour votre rôle (max '+delaiRole+'j)</div>';
       }
       html += '</div>';
     });
