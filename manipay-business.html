@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v1.5-2026-08-09-j"/>
+<meta name="version" content="v1.6-2026-08-09-k"/>
 <meta name="theme-color" content="#DA7756"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Business v1</title>
@@ -1027,7 +1027,8 @@ var TX_CFG={
   paiement_marchand:{l:'Paiement reçu',icon:'🛒',color:'#137a3f'},
   retrait:{l:'Retrait',icon:'📤',color:'#c2410c'},
   transfert:{l:'Transfert',icon:'⇄',color:'#3b82f6'},
-  virement_gains:{l:'Virement de gains',icon:'💰',color:'#DA7756',i:'💰'}
+  virement_gains:{l:'Virement de gains',icon:'💰',color:'#DA7756',i:'💰'},
+  remboursement:{l:'Remboursement',icon:'↩',color:'#6366f1'}
 };
 function maskTel(tel){
   if(!tel) return '—';
@@ -1065,7 +1066,7 @@ function txRow(tx){
   var cid = G.compte ? G.compte.id : '';
   var srcId = tx.compte_source_id||tx.compteSourceId||'';
   var dstId = tx.compte_dest_id||tx.compteDestId||'';
-  var isIn = tx.type==='paiement_marchand' || (tx.type==='transfert' ? dstId===cid : tx.type!=='retrait');
+  var isIn = tx.type==='paiement_marchand' || (['transfert','remboursement'].includes(tx.type) ? dstId===cid : tx.type!=='retrait');
   var cfg=TX_CFG[tx.type]||{l:tx.type,icon:'💳',color:'#6b7280'};
   var label = cfg.l, icon = cfg.icon, sub='';
   if(tx.type==='transfert'){
@@ -1076,15 +1077,23 @@ function txRow(tx){
   } else if(tx.type==='paiement_marchand'){
     var ci = contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
     sub = ci.nom;
+  } else if(tx.type==='remboursement'){
+    label = isIn ? '↩ Remboursement reçu' : '↩ Remboursement débité';
   }
   var montant=Number(tx.montant||0);
   var sign = isIn ? '+' : '-';
   var col = isIn ? cfg.color : '#c2410c';
+  var estAnnulee=(tx.statut==='annule'||tx.statut==='rembourse');
+  var badgeAnnule='';
+  if(estAnnulee){
+    col='#9ca3af';
+    badgeAnnule='<div style="font-size:9px;font-weight:800;color:#dc2626;background:#fef2f2;display:inline-block;padding:1px 6px;border-radius:6px;margin-top:2px">✗ ANNULÉE — remboursée</div>';
+  }
   return '<div class="tx" onclick="voirDetailTx(\''+tx.id+'\')" style="cursor:pointer;background:'+col+'0d;border:1px solid '+col+'22">'
     +'<div style="display:flex;align-items:center;gap:10px">'
     +'<div style="width:36px;height:36px;border-radius:10px;background:'+col+'18;color:'+col+';display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">'+icon+'</div>'
-    +'<div><div style="font-size:13px;font-weight:600">'+label+'</div><div style="color:var(--m);font-size:11px">'+(sub?sub+' · ':'')+FD(tx.dateCreation||tx.date_creation)+'</div></div></div>'
-    +'<div style="text-align:right"><div style="color:'+col+';font-size:14px;font-weight:800;font-family:monospace">'+sign+F(montant)+'</div>'
+    +'<div><div style="font-size:13px;font-weight:600'+(estAnnulee?';text-decoration:line-through;color:#9ca3af':'')+'">'+label+'</div><div style="color:var(--m);font-size:11px">'+(sub?sub+' · ':'')+FD(tx.dateCreation||tx.date_creation)+'</div>'+badgeAnnule+'</div></div>'
+    +'<div style="text-align:right"><div style="color:'+col+';font-size:14px;font-weight:800;font-family:monospace'+(estAnnulee?';text-decoration:line-through':'')+'">'+sign+F(montant)+'</div>'
     +(tx.reference?'<div style="color:var(--d);font-size:10px;font-family:monospace">'+tx.reference+'</div>':'')+'</div></div>';
 }
 async function chargerTxns(){

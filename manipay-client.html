@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.7-2026-08-09-j"/>
+<meta name="version" content="v1.8-2026-08-09-k"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1200,6 +1200,7 @@ var TX_CFG={
   commission_depot:{c:'#f59e0b',bg:'#fffbeb',i:'⭐',l:'Commission dépôt'},
   commission:{c:'#f59e0b',bg:'#fffbeb',i:'⭐',l:'Commission'},
   bonus_reseau:{c:'#10b981',bg:'#ecfdf5',i:'🎁',l:'Bonus réseau'},
+  remboursement:{c:'#6366f1',bg:'#eef2ff',i:'↩️',l:'Remboursement'},
 };
 
 function txRow(tx){
@@ -1235,9 +1236,13 @@ function txRow(tx){
     var ci=contactInfo(tx.srcRole,tx.srcNomCommercial,tx.srcPrenom,tx.srcNom,tx.srcTel);
     label='Dépôt';
     sublabel='Par '+ci.nom;
+  } else if(tx.type==='remboursement'){
+    label=isIn?'↩ Remboursement reçu':'↩ Remboursement débité';
   } else {
     label=cfg.l;
   }
+  var estAnnulee=(tx.statut==='annule'||tx.statut==='rembourse');
+  if(estAnnulee) col='#9ca3af';
   // Date courte style Wave
   var d=new Date(tx.dateCreation||tx.date_creation||Date.now());
   var now=new Date();
@@ -1248,12 +1253,13 @@ function txRow(tx){
   return '<div class="tx-row" onclick="voirDetailTx(\''+tx.id+'\')" style="cursor:pointer;border-radius:12px;background:rgba(255,255,255,.88);margin-bottom:6px;transition:all .15s" onmousedown="this.style.background=\'rgba(255,255,255,.7)\'" onmouseup="this.style.background=\'rgba(255,255,255,.88)\'">'
     +'<div class="tx-icon" style="background:'+cfg.bg+'">'+cfg.i+'</div>'
     +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:14px;font-weight:700;color:#1e3a5f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+label+'</div>'
+      +'<div style="font-size:14px;font-weight:700;color:'+(estAnnulee?'#9ca3af':'#1e3a5f')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis'+(estAnnulee?';text-decoration:line-through':'')+'">'+label+'</div>'
       +(sublabel?'<div style="color:#9ca3af;font-size:12px;margin-top:1px">'+sublabel+'</div>':'')
       +'<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+ds+'</div>'
+      +(estAnnulee?'<div style="font-size:9px;font-weight:800;color:#dc2626;background:#fef2f2;display:inline-block;padding:1px 6px;border-radius:6px;margin-top:2px">✗ ANNULÉE — remboursée</div>':'')
     +'</div>'
     +'<div style="text-align:right;flex-shrink:0;margin-left:10px">'
-      +'<div style="color:'+col+';font-size:15px;font-weight:800">'+sign+F(displayMontant)+'</div>'
+      +'<div style="color:'+col+';font-size:15px;font-weight:800'+(estAnnulee?';text-decoration:line-through':'')+'">'+sign+F(displayMontant)+'</div>'
     +'</div>'
     +'</div>';
 }
