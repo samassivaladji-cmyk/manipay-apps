@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.9-2026-08-09-n"/>
+<meta name="version" content="v9.0-2026-08-09-o"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Master v1</title>
@@ -3963,6 +3963,7 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-loading1').style.display='none';
   document.getElementById('sop-ret-phase1').style.display='';
   document.getElementById('sop-ret-phase2').style.display='none';
+  var p3m=document.getElementById('sop-ret-phase3');if(p3m)p3m.style.display='none';
   document.getElementById('sop-ret-btn1').disabled=true;document.getElementById('sop-ret-btn1').style.opacity='.4';
   var b2=document.getElementById('sop-ret-btn2');if(b2){b2.disabled=false;b2.textContent='Confirmer';}
   var oi=document.getElementById('sop-ret-otp-input');if(oi)oi.value='';
@@ -4051,25 +4052,54 @@ async function confirmerOTPSop(){
     if(window._sopOtpInterval){clearInterval(window._sopOtpInterval);window._sopOtpInterval=null;}
     loading.style.display='none';
     var d=r.data||{};
-    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
-    document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
-    var sopOkPhotoEl=document.getElementById('sop-ret-ok-photo'),sopOkPhotoLabel=document.getElementById('sop-ret-ok-photo-label');
-    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&sopOkPhotoEl){
-      sopOkPhotoLabel.textContent=(d.photoVerification.type==='cni'?'📇 Vérifiez la CNI du client':'🤳 Vérifiez le selfie du client')+' avant de remettre les fonds';
-      afficherPhotoSecurisee('sop-ret-ok-photo-imgs', d.photoVerification.urls);
-      sopOkPhotoEl.style.display='';
-    }else if(sopOkPhotoEl){
-      sopOkPhotoEl.style.display='none';
-      var pi3=document.getElementById('sop-ret-ok-photo-imgs');if(pi3)pi3.innerHTML='';
+    var fraisR=Number(d.frais||0),totalR=Number(d.total||0);
+    window._sopRetPendingRecap={montant:d.montant||0,frais:fraisR,total:totalR};
+    document.getElementById('sop-ret-phase2').style.display='none';
+    document.getElementById('sop-ret-phase3').style.display='';
+    var rr=document.getElementById('sop-ret-review-recap');if(rr)rr.textContent=F(d.montant||0)+' + '+F(fraisR)+' frais = '+F(totalR)+' total';
+    var revPhotoEl=document.getElementById('sop-ret-review-photo'),revPhotoLabel=document.getElementById('sop-ret-review-photo-label');
+    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&revPhotoEl){
+      revPhotoLabel.textContent=(d.photoVerification.type==='cni'?'📇 CNI du client':'🤳 Selfie du client');
+      afficherPhotoSecurisee('sop-ret-review-photo-imgs', d.photoVerification.urls);
+      revPhotoEl.style.display='';
+    }else if(revPhotoEl){
+      revPhotoEl.style.display='none';
+      var pi3b=document.getElementById('sop-ret-review-photo-imgs');if(pi3b)pi3b.innerHTML='';
     }
-    rafraichir();S('s-op-retrait-ok');
   }catch(e){
     loading.style.display='none';btn.disabled=false;btn.textContent='Confirmer';
     err.textContent=e.message;err.style.display='';
     document.getElementById('sop-ret-otp-input').value='';
     setTimeout(function(){document.getElementById('sop-ret-otp-input').focus();},50);
   }
+}
+async function validerReviewSop(){
+  var client=_sopClient.ret;if(!client)return;
+  var btn=document.getElementById('sop-ret-btn3');
+  var loading=document.getElementById('sop-ret-loading3');
+  var err=document.getElementById('sop-ret-review-err');
+  btn.disabled=true;btn.textContent='...';loading.style.display='';err.style.display='none';
+  try{
+    var r=await post('/transactions/withdraw/valider',{telephone:client.telephone});
+    loading.style.display='none';
+    var d=r.data||{};
+    var rec=window._sopRetPendingRecap||{};
+    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant!=null?d.montant:rec.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
+    document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
+    var okPhotoEl=document.getElementById('sop-ret-ok-photo');if(okPhotoEl)okPhotoEl.style.display='none';
+    window._sopRetPendingRecap=null;
+    rafraichir();S('s-op-retrait-ok');
+  }catch(e){
+    loading.style.display='none';btn.disabled=false;btn.textContent='✅ Valider et remettre les fonds';
+    err.textContent=e.message;err.style.display='';
+  }
+}
+function annulerReviewSop(){
+  document.getElementById('sop-ret-phase3').style.display='none';
+  document.getElementById('sop-ret-phase1').style.display='';
+  window._sopRetPendingRecap=null;
+  T('Retrait annulé — les fonds n\'ont pas été mouvementés.');
 }
 function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);else S('s-home');}
 
@@ -4387,6 +4417,23 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       <div style="display:flex;gap:10px">
         <button onclick="annulerOTPSop()" style="flex:1;background:#f3f4f6;border:none;border-radius:14px;padding:16px;color:#374151;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
         <button id="sop-ret-btn2" onclick="confirmerOTPSop()" style="flex:2;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer</button>
+      </div>
+    </div>
+    <div id="sop-ret-phase3" style="display:none">
+      <div style="background:#fff7ed;border:1.5px solid #fb923c;border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:800;color:#c2410c;margin-bottom:10px;text-align:center">📇 Vérification d'identité</div>
+        <div id="sop-ret-review-photo" style="display:none;margin-bottom:14px;text-align:center">
+          <div id="sop-ret-review-photo-label" style="font-size:11px;color:#9a3412;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"></div>
+          <div id="sop-ret-review-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
+        <div id="sop-ret-review-recap" style="font-size:13px;font-weight:700;color:#374151;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px;margin-bottom:12px"></div>
+        <div style="font-size:12px;color:#c2410c;font-weight:700;text-align:center">⚠️ Vérifiez que la personne devant vous correspond bien à la pièce avant de valider.</div>
+      </div>
+      <div id="sop-ret-review-err" style="display:none;color:#dc2626;font-size:12px;margin-bottom:10px;text-align:center"></div>
+      <div id="sop-ret-loading3" style="display:none;text-align:center;padding:16px"><div class="spin" style="width:28px;height:28px;border-width:3px;border-top-color:#f97316"></div></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="annulerReviewSop()" style="flex:1;background:#f3f4f6;border:none;border-radius:14px;padding:16px;color:#374151;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
+        <button id="sop-ret-btn3" onclick="validerReviewSop()" style="flex:2;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">✅ Valider et remettre les fonds</button>
       </div>
     </div>
   </div>

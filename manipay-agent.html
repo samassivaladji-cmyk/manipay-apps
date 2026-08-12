@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v1.9-2026-08-09-n"/>
+<meta name="version" content="v2.0-2026-08-09-o"/>
 <meta name="theme-color" content="#d97706"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Agent</title>
@@ -780,14 +780,28 @@ function setTab(t){
       </div>
     </div>
 
+    <div id="ret-review" style="display:none;padding:0 4px">
+      <div style="background:#fff7ed;border:1.5px solid #fb923c;border-radius:14px;padding:16px">
+        <div style="font-size:15px;font-weight:800;color:#c2410c;margin-bottom:10px;text-align:center">📇 Vérification d'identité</div>
+        <div id="ret-review-info" style="font-size:12px;color:#9a3412;margin-bottom:12px;text-align:center"></div>
+        <div id="ret-review-photo" style="display:none;margin-bottom:14px;text-align:center">
+          <div id="ret-review-photo-label" style="font-size:11px;color:#9a3412;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"></div>
+          <div id="ret-review-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
+        <div id="ret-review-recap" style="font-size:14px;font-weight:700;color:#374151;margin-bottom:14px;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px"></div>
+        <div style="font-size:12px;color:#c2410c;font-weight:700;margin-bottom:12px;text-align:center">⚠️ Vérifiez que la personne devant vous correspond bien à la pièce avant de valider.</div>
+        <div id="ret-review-err" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px;text-align:center"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="flex:1" onclick="annulerReviewRetrait(this)">Annuler</button>
+          <button id="ret-review-btn" class="btn btn-o" style="flex:2" onclick="validerRetraitFinal(this)">✅ Valider et remettre les fonds</button>
+        </div>
+      </div>
+    </div>
+
     <div id="ret-success" style="display:none;text-align:center;padding:20px 0">
       <div style="width:60px;height:60px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;color:#fff">✓</div>
       <div style="font-size:20px;font-weight:800;margin-bottom:10px">Retrait valid&#233; !</div>
       <div id="ret-succ-txt" style="color:var(--m);font-size:13px;margin-bottom:8px"></div>
-      <div id="ret-succ-photo" style="display:none;margin:0 auto 12px;text-align:center;max-width:280px">
-        <div id="ret-succ-photo-label" style="font-size:12px;font-weight:700;color:#c2410c;margin-bottom:6px">📇 Vérifiez l'identité avant de remettre les fonds</div>
-        <div id="ret-succ-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
-      </div>
       <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px;margin:0 auto 10px;text-align:left;max-width:280px">
         <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--m)">Montant retir&#233;</span><span id="ret-succ-montant" style="font-weight:700"></span></div>
         <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-top:1px solid #fed7aa"><span style="color:var(--m)">Frais</span><span id="ret-succ-frais" style="font-weight:700;color:#dc2626"></span></div>
@@ -1284,35 +1298,67 @@ async function confirmerRetraitOTP(btnEl){
     var r=await post('/transactions/withdraw/confirm',{telephone:client.telephone,otp:otp});
     if(window._retOtpInterval){clearInterval(window._retOtpInterval);window._retOtpInterval=null;}
     otpSec.style.display='none';
-    var shChoix2=document.getElementById('sh-choix-op');if(shChoix2)shChoix2.classList.remove('on');
-    // Trouver le ret-success dans le même parent
+    // Trouver l'écran de révision (vérification identité) dans le même parent
     var par=otpSec.parentElement;
-    var succ=par?par.querySelector('#ret-success,[id="ret-success"]'):document.getElementById('ret-success');
-    if(succ)succ.style.display='';
+    var rev=par?par.querySelector('#ret-review,[id="ret-review"]'):document.getElementById('ret-review');
+    if(rev)rev.style.display='';
     var d=r.data||{};
     var fraisR=Number(d.frais||0);var totalR=Number(d.total||amt+fraisR);
     var el=function(id){return par?par.querySelector('[id="'+id+'"]'):document.getElementById(id);};
-    var e2=el('ret-succ-txt');if(e2)e2.textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
-    var e3=el('ret-succ-montant');if(e3)e3.textContent=F(d.montant||amt);
-    var e4=el('ret-succ-frais');if(e4)e4.textContent=F(fraisR);
-    var e5=el('ret-succ-total');if(e5)e5.textContent=F(totalR);
-    var e6=el('ret-succ-gain');if(e6)e6.textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
-    var e7=el('ret-succ-ref');if(e7)e7.textContent=d.reference||'';
-    var photoEl2=el('ret-succ-photo'),photoLabel2=el('ret-succ-photo-label');
+    window._retPendingClient=client;
+    window._retPendingRecap={montant:d.montant||amt,frais:fraisR,total:totalR,par:par};
+    var ei=el('ret-review-info');if(ei)ei.textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
+    var er=el('ret-review-recap');if(er)er.textContent=F(d.montant||amt)+' + '+F(fraisR)+' frais = '+F(totalR)+' total';
+    var photoEl2=el('ret-review-photo'),photoLabel2=el('ret-review-photo-label');
     if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&photoEl2){
-      if(photoLabel2)photoLabel2.textContent=(d.photoVerification.type==='cni'?'📇 Vérifiez la CNI du client':'🤳 Vérifiez le selfie du client')+' avant de remettre les fonds';
-      afficherPhotoSecurisee('ret-succ-photo-imgs', d.photoVerification.urls);
+      if(photoLabel2)photoLabel2.textContent=(d.photoVerification.type==='cni'?'📇 CNI du client':'🤳 Selfie du client');
+      afficherPhotoSecurisee('ret-review-photo-imgs', d.photoVerification.urls);
       photoEl2.style.display='';
     }else if(photoEl2){
       photoEl2.style.display='none';
-      var pi2=el('ret-succ-photo-imgs');if(pi2)pi2.innerHTML='';
+      var pi2=el('ret-review-photo-imgs');if(pi2)pi2.innerHTML='';
     }
-    rafraichir();
   }catch(e){
     if(otpErr){otpErr.textContent=e.message;otpErr.style.display='';}
     if(btn){btn.disabled=false;btn.textContent='Confirmer';}
     if(otpInp){otpInp.value='';setTimeout(function(){otpInp.focus();},50);}
   }
+}
+
+async function validerRetraitFinal(btnEl){
+  var client=window._retPendingClient;if(!client)return;
+  var reviewSec=btnEl?btnEl.closest('[id="ret-review"]'):document.getElementById('ret-review');
+  var par=reviewSec?reviewSec.parentElement:null;
+  var el=function(id){return par?par.querySelector('[id="'+id+'"]'):document.getElementById(id);};
+  var errEl=el('ret-review-err');if(errEl)errEl.style.display='none';
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='...';}
+  try{
+    var r=await post('/transactions/withdraw/valider',{telephone:client.telephone});
+    if(reviewSec)reviewSec.style.display='none';
+    var shChoix2=document.getElementById('sh-choix-op');if(shChoix2)shChoix2.classList.remove('on');
+    var succ=el('ret-success');
+    if(succ)succ.style.display='';
+    var d=r.data||{};
+    var rec=window._retPendingRecap||{};
+    var e2=el('ret-succ-txt');if(e2)e2.textContent='Retrait pour '+(client.prenom||'')+' '+(client.nom||'');
+    var e3=el('ret-succ-montant');if(e3)e3.textContent=F(d.montant||rec.montant||0);
+    var e4=el('ret-succ-frais');if(e4)e4.textContent=F(d.frais!=null?d.frais:rec.frais||0);
+    var e5=el('ret-succ-total');if(e5)e5.textContent=F(d.total!=null?d.total:rec.total||0);
+    var e6=el('ret-succ-gain');if(e6)e6.textContent=d.gainAgent?'Commission agent : +'+F(d.gainAgent):'';
+    var e7=el('ret-succ-ref');if(e7)e7.textContent=d.reference||'';
+    window._retPendingClient=null;window._retPendingRecap=null;
+    rafraichir();
+  }catch(e){
+    if(errEl){errEl.textContent=e.message;errEl.style.display='';}
+    if(btnEl){btnEl.disabled=false;btnEl.textContent='✅ Valider et remettre les fonds';}
+  }
+}
+function annulerReviewRetrait(btnEl){
+  var reviewSec=btnEl?btnEl.closest('[id="ret-review"]'):document.getElementById('ret-review');
+  if(reviewSec)reviewSec.style.display='none';
+  window._retPendingClient=null;window._retPendingRecap=null;
+  rstOp('ret');
+  T('Retrait annulé — les fonds n\'ont pas été mouvementés.');
 }
 
 function rstOpOTP(el){
@@ -1344,6 +1390,9 @@ function rstOp(op){
   document.getElementById(op+'-err1').style.display='none';
   document.getElementById(op+'-err2').style.display='none';
   document.getElementById(op+'-btn-valider').style.display='none';
+  // Reset l'écran de vérification d'identité (retrait) s'il existe pour cette opération
+  document.querySelectorAll('[id="'+op+'-review"]').forEach(function(el){el.style.display='none';});
+  document.querySelectorAll('[id="'+op+'-review-err"]').forEach(function(el){el.style.display='none';el.textContent='';});
   // Reset toutes les sections OTP (2 sheets identiques)
   document.querySelectorAll('[id="'+op+'-otp-section"]').forEach(function(el){el.style.display='none';});
   document.querySelectorAll('[id="'+op+'-otp-err"]').forEach(function(el){el.style.display='none';el.textContent='';});
@@ -3494,6 +3543,7 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-loading1').style.display='none';
   document.getElementById('sop-ret-phase1').style.display='';
   document.getElementById('sop-ret-phase2').style.display='none';
+  var p3=document.getElementById('sop-ret-phase3');if(p3)p3.style.display='none';
   document.getElementById('sop-ret-btn1').disabled=true;document.getElementById('sop-ret-btn1').style.opacity='.4';
   var b2=document.getElementById('sop-ret-btn2');if(b2){b2.disabled=false;b2.textContent='Confirmer';}
   var oi=document.getElementById('sop-ret-otp-input');if(oi)oi.value='';
@@ -3582,25 +3632,54 @@ async function confirmerOTPSop(){
     if(window._sopOtpInterval){clearInterval(window._sopOtpInterval);window._sopOtpInterval=null;}
     loading.style.display='none';
     var d=r.data||{};
-    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
-    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
-    document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
-    var sopOkPhotoEl=document.getElementById('sop-ret-ok-photo'),sopOkPhotoLabel=document.getElementById('sop-ret-ok-photo-label');
-    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&sopOkPhotoEl){
-      sopOkPhotoLabel.textContent=(d.photoVerification.type==='cni'?'📇 Vérifiez la CNI du client':'🤳 Vérifiez le selfie du client')+' avant de remettre les fonds';
-      afficherPhotoSecurisee('sop-ret-ok-photo-imgs', d.photoVerification.urls);
-      sopOkPhotoEl.style.display='';
-    }else if(sopOkPhotoEl){
-      sopOkPhotoEl.style.display='none';
-      var pi3=document.getElementById('sop-ret-ok-photo-imgs');if(pi3)pi3.innerHTML='';
+    var fraisR=Number(d.frais||0),totalR=Number(d.total||0);
+    window._sopRetPendingRecap={montant:d.montant||0,frais:fraisR,total:totalR};
+    document.getElementById('sop-ret-phase2').style.display='none';
+    document.getElementById('sop-ret-phase3').style.display='';
+    var rr=document.getElementById('sop-ret-review-recap');if(rr)rr.textContent=F(d.montant||0)+' + '+F(fraisR)+' frais = '+F(totalR)+' total';
+    var revPhotoEl=document.getElementById('sop-ret-review-photo'),revPhotoLabel=document.getElementById('sop-ret-review-photo-label');
+    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&revPhotoEl){
+      revPhotoLabel.textContent=(d.photoVerification.type==='cni'?'📇 CNI du client':'🤳 Selfie du client');
+      afficherPhotoSecurisee('sop-ret-review-photo-imgs', d.photoVerification.urls);
+      revPhotoEl.style.display='';
+    }else if(revPhotoEl){
+      revPhotoEl.style.display='none';
+      var pi3b=document.getElementById('sop-ret-review-photo-imgs');if(pi3b)pi3b.innerHTML='';
     }
-    rafraichir();S('s-op-retrait-ok');
   }catch(e){
     loading.style.display='none';btn.disabled=false;btn.textContent='Confirmer';
     err.textContent=e.message;err.style.display='';
     document.getElementById('sop-ret-otp-input').value='';
     setTimeout(function(){document.getElementById('sop-ret-otp-input').focus();},50);
   }
+}
+async function validerReviewSop(){
+  var client=_sopClient.ret;if(!client)return;
+  var btn=document.getElementById('sop-ret-btn3');
+  var loading=document.getElementById('sop-ret-loading3');
+  var err=document.getElementById('sop-ret-review-err');
+  btn.disabled=true;btn.textContent='...';loading.style.display='';err.style.display='none';
+  try{
+    var r=await post('/transactions/withdraw/valider',{telephone:client.telephone});
+    loading.style.display='none';
+    var d=r.data||{};
+    var rec=window._sopRetPendingRecap||{};
+    document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant!=null?d.montant:rec.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
+    document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
+    document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
+    var okPhotoEl=document.getElementById('sop-ret-ok-photo');if(okPhotoEl)okPhotoEl.style.display='none';
+    window._sopRetPendingRecap=null;
+    rafraichir();S('s-op-retrait-ok');
+  }catch(e){
+    loading.style.display='none';btn.disabled=false;btn.textContent='✅ Valider et remettre les fonds';
+    err.textContent=e.message;err.style.display='';
+  }
+}
+function annulerReviewSop(){
+  document.getElementById('sop-ret-phase3').style.display='none';
+  document.getElementById('sop-ret-phase1').style.display='';
+  window._sopRetPendingRecap=null;
+  T('Retrait annulé — les fonds n\'ont pas été mouvementés.');
 }
 function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);else S('s-home');}
 
@@ -3918,6 +3997,23 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
       <div style="display:flex;gap:10px">
         <button onclick="annulerOTPSop()" style="flex:1;background:#f3f4f6;border:none;border-radius:14px;padding:16px;color:#374151;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
         <button id="sop-ret-btn2" onclick="confirmerOTPSop()" style="flex:2;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer</button>
+      </div>
+    </div>
+    <div id="sop-ret-phase3" style="display:none">
+      <div style="background:#fff7ed;border:1.5px solid #fb923c;border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:800;color:#c2410c;margin-bottom:10px;text-align:center">📇 Vérification d'identité</div>
+        <div id="sop-ret-review-photo" style="display:none;margin-bottom:14px;text-align:center">
+          <div id="sop-ret-review-photo-label" style="font-size:11px;color:#9a3412;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"></div>
+          <div id="sop-ret-review-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+        </div>
+        <div id="sop-ret-review-recap" style="font-size:13px;font-weight:700;color:#374151;text-align:center;background:rgba(0,0,0,.05);border-radius:8px;padding:8px;margin-bottom:12px"></div>
+        <div style="font-size:12px;color:#c2410c;font-weight:700;text-align:center">⚠️ Vérifiez que la personne devant vous correspond bien à la pièce avant de valider.</div>
+      </div>
+      <div id="sop-ret-review-err" style="display:none;color:#dc2626;font-size:12px;margin-bottom:10px;text-align:center"></div>
+      <div id="sop-ret-loading3" style="display:none;text-align:center;padding:16px"><div class="spin" style="width:28px;height:28px;border-width:3px;border-top-color:#f97316"></div></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="annulerReviewSop()" style="flex:1;background:#f3f4f6;border:none;border-radius:14px;padding:16px;color:#374151;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Annuler</button>
+        <button id="sop-ret-btn3" onclick="validerReviewSop()" style="flex:2;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">✅ Valider et remettre les fonds</button>
       </div>
     </div>
   </div>
