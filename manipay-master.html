@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.7-2026-08-09-k"/>
+<meta name="version" content="v8.8-2026-08-09-l"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Master v1</title>
@@ -3953,12 +3953,10 @@ function ouvrirScreenRetrait(client){
   document.getElementById('sop-ret-name').textContent=(client.prenom||'')+' '+(client.nom||'');
   document.getElementById('sop-ret-tel').textContent=client.telephone||'';
   document.getElementById('sop-ret-kyc').textContent=client.kycNiveau||'—';
-  var lgPhotoEl=document.getElementById('sop-ret-photo-lg'),lgLabel=document.getElementById('sop-ret-photo-lg-label'),lgImgs=document.getElementById('sop-ret-photo-lg-imgs');
-  if(client.photoVerification&&client.photoVerification.urls&&client.photoVerification.urls.length){
-    lgLabel.textContent=client.photoVerification.type==='cni'?'📇 Carte d\'identité du client':'🤳 Selfie du client';
-    afficherPhotoSecurisee('sop-ret-photo-lg-imgs', client.photoVerification.urls);
-    lgPhotoEl.style.display='';
-  }else{lgPhotoEl.style.display='none';lgImgs.innerHTML='';}
+  // La photo d'identité n'est plus affichée à cette étape (identification) — uniquement après
+  // validation de l'OTP, voir confirmerOTPSop / écran de succès.
+  var lgPhotoEl=document.getElementById('sop-ret-photo-lg');
+  if(lgPhotoEl)lgPhotoEl.style.display='none';
   document.getElementById('sop-ret-amt').value='';
   document.getElementById('sop-ret-calc').style.display='none';
   document.getElementById('sop-ret-err1').style.display='none';
@@ -4020,12 +4018,6 @@ async function demanderOTPSop(){
     var d=r.data||{};
     document.getElementById('sop-ret-otp-info').textContent='Code envoyé à '+(client.prenom||'')+' '+(client.nom||'')+'. Demandez-lui le code.';
     document.getElementById('sop-ret-otp-recap').textContent=F(d.montant||amt)+' + '+F(d.frais||0)+' frais = '+F(d.total||amt)+' total';
-    var sopPhotoEl=document.getElementById('sop-ret-otp-photo'),sopPhotoLabel=document.getElementById('sop-ret-otp-photo-label'),sopPhotoImgs=document.getElementById('sop-ret-otp-photo-imgs');
-    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length){
-      sopPhotoLabel.textContent=d.photoVerification.type==='cni'?'Vérifiez la CNI du client':'Vérifiez le selfie du client';
-      afficherPhotoSecurisee('sop-ret-otp-photo-imgs', d.photoVerification.urls);
-      sopPhotoEl.style.display='';
-    }else{sopPhotoEl.style.display='none';sopPhotoImgs.innerHTML='';}
     document.getElementById('sop-ret-otp-err').style.display='none';
     document.getElementById('sop-ret-phase1').style.display='none';
     document.getElementById('sop-ret-phase2').style.display='';
@@ -4062,6 +4054,15 @@ async function confirmerOTPSop(){
     document.getElementById('sop-ret-ok-txt').textContent='Retrait de '+F(d.montant||0)+' pour '+(client.prenom||'')+' '+(client.nom||'');
     document.getElementById('sop-ret-ok-gain').textContent=d.gainAgent?'Commission : +'+F(d.gainAgent):'';
     document.getElementById('sop-ret-ok-ref').textContent=d.reference||'';
+    var sopOkPhotoEl=document.getElementById('sop-ret-ok-photo'),sopOkPhotoLabel=document.getElementById('sop-ret-ok-photo-label');
+    if(d.photoVerification&&d.photoVerification.urls&&d.photoVerification.urls.length&&sopOkPhotoEl){
+      sopOkPhotoLabel.textContent=(d.photoVerification.type==='cni'?'📇 Vérifiez la CNI du client':'🤳 Vérifiez le selfie du client')+' avant de remettre les fonds';
+      afficherPhotoSecurisee('sop-ret-ok-photo-imgs', d.photoVerification.urls);
+      sopOkPhotoEl.style.display='';
+    }else if(sopOkPhotoEl){
+      sopOkPhotoEl.style.display='none';
+      var pi3=document.getElementById('sop-ret-ok-photo-imgs');if(pi3)pi3.innerHTML='';
+    }
     rafraichir();S('s-op-retrait-ok');
   }catch(e){
     loading.style.display='none';btn.disabled=false;btn.textContent='Confirmer';
@@ -4400,7 +4401,11 @@ function nouveauSopRet(){if(_sopClient.ret)ouvrirScreenRetrait(_sopClient.ret);e
     <div style="font-size:26px;font-weight:900;color:#111;margin-bottom:8px">Retrait valid&#233; !</div>
     <div id="sop-ret-ok-txt" style="color:#6b7280;font-size:14px;margin-bottom:6px"></div>
     <div id="sop-ret-ok-gain" style="color:#b45309;font-size:16px;font-weight:800;margin-bottom:6px"></div>
-    <div id="sop-ret-ok-ref" style="color:#9ca3af;font-size:11px;font-family:monospace;margin-bottom:40px"></div>
+    <div id="sop-ret-ok-ref" style="color:#9ca3af;font-size:11px;font-family:monospace;margin-bottom:20px"></div>
+    <div id="sop-ret-ok-photo" style="display:none;margin:0 auto 24px;text-align:center;max-width:280px">
+      <div id="sop-ret-ok-photo-label" style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:8px"></div>
+      <div id="sop-ret-ok-photo-imgs" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+    </div>
     <div style="display:flex;gap:12px">
       <button onclick="nouveauSopRet()" style="flex:1;background:linear-gradient(135deg,#c2410c,#f97316);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
         + Nouveau retrait
