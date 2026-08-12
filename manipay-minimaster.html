@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="version" content="v8.8-2026-08-09-l"/>
+<meta name="version" content="v8.9-2026-08-09-n"/>
 <meta name="theme-color" content="#006400"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Mini-Master v8</title>
@@ -1699,10 +1699,10 @@ function txRow(tx){
   // Pour l'agent : logique de signe et libellé selon le sens
   var label, icon, color, sign, amtColor;
   if(type==='remboursement'){
-    var isRembSrc=cSrc===cid;
-    label=isRembSrc?'↩ Remboursement reçu':'↩ Remboursement débité';
+    var isRembRecu=cDst===cid;
+    label=isRembRecu?'↩ Remboursement reçu':'↩ Remboursement débité';
     icon='↩'; color='#6366f1';
-    sign=isRembSrc?'+':'−'; amtColor=isRembSrc?'#22c55e':'#ef4444';
+    sign=isRembRecu?'+':'−'; amtColor=isRembRecu?'#22c55e':'#ef4444';
   } else if(type==='depot'){
     // D&#233;p&#244;t client = l'agent débourse de sa liquidité → SORTIE
     label='D&#233;p&#244;t client'; icon='↓'; color='#22c55e';
