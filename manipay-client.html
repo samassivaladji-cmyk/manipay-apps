@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.9-2026-08-09-m"/>
+<meta name="version" content="v2.0-2026-08-09-p"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -830,6 +830,11 @@ var LS={get:function(k){try{return localStorage.getItem(k);}catch(e){return null
 
 function contacterSupport(){
   var msg='Bonjour, je suis client ManiPay '+(G.user?'('+((G.user.prenom||'')+' '+(G.user.nom||'')).trim()+' - '+(G.user.telephone||'')+')':"")+" et j'ai besoin d'assistance.";
+  var url='https://wa.me/2250565438015?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+function contacterSupportCodeDocsBloque(){
+  var msg='Bonjour, je suis client ManiPay '+(G.user?'('+((G.user.prenom||'')+' '+(G.user.nom||'')).trim()+' - '+(G.user.telephone||'')+')':"")+" — mon code de consultation de documents d'identité est bloqué suite à plusieurs tentatives incorrectes. Pouvez-vous le débloquer ?";
   var url='https://wa.me/2250565438015?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
@@ -2164,7 +2169,11 @@ async function doVerifierCodeDocuments(){
   }catch(e){
     document.getElementById('md-loading').style.display='none';
     document.getElementById('md-entry').style.display='';
-    errEl.textContent=e.message;errEl.style.display='';
+    errEl.innerHTML=e.message;
+    if(e.message.indexOf('Trop de tentatives')===0){
+      errEl.innerHTML+='<div style="margin-top:8px"><a href="#" onclick="contacterSupportCodeDocsBloque();return false;" style="color:#dc2626;font-weight:800;text-decoration:underline">📞 Contacter le service client pour débloquer</a></div>';
+    }
+    errEl.style.display='';
     var i=document.getElementById('md-entry-code');if(i){i.value='';setTimeout(function(){i.focus();},50);}
   }
 }
