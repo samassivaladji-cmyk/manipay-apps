@@ -2233,7 +2233,8 @@ var KYC_DOCS_REQUIS = {
 };
 var KYC_LABELS = {
   selfie:'Selfie', cni_recto:'CNI Recto', cni_verso:'CNI Verso',
-  extrait_naissance:'Extrait naissance', justificatif_domicile:'Justificatif domicile',
+  justificatif_domicile:'Justificatif domicile',
+  document_tontine:'Document Tontine (signé agence)',
   rccm:'RCCM', declaration_fiscale:'DFE'
 };
 
@@ -6294,7 +6295,7 @@ async function chargerPhotosKycClient(userId){
     var r=await apiGet('/kyc/documents?userId='+userId);
     var docs=r.data||[];
     if(!docs.length){el.innerHTML='<div style="font-size:11px;color:#9ca3af;padding:4px 0">Aucun document KYC soumis</div>';return;}
-    var labels={selfie:'Selfie',selfie_inscription:'Selfie (inscription)',cni_recto:'CNI Recto',cni_verso:'CNI Verso',rccm:'RCCM',declaration_fiscale:'DFE',justificatif_domicile:'Justif. domicile',extrait_naissance:'Extrait naissance'};
+    var labels={selfie:'Selfie',selfie_inscription:'Selfie (inscription)',cni_recto:'CNI Recto',cni_verso:'CNI Verso',rccm:'RCCM',declaration_fiscale:'DFE',justificatif_domicile:'Justif. domicile',document_tontine:'Document Tontine'};
     // Séparer les documents déjà approuvés (validés lors d'un niveau KYC précédent) des
     // documents encore en attente d'examen — pour que l'équipe ne confonde jamais les deux
     // et ne pense pas devoir re-valider une photo déjà traitée.
@@ -6472,7 +6473,7 @@ function afficherDocsTech(userId,nom){
       +(niveauMax?'✅ Niveau validable : '+niveauMax:'⚠️ Documents insuffisants pour valider un niveau')
       +'</div>';
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
-    var labels={selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',extrait_naissance:'Extrait naiss.',justificatif_domicile:'Justif. domicile',rccm:'RCCM',declaration_fiscale:'DFE'};
+    var labels={selfie:'Selfie',cni_recto:'CNI Recto',cni_verso:'CNI Verso',justificatif_domicile:'Justif. domicile',rccm:'RCCM',declaration_fiscale:'DFE',document_tontine:'Doc. Tontine'};
     docs.forEach(function(doc){
       var sc=doc.statut==='approuve'?'#22c55e':doc.statut==='rejete'?'#ef4444':'#f59e0b';
       html+='<div style="background:#f9fafb;border-radius:12px;overflow:hidden">'

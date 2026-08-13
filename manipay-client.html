@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.0-2026-08-09-p"/>
+<meta name="version" content="v2.1-2026-08-09-q"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -2533,7 +2533,7 @@ function _renderKyc(docsExistants){
     KYC3:[{id:'selfie',         label:'Selfie',                  icon:'🤳',camera:'user'},
           {id:'cni_recto',      label:'CNI Recto',               icon:'🪪',camera:'environment'},
           {id:'cni_verso',      label:'CNI Verso',               icon:'🪪',camera:'environment'},
-          {id:'extrait_naissance',     label:'Extrait de naissance',    icon:'📄',camera:'environment'},
+          {id:'document_tontine',      label:'Document ManiPay (Tontine)',icon:'📝',camera:'environment'},
           {id:'justificatif_domicile', label:'Justificatif de domicile',icon:'🏠',camera:'environment'}]
   };
   var PLAFONDS={KYC1:'20 000',KYC2:'50 000',KYC3:'100 000'};
@@ -2553,7 +2553,7 @@ function _renderKyc(docsExistants){
   var DOCS_VALIDES_PAR_NIVEAU={
     KYC1:['selfie'],
     KYC2:['selfie','cni_recto','cni_verso'],
-    KYC3:['selfie','cni_recto','cni_verso','extrait_naissance','justificatif_domicile']
+    KYC3:['selfie','cni_recto','cni_verso','document_tontine','justificatif_domicile']
   };
   var docsDefinitivementValides={};
   niveaux.forEach(function(n){
@@ -2671,6 +2671,9 @@ function _renderKyc(docsExistants){
         h+='<div style="font-size:18px">🔒</div></div>';
       } else if(etat==='ouvert'){
         // 📷 À fournir — modifiable
+        if(doc.id==='document_tontine'){
+          h+='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:#92400e;line-height:1.5">📝 Ce document doit être rempli et signé <b>en agence ManiPay</b> avant d\'être photographié ici. Il conditionne l\'accès à la Tontine ManiPay.</div>';
+        }
         h+='<div id="ks-'+key+'" data-niv="'+niv+'" data-doc="'+doc.id+'" data-cam="'+doc.camera+'" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:6px;cursor:pointer">';
         h+='<div style="width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">'+doc.icon+'</div>';
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+doc.label+'</div>';
@@ -2729,7 +2732,7 @@ function _renderKyc(docsExistants){
 }
 
 function _checkKycBtn(niv){
-  var NOUVEAUX_DOCS={KYC1:['selfie'],KYC2:['cni_recto','cni_verso'],KYC3:['extrait_naissance','justificatif_domicile']};
+  var NOUVEAUX_DOCS={KYC1:['selfie'],KYC2:['cni_recto','cni_verso'],KYC3:['document_tontine','justificatif_domicile']};
   var docs=NOUVEAUX_DOCS[niv]||[];
   var photos=window._kycPhotos||{};
   var tous=docs.every(function(id){return !!photos[niv+'-'+id];});
@@ -2759,7 +2762,7 @@ async function soumettreKyc(niv){
   var NOUVEAUX_DOCS={
     'KYC1':[{id:'selfie'}],
     'KYC2':[{id:'cni_recto'},{id:'cni_verso'}],
-    'KYC3':[{id:'extrait_naissance'},{id:'justificatif_domicile'}]
+    'KYC3':[{id:'document_tontine'},{id:'justificatif_domicile'}]
   };
   // Docs pré-requis des niveaux précédents (doivent déjà être en base)
   var DOCS_PREREQUIS={
