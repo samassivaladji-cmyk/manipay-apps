@@ -3023,7 +3023,7 @@ async function chargerTicketsKyc(){
   if(!section||!listEl)return;
   try{
     var r=await apiGet('/tickets?statut=ouvert&limit=50');
-    var tickets=(r.data||[]).filter(function(t){return t.sujet&&t.sujet.indexOf('Demande validation KYC')>=0;});
+    var tickets=(r.data||[]).filter(function(t){return t.sujet&&/KYC/i.test(t.sujet)&&(/valid/i.test(t.sujet)||/upgrade/i.test(t.sujet));});
     if(!tickets.length){section.style.display='none';return;}
     section.style.display='';
     listEl.innerHTML='';
