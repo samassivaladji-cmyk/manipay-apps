@@ -3049,7 +3049,7 @@ async function chargerTicketsKyc(){
       btnRej.textContent='Rejeter';
       btnRej.style.cssText='padding:6px 10px;background:#fef2f2;color:#ef4444;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit';
       btnRej.addEventListener('click',(function(cid,tid,niv){return function(){rejeterKyc(cid,tid,niv);};})(t.clientId,t.id,niveau));
-      var btnZone=document.getElementById('kyc-btns-'+t.id);
+      var btnZone=card.querySelector('#kyc-btns-'+t.id);
       if(btnZone){btnZone.appendChild(btnVoir);btnZone.appendChild(btnVal);btnZone.appendChild(btnRej);}
       listEl.appendChild(card);
     });
@@ -5412,6 +5412,42 @@ function voirU(id){
     if(extra)btn.style.cssText=extra;btn.style.marginBottom='10px';
     btn.addEventListener('click',fn);body.appendChild(btn);
   }
+  if(u.kycNiveauDemande){
+    // Demande KYC en attente (le statut du compte reste 'actif', seul kycNiveauDemande signale
+    // la demande — voir section Support Client pour le même mécanisme). Ajouté ici pour valider
+    // directement depuis la fiche compte, sans devoir passer par l'onglet Support.
+    var kycDemZone=document.createElement('div');
+    kycDemZone.style.cssText='margin-bottom:12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:14px';
+    kycDemZone.innerHTML='<div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px">\ud83e\udeaa Demande '+u.kycNiveauDemande+' en attente de validation</div><div style="text-align:center;padding:10px;color:#9ca3af;font-size:12px">V\u00e9rification des documents...</div>';
+    body.appendChild(kycDemZone);
+    apiGet('/kyc/documents?userId='+id).then(function(r){
+      var docs=r.data||[];
+      var docsIds=docs.map(function(d){return d.typeDocument;});
+      var niveauDem=u.kycNiveauDemande;
+      var requis=KYC_DOCS_REQUIS[niveauDem]||[];
+      var manq=requis.filter(function(d){return docsIds.indexOf(d)<0;});
+      var complet=manq.length===0;
+      var html='<div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px">\ud83e\udeaa Demande '+niveauDem+' en attente de validation</div>';
+      if(manq.length){
+        html+='<div style="font-size:12px;color:#a16207;margin-bottom:10px">Documents manquants : '+manq.map(function(d){return KYC_LABELS[d]||d;}).join(', ')+'</div>';
+      } else {
+        html+='<div style="font-size:12px;color:#15803d;margin-bottom:10px">\u2705 Tous les documents requis sont pr\u00e9sents</div>';
+      }
+      kycDemZone.innerHTML=html;
+      var btnValDem=document.createElement('button');
+      btnValDem.textContent=complet?('\u2705 Valider '+niveauDem):'\u2705 Valider (niveau incomplet \u2014 confirmer quand m\u00eame)';
+      btnValDem.style.cssText='width:100%;padding:13px;border-radius:12px;background:#22c55e;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px';
+      btnValDem.addEventListener('click',function(){validerKycDepuisCompte(id,niveauDem);});
+      kycDemZone.appendChild(btnValDem);
+      var btnRejDem=document.createElement('button');
+      btnRejDem.textContent='\u274c Rejeter la demande';
+      btnRejDem.style.cssText='width:100%;padding:13px;border-radius:12px;background:#fff;color:#dc2626;border:1px solid #fecaca;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit';
+      btnRejDem.addEventListener('click',function(){rejeterKycDepuisCompte(id,niveauDem);});
+      kycDemZone.appendChild(btnRejDem);
+    }).catch(function(){
+      kycDemZone.innerHTML='<div style="font-size:12px;color:#9ca3af">Impossible de v\u00e9rifier les documents</div>';
+    });
+  }
   if(u.statut==='en_attente'){
     // Charger les docs pour vérifier avant d'afficher le bouton
     var activerBtn=document.createElement('button');
@@ -5529,6 +5565,35 @@ async function sauvegarderEditUser(){
   }catch(e){errEl.textContent=e.message;errEl.style.display='';}
 }
 
+async function validerKycDepuisCompte(clientId,niveau){
+  if(!confirm('Valider le passage au niveau '+niveau+' pour ce client ?'))return;
+  try{
+    var rd=await apiPatch('/users/'+clientId+'/kyc',{kycNiveau:niveau});
+    if(!rd||!rd.success)throw new Error((rd&&rd.message)||'Erreur serveur');
+    try{
+      var tk=await apiGet('/tickets?statut=ouvert&limit=50');
+      var match=(tk.data||[]).find(function(t){return t.clientId===clientId && t.sujet && /KYC/i.test(t.sujet) && (/valid/i.test(t.sujet)||/upgrade/i.test(t.sujet));});
+      if(match)await apiPost('/tickets/'+match.id+'/status',{statut:'resolu'}).catch(function(){});
+    }catch(e2){}
+    toast('\u2705 KYC '+niveau+' valid\u00e9 \u2014 client actif');
+    closeSh('user');chargerUsers();
+  }catch(e){toast('Validation: '+e.message,true);}
+}
+async function rejeterKycDepuisCompte(clientId,niveau){
+  var raison=prompt('Raison du rejet (sera communiqu\u00e9e au client) :');
+  if(raison===null)return;
+  try{
+    var h={'Content-Type':'application/json'};if(G.token)h['Authorization']='Bearer '+G.token;
+    await fetch(API+'/kyc/'+clientId+'/reject',{method:'PATCH',headers:h,body:JSON.stringify({raison:raison||'Documents non conformes'})});
+    try{
+      var tk=await apiGet('/tickets?statut=ouvert&limit=50');
+      var match=(tk.data||[]).find(function(t){return t.clientId===clientId && t.sujet && /KYC/i.test(t.sujet) && (/valid/i.test(t.sujet)||/upgrade/i.test(t.sujet));});
+      if(match)await apiPost('/tickets/'+match.id+'/status',{statut:'ferme'}).catch(function(){});
+    }catch(e2){}
+    toast('Demande KYC rejet\u00e9e \u2014 client notifi\u00e9');
+    closeSh('user');chargerUsers();
+  }catch(e){toast('Rejet: '+e.message,true);}
+}
 async function activerAvecKyc(clientId,niveauKyc){
   if(!confirm('Activer ce compte au niveau '+niveauKyc+' ?'))return;
   try{
