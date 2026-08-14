@@ -2207,13 +2207,14 @@ function _renderTontine(elig, statutD){
         h3+='<div style="display:flex;justify-content:space-between;align-items:center">';
         h3+='<div><div style="font-size:13px;font-weight:600">'+(c.garantNom||c.garantTelephone)+'</div><div style="font-size:11px;color:#9ca3af">'+c.garantTelephone+'</div></div>';
         h3+='<div style="font-size:12px">'+badgeC+'</div></div>';
-        if(c.statut==='refuse'){
+        if(c.statut==='refuse'||c.statut==='invite'){
           h3+='<div id="remplacer-form-'+c.id+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb">';
           h3+='<input id="remplacer-tel-'+c.id+'" type="tel" placeholder="Nouveau numéro" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;margin-bottom:6px;box-sizing:border-box"/>';
           h3+='<input id="remplacer-nom-'+c.id+'" type="text" placeholder="Nom (optionnel)" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box"/>';
           h3+='<button onclick="remplacerCautionTontine(\''+c.id+'\')" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Envoyer la nouvelle invitation</button>';
           h3+='</div>';
-          h3+='<button id="remplacer-btn-'+c.id+'" onclick="document.getElementById(\'remplacer-form-'+c.id+'\').style.display=\'\';this.style.display=\'none\'" style="width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Remplacer cette caution</button>';
+          var lblRemp=c.statut==='refuse'?'Remplacer cette caution':'Corriger le numéro';
+          h3+='<button id="remplacer-btn-'+c.id+'" onclick="document.getElementById(\'remplacer-form-'+c.id+'\').style.display=\'\';this.style.display=\'none\'" style="width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">'+lblRemp+'</button>';
         }
         h3+='</div>';
       });
