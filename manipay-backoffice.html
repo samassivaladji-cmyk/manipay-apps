@@ -3083,7 +3083,7 @@ async function rejeterKyc(clientId,ticketId,niveau){
     // Mettre à jour le ticket
     await fetch(API+'/tickets/'+ticketId+'/status',{method:'PATCH',headers:h,body:JSON.stringify({statut:'rejete'})}).catch(function(){});
     // Fermer le ticket normalement si rejete n'existe pas
-    await apiPost('/tickets/'+ticketId+'/status',{statut:'ferme'}).catch(function(){});
+    await apiPatch('/tickets/'+ticketId+'/status',{statut:'ferme'}).catch(function(){});
     toast('Demande KYC rejetée - client notifié');
     chargerTicketsKyc();
   }catch(e){toast('Rejet: '+e.message,true);}
@@ -3120,7 +3120,7 @@ async function validerKyc(clientId,ticketId,niveau){
   try{
     var rd=await apiPatch('/users/'+clientId+'/kyc',{kycNiveau:niveauAValider});
     if(!rd||!rd.success)throw new Error((rd&&rd.message)||'Erreur serveur');
-    await apiPost('/tickets/'+ticketId+'/status',{statut:'resolu'}).catch(function(){});
+    await apiPatch('/tickets/'+ticketId+'/status',{statut:'resolu'}).catch(function(){});
     toast('✅ KYC '+niveauAValider+' validé — client actif');
     chargerTicketsKyc();
   }catch(e){toast('Validation: '+e.message,true);}
@@ -5572,7 +5572,7 @@ async function validerKycDepuisCompte(clientId,niveau){
     try{
       var tk=await apiGet('/tickets?statut=ouvert&limit=50');
       var match=(tk.data||[]).find(function(t){return t.clientId===clientId && t.sujet && /KYC/i.test(t.sujet) && (/valid/i.test(t.sujet)||/upgrade/i.test(t.sujet));});
-      if(match)await apiPost('/tickets/'+match.id+'/status',{statut:'resolu'}).catch(function(){});
+      if(match)await apiPatch('/tickets/'+match.id+'/status',{statut:'resolu'}).catch(function(){});
     }catch(e2){}
     toast('\u2705 KYC '+niveau+' valid\u00e9 \u2014 client actif');
     closeSh('user');chargerUsers();
@@ -5587,7 +5587,7 @@ async function rejeterKycDepuisCompte(clientId,niveau){
     try{
       var tk=await apiGet('/tickets?statut=ouvert&limit=50');
       var match=(tk.data||[]).find(function(t){return t.clientId===clientId && t.sujet && /KYC/i.test(t.sujet) && (/valid/i.test(t.sujet)||/upgrade/i.test(t.sujet));});
-      if(match)await apiPost('/tickets/'+match.id+'/status',{statut:'ferme'}).catch(function(){});
+      if(match)await apiPatch('/tickets/'+match.id+'/status',{statut:'ferme'}).catch(function(){});
     }catch(e2){}
     toast('Demande KYC rejet\u00e9e \u2014 client notifi\u00e9');
     closeSh('user');chargerUsers();
