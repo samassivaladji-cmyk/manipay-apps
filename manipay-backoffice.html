@@ -1405,6 +1405,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div style="color:var(--m);font-size:12px;margin-top:2px;margin-bottom:12px">Groupes, participants, défaillances</div>
     <div style="display:flex;gap:4px;overflow-x:auto">
       <button id="tbo-tab-groupes" onclick="setTontineBOTab('groupes')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#7c3aed;border-bottom:2px solid #7c3aed;white-space:nowrap">👥 Groupes</button>
+      <button id="tbo-tab-attente" onclick="setTontineBOTab('attente')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⏳ En attente</button>
       <button id="tbo-tab-defaillances" onclick="setTontineBOTab('defaillances')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⚠️ Défaillances</button>
       <button id="tbo-tab-stats" onclick="setTontineBOTab('stats')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
     </div>
@@ -11206,7 +11207,7 @@ var _isSuperBO = false;
 var _tboActiveTab='groupes';
 function setTontineBOTab(t){
   _tboActiveTab=t;
-  ['groupes','defaillances','stats'].forEach(function(t2){
+  ['groupes','attente','defaillances','stats'].forEach(function(t2){
     var btn=document.getElementById('tbo-tab-'+t2);
     if(btn){btn.style.color=t2===t?'#7c3aed':'#6b7280';btn.style.borderBottom=t2===t?'2px solid #7c3aed':'2px solid transparent';}
   });
@@ -11217,6 +11218,7 @@ async function chargerTontineBO(){
   body.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
   try{
     if(_tboActiveTab==='groupes')await _renderTontineBOGroupes(body);
+    else if(_tboActiveTab==='attente')await _renderTontineBOAttente(body);
     else if(_tboActiveTab==='defaillances')await _renderTontineBODefaillances(body);
     else await _renderTontineBOStats(body);
   }catch(e){
@@ -11241,6 +11243,30 @@ async function _renderTontineBOGroupes(body){
     html+='<div style="font-size:12px;color:#6b7280">'+CAT_LABEL[g.categorie]+' · '+F(g.montant)+' F · '+g.nbMembres+'/5 membres</div>';
     if(Number(g.nbDefaillances)>0)html+='<span style="font-size:11px;font-weight:700;color:#dc2626">⚠️ '+g.nbDefaillances+'</span>';
     html+='</div></div>';
+  });
+  body.innerHTML=html;
+}
+async function _renderTontineBOAttente(body){
+  var r=await apiGet('/admin/tontine/participants-non-groupes');
+  var list=r.data||[];
+  if(!list.length){body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucun participant en attente de groupe</div>';return;}
+  var STATUT_P={attente_cautions:'En attente de cautions',pret:'Prêt (affectation groupe)'};
+  var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+  var html='';
+  list.forEach(function(p){
+    html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html+='<div style="font-size:13px;font-weight:700">'+(p.prenom||'')+' '+(p.nom||'')+'</div>';
+    html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#fffbeb;color:#d97706">'+(STATUT_P[p.statut]||p.statut)+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+p.telephone+' · '+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F · inscrit le '+new Date(p.dateInscription).toLocaleDateString('fr-FR')+'</div>';
+    (p.cautions||[]).forEach(function(c){
+      var badge=c.statut==='accepte'?'<span style="color:#059669;font-weight:700">✅ Signé'+(c.dateSignature?' le '+new Date(c.dateSignature).toLocaleString('fr-FR'):'')+'</span>':c.statut==='refuse'?'<span style="color:#dc2626;font-weight:700">❌ Refusé</span>':'<span style="color:#d97706;font-weight:700">⏳ Invité'+(c.dateInvitation?' le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR'):'')+'</span>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:6px 10px;background:#f9fafb;border-radius:8px;margin-bottom:4px">';
+      html+='<div>'+c.ordre+'. '+(c.garantNom||c.garantTelephone)+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
+      html+='<div>'+badge+'</div></div>';
+    });
+    html+='</div>';
   });
   body.innerHTML=html;
 }
@@ -11292,7 +11318,7 @@ async function ouvrirGroupeTontineBO(id){
       html+='<div style="background:#f9fafb;border-radius:10px;padding:10px 14px;margin-bottom:6px">';
       html+='<div style="display:flex;justify-content:space-between"><b style="font-size:13px">'+(m.position||'-')+'. '+(m.prenom||'')+' '+(m.nom||'')+'</b><span style="font-size:11px;color:'+(m.statut==='defaillant'?'#dc2626':'#6b7280')+'">'+m.statut+'</span></div>';
       html+='<div style="font-size:11px;color:#9ca3af">'+m.telephone+'</div>';
-      html+='<div style="font-size:10px;color:#9ca3af;margin-top:4px">Cautions: '+(m.cautions||[]).map(function(c){return c.ordre+'.'+(c.statut==='accepte'?'✅':c.statut==='refuse'?'❌':'⏳');}).join(' ')+'</div>';
+      html+='<div style="font-size:10px;color:#9ca3af;margin-top:4px">Cautions: '+(m.cautions||[]).map(function(c){var d=c.statut==='accepte'&&c.dateSignature?' ('+new Date(c.dateSignature).toLocaleDateString('fr-FR')+')':'';return c.ordre+'.'+(c.statut==='accepte'?'✅':c.statut==='refuse'?'❌':'⏳')+d;}).join(' ')+'</div>';
       html+='</div>';
     });
     html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Tours</div>';

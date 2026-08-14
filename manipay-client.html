@@ -2163,7 +2163,7 @@ function _renderTontine(elig, statutD){
 
   // Cas 2 : éligible, pas encore inscrit → choix du palier
   if(!p){
-    var h2='<div style="font-size:13px;color:var(--m);margin-bottom:14px;line-height:1.5">Choisissez un palier. Vous verserez le montant + 5% de commission à chaque tour, et recevrez la somme totale du groupe (5 personnes) à votre tour.</div>';
+    var h2='<div style="font-size:13px;color:var(--m);margin-bottom:14px;line-height:1.5">Choisissez un palier. Vous verserez le montant + 5% de frais de participation à chaque tour, et recevrez la somme totale du groupe (5 personnes) à votre tour.</div>';
     ['hebdo','bihebdo','mensuel'].forEach(function(cat){
       var items=(statutD._paliers||window._tontinePaliers||[]).filter(function(x){return x.categorie===cat;});
       if(!items.length)return;
@@ -2171,7 +2171,7 @@ function _renderTontine(elig, statutD){
       items.forEach(function(pal){
         h2+='<button onclick="choisirPalierTontine('+pal.montant+')" style="width:100%;text-align:left;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-family:inherit">';
         h2+='<div style="display:flex;justify-content:space-between;align-items:center">';
-        h2+='<div><div style="font-size:15px;font-weight:800;color:#6d28d9">'+F(pal.montant)+' F</div><div style="font-size:11px;color:#9ca3af">Versement : '+F(pal.versementParTour)+' F (dont '+F(pal.commission)+' F commission)</div></div>';
+        h2+='<div><div style="font-size:15px;font-weight:800;color:#6d28d9">'+F(pal.montant)+' F</div><div style="font-size:11px;color:#9ca3af">Versement : '+F(pal.versementParTour)+' F (dont '+F(pal.commission)+' F frais de participation)</div></div>';
         h2+='<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#059669">+'+F(pal.gainParTour)+' F</div><div style="font-size:10px;color:#9ca3af">à votre tour</div></div>';
         h2+='</div></button>';
       });
