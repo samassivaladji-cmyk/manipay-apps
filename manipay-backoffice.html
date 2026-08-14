@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.2-2026-08-14"/>
+<meta name="version" content="v1.3-2026-08-14"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1416,10 +1416,13 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 </div>
 
 <div class="sh-ov" id="sh-tontine-groupe-detail">
-  <div class="sh">
+  <div class="sh" style="max-height:97vh;border-radius:20px 20px 0 0">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title" id="tgd-title">Groupe</div><div style="color:var(--m);font-size:12px" id="tgd-sub">--</div></div><button class="sh-x" onclick="closeSh('tontine-groupe-detail')">✕</button></div>
-    <div id="tgd-body" style="padding:0 22px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" id="tgd-title" style="font-size:20px">Groupe</div><div style="color:var(--m);font-size:12px;margin-top:2px" id="tgd-sub">--</div></div>
+      <button class="sh-x" onclick="closeSh('tontine-groupe-detail')">✕</button>
+    </div>
+    <div id="tgd-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
   </div>
 </div>
 
@@ -11261,9 +11264,10 @@ async function _renderTontineBOAttente(body){
     html+='</div>';
     html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+p.telephone+' · '+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F · inscrit le '+new Date(p.dateInscription).toLocaleDateString('fr-FR')+'</div>';
     (p.cautions||[]).forEach(function(c){
+      var nomReel=(c.garantPrenomCompte||c.garantNomCompte)?((c.garantPrenomCompte||'')+' '+(c.garantNomCompte||'')).trim():(c.garantNomSaisi||'Nom non renseigné');
       var badge=c.statut==='accepte'?'<span style="color:#059669;font-weight:700">✅ Signé'+(c.dateSignature?' le '+new Date(c.dateSignature).toLocaleString('fr-FR'):'')+'</span>':c.statut==='refuse'?'<span style="color:#dc2626;font-weight:700">❌ Refusé</span>':'<span style="color:#d97706;font-weight:700">⏳ Invité'+(c.dateInvitation?' le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR'):'')+'</span>';
       html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:6px 10px;background:#f9fafb;border-radius:8px;margin-bottom:4px">';
-      html+='<div>'+c.ordre+'. '+(c.garantNom||c.garantTelephone)+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
+      html+='<div>'+c.ordre+'. '+nomReel+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
       html+='<div>'+badge+'</div></div>';
     });
     html+='</div>';
@@ -11311,26 +11315,56 @@ async function ouvrirGroupeTontineBO(id){
     var r=await apiGet('/admin/tontine/groupe/'+id);
     var d=r.data||{};
     var g=d.groupe;
+    var STATUT_G={formation:'En formation',en_cours:'En cours',termine:'Terminé',annule:'Annulé'};
     document.getElementById('tgd-title').textContent=g.categorie.toUpperCase()+'-'+String(g.numero).padStart(6,'0');
-    document.getElementById('tgd-sub').textContent=F(g.montant)+' F · '+g.statut;
-    var html='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Membres</div>';
+    document.getElementById('tgd-sub').textContent=F(g.montant)+' F par tour · '+(STATUT_G[g.statut]||g.statut)+' · '+(d.membres||[]).length+'/5 membres';
+
+    var CAUTION_CFG={
+      accepte:{l:'Signé',c:'#059669',bg:'#f0fdf4',i:'✅'},
+      refuse:{l:'Refusé',c:'#dc2626',bg:'#fef2f2',i:'❌'},
+      invite:{l:'En attente de réponse',c:'#d97706',bg:'#fffbeb',i:'⏳'}
+    };
+
+    var html='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Membres du groupe</div>';
     (d.membres||[]).forEach(function(m){
-      html+='<div style="background:#f9fafb;border-radius:10px;padding:10px 14px;margin-bottom:6px">';
-      html+='<div style="display:flex;justify-content:space-between"><b style="font-size:13px">'+(m.position||'-')+'. '+(m.prenom||'')+' '+(m.nom||'')+'</b><span style="font-size:11px;color:'+(m.statut==='defaillant'?'#dc2626':'#6b7280')+'">'+m.statut+'</span></div>';
-      html+='<div style="font-size:11px;color:#9ca3af">'+m.telephone+'</div>';
-      html+='<div style="font-size:10px;color:#9ca3af;margin-top:4px">Cautions: '+(m.cautions||[]).map(function(c){var d=c.statut==='accepte'&&c.dateSignature?' ('+new Date(c.dateSignature).toLocaleDateString('fr-FR')+')':'';return c.ordre+'.'+(c.statut==='accepte'?'✅':c.statut==='refuse'?'❌':'⏳')+d;}).join(' ')+'</div>';
+      html+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.03)">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<div style="display:flex;align-items:center;gap:8px">';
+      html+='<div style="width:26px;height:26px;border-radius:8px;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">'+(m.position||'-')+'</div>';
+      html+='<div><div style="font-size:14px;font-weight:800">'+(m.prenom||'')+' '+(m.nom||'')+'</div><div style="font-size:11px;color:#9ca3af">'+m.telephone+'</div></div>';
       html+='</div>';
-    });
-    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Tours</div>';
-    (d.tours||[]).forEach(function(t){
-      html+='<div style="background:#f9fafb;border-radius:10px;padding:10px 14px;margin-bottom:6px">';
-      html+='<div style="display:flex;justify-content:space-between"><b style="font-size:13px">Tour '+t.numeroTour+' — '+(t.beneficiairePrenom||'')+' '+(t.beneficiaireNom||'')+'</b><span style="font-size:11px">'+t.statut+'</span></div>';
-      html+='<div style="font-size:11px;color:#9ca3af">'+new Date(t.datePrevue).toLocaleDateString('fr-FR')+' · '+F(t.montantTotal)+' F</div>';
-      (t.versements||[]).forEach(function(v){
-        html+='<div style="font-size:10px;color:'+(v.statut==='defaillant'?'#dc2626':v.statut==='preleve'?'#059669':'#9ca3af')+';margin-top:2px">• '+(v.participantPrenom||'')+' '+(v.participantNom||'')+' — '+v.statut+(v.payeParCautionId?' (via caution)':'')+'</div>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+(m.statut==='defaillant'?'#fef2f2':'#f3f4f6')+';color:'+(m.statut==='defaillant'?'#dc2626':'#6b7280')+'">'+m.statut+'</span>';
+      html+='</div>';
+
+      html+='<div style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px">Ses 4 cautions</div>';
+      (m.cautions||[]).forEach(function(c){
+        var cc=CAUTION_CFG[c.statut]||{l:c.statut,c:'#6b7280',bg:'#f3f4f6',i:'•'};
+        var nomReel=(c.garantPrenomCompte||c.garantNomCompte)?((c.garantPrenomCompte||'')+' '+(c.garantNomCompte||'')).trim():(c.garantNomSaisi||'Nom non renseigné');
+        html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;background:#f9fafb;border-radius:10px;padding:9px 12px;margin-bottom:6px">';
+        html+='<div style="display:flex;gap:8px;align-items:flex-start">';
+        html+='<div style="width:18px;height:18px;border-radius:5px;background:#fff;border:1px solid #e5e7eb;font-size:9px;font-weight:800;color:#9ca3af;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">'+c.ordre+'</div>';
+        html+='<div><div style="font-size:12px;font-weight:700;color:#1f2937">'+nomReel+'</div><div style="font-size:11px;color:#9ca3af">'+c.garantTelephone+'</div></div>';
+        html+='</div>';
+        html+='<div style="text-align:right;flex-shrink:0;margin-left:8px">';
+        html+='<div style="font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;background:'+cc.bg+';color:'+cc.c+';white-space:nowrap">'+cc.i+' '+cc.l+'</div>';
+        if(c.statut==='accepte'&&c.dateSignature)html+='<div style="font-size:9px;color:#9ca3af;margin-top:3px">'+new Date(c.dateSignature).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>';
+        else if(c.dateInvitation)html+='<div style="font-size:9px;color:#9ca3af;margin-top:3px">invité le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR')+'</div>';
+        html+='</div></div>';
       });
       html+='</div>';
     });
+
+    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px">Tours de versement</div>';
+    (d.tours||[]).forEach(function(t){
+      html+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:12px 16px;margin-bottom:8px">';
+      html+='<div style="display:flex;justify-content:space-between"><b style="font-size:13px">Tour '+t.numeroTour+' — '+(t.beneficiairePrenom||'')+' '+(t.beneficiaireNom||'')+'</b><span style="font-size:11px;color:#6b7280">'+t.statut+'</span></div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-top:2px">'+new Date(t.datePrevue).toLocaleDateString('fr-FR')+' · '+F(t.montantTotal)+' F</div>';
+      (t.versements||[]).forEach(function(v){
+        html+='<div style="font-size:11px;color:'+(v.statut==='defaillant'?'#dc2626':v.statut==='preleve'?'#059669':'#9ca3af')+';margin-top:4px">• '+(v.participantPrenom||'')+' '+(v.participantNom||'')+' — '+v.statut+(v.payeParCautionId?' (via caution)':'')+'</div>';
+      });
+      html+='</div>';
+    });
+    if(!(d.tours||[]).length)html+='<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Aucun tour pour l\'instant — le tirage au sort n\'a pas encore eu lieu</div>';
     body.innerHTML=html;
   }catch(e){
     body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
