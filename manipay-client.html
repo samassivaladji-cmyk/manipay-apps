@@ -2131,6 +2131,23 @@ function rstMesDocs(){
 }
 // ══ TONTINE MANIPAY ═════════════════════════════════════════════
 var TONTINE_CADENCE_LABEL={hebdo:'chaque semaine',bihebdo:'toutes les 2 semaines',mensuel:'chaque mois'};
+async function telechargerAttestationTontineClient(participantId){
+  try{
+    var r=await fetch(API+'/tontine/participants/'+participantId+'/attestation',{
+      headers:{'Authorization':'Bearer '+G.token}
+    });
+    if(!r.ok){
+      var d=await r.json().catch(function(){return{};});
+      T(d.message||'Impossible de générer le document.',true);
+      return;
+    }
+    var blob=await r.blob();
+    var url=URL.createObjectURL(blob);
+    window.open(url,'_blank');
+  }catch(e){
+    T('Erreur : '+e.message,true);
+  }
+}
 async function ouvrirTontine(){
   openSh('tontine');
   var body=document.getElementById('tontine-body');
@@ -2218,6 +2235,10 @@ function _renderTontine(elig, statutD){
         }
         h3+='</div>';
       });
+      var toutesAccepteesP=cautions.length===4 && cautions.every(function(c){return c.statut==='accepte';});
+      if(toutesAccepteesP){
+        h3+='<button onclick="telechargerAttestationTontineClient(\''+p.id+'\')" style="width:100%;margin-top:6px;padding:12px;border-radius:12px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger mon attestation</button>';
+      }
     }
     body.innerHTML=h3;
     return;
@@ -2259,6 +2280,7 @@ function _renderTontine(elig, statutD){
       h6+='<div style="font-size:11px;font-weight:700;color:'+(t.statut==='termine'?'#059669':t.statut==='preleve'||t.statut==='verse'?'#d97706':'#9ca3af')+'">'+(t.statut==='a_venir'?'À venir':t.statut==='preleve'?'Prélevé':t.statut==='verse'?'Versé':'Terminé')+'</div>';
       h6+='</div>';
     });
+    h6+='<button onclick="telechargerAttestationTontineClient(\''+p.id+'\')" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger mon attestation</button>';
     body.innerHTML=h6;
     return;
   }
@@ -2300,7 +2322,7 @@ async function remplacerCautionTontine(cautionId){
   }catch(e){T(e.message,true);}
 }
 
-// ── Invitations de caution reçues ──
+// ── Invitations de caution reçues (en attente) + engagements déjà signés ──
 async function ouvrirCautionsRecues(){
   openSh('cautions-recues');
   var body=document.getElementById('cautions-recues-body');
@@ -2308,18 +2330,37 @@ async function ouvrirCautionsRecues(){
   try{
     var r=await get('/tontine/cautions/recues');
     var list=r.data||[];
-    if(!list.length){body.innerHTML='<div style="text-align:center;padding:32px;color:var(--m);font-size:13px">Aucune invitation en attente</div>';return;}
+    var rs=await get('/tontine/cautions/signees');
+    var listSignees=rs.data||[];
+
     var h='';
-    list.forEach(function(c){
-      h+='<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;margin-bottom:12px">';
-      h+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+(c.demandeurPrenom||'')+' '+(c.demandeurNom||'')+'</div>';
-      h+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+c.demandeurTelephone+'</div>';
-      h+='<div style="font-size:12px;color:#9a3412;margin-bottom:12px">Vous demande de vous porter caution pour sa Tontine — palier <b>'+F(c.montant)+' F</b> ('+TONTINE_CADENCE_LABEL[c.categorie]+')</div>';
-      h+='<div style="display:flex;gap:8px">';
-      h+='<button onclick="refuserCaution(\''+c.id+'\')" style="flex:1;padding:11px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser</button>';
-      h+='<button onclick="ouvrirAccepterCaution(\''+c.id+'\','+c.montant+',\''+((c.demandeurPrenom||'')+' '+(c.demandeurNom||'')).replace(/'/g,"")+'\')" style="flex:2;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#047857,#059669);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Accepter</button>';
-      h+='</div></div>';
-    });
+    if(!list.length && !listSignees.length){
+      body.innerHTML='<div style="text-align:center;padding:32px;color:var(--m);font-size:13px">Aucune invitation en attente</div>';
+      return;
+    }
+    if(list.length){
+      list.forEach(function(c){
+        h+='<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;margin-bottom:12px">';
+        h+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+(c.demandeurPrenom||'')+' '+(c.demandeurNom||'')+'</div>';
+        h+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+c.demandeurTelephone+'</div>';
+        h+='<div style="font-size:12px;color:#9a3412;margin-bottom:12px">Vous demande de vous porter caution pour sa Tontine — palier <b>'+F(c.montant)+' F</b> ('+TONTINE_CADENCE_LABEL[c.categorie]+')</div>';
+        h+='<div style="display:flex;gap:8px">';
+        h+='<button onclick="refuserCaution(\''+c.id+'\')" style="flex:1;padding:11px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Refuser</button>';
+        h+='<button onclick="ouvrirAccepterCaution(\''+c.id+'\','+c.montant+',\''+((c.demandeurPrenom||'')+' '+(c.demandeurNom||'')).replace(/'/g,"")+'\')" style="flex:2;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#047857,#059669);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Accepter</button>';
+        h+='</div></div>';
+      });
+    }
+    if(listSignees.length){
+      h+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Mes engagements déjà signés</div>';
+      listSignees.forEach(function(c){
+        h+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:14px 16px;margin-bottom:10px">';
+        h+='<div style="font-size:13px;font-weight:700">'+(c.demandeurPrenom||'')+' '+(c.demandeurNom||'')+'</div>';
+        h+='<div style="font-size:11px;color:#9ca3af;margin-bottom:6px">'+c.demandeurTelephone+' · palier '+F(c.montant)+' F</div>';
+        h+='<div style="font-size:11px;color:#059669;margin-bottom:10px">✅ Signé le '+new Date(c.dateSignature).toLocaleString('fr-FR')+'</div>';
+        h+='<button onclick="telechargerAttestationTontineClient(\''+c.participantId+'\')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #bbf7d0;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger ce que j\'ai signé</button>';
+        h+='</div>';
+      });
+    }
     body.innerHTML=h;
   }catch(e){
     body.innerHTML='<div style="color:#dc2626;text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
