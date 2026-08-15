@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.3-2026-08-14"/>
+<meta name="version" content="v1.5-2026-08-15"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1407,6 +1407,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="tbo-tab-groupes" onclick="setTontineBOTab('groupes')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#7c3aed;border-bottom:2px solid #7c3aed;white-space:nowrap">👥 Groupes</button>
       <button id="tbo-tab-attente" onclick="setTontineBOTab('attente')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⏳ En attente</button>
       <button id="tbo-tab-defaillances" onclick="setTontineBOTab('defaillances')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⚠️ Défaillances</button>
+      <button id="tbo-tab-verifier" onclick="setTontineBOTab('verifier')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🔍 Vérifier</button>
       <button id="tbo-tab-stats" onclick="setTontineBOTab('stats')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
     </div>
   </div>
@@ -11210,7 +11211,7 @@ var _isSuperBO = false;
 var _tboActiveTab='groupes';
 function setTontineBOTab(t){
   _tboActiveTab=t;
-  ['groupes','attente','defaillances','stats'].forEach(function(t2){
+  ['groupes','attente','defaillances','verifier','stats'].forEach(function(t2){
     var btn=document.getElementById('tbo-tab-'+t2);
     if(btn){btn.style.color=t2===t?'#7c3aed':'#6b7280';btn.style.borderBottom=t2===t?'2px solid #7c3aed':'2px solid transparent';}
   });
@@ -11223,6 +11224,7 @@ async function chargerTontineBO(){
     if(_tboActiveTab==='groupes')await _renderTontineBOGroupes(body);
     else if(_tboActiveTab==='attente')await _renderTontineBOAttente(body);
     else if(_tboActiveTab==='defaillances')await _renderTontineBODefaillances(body);
+    else if(_tboActiveTab==='verifier')_renderTontineBOVerifier(body);
     else await _renderTontineBOStats(body);
   }catch(e){
     body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
@@ -11249,6 +11251,85 @@ async function _renderTontineBOGroupes(body){
   });
   body.innerHTML=html;
 }
+function _renderTontineBOVerifier(body){
+  var html='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px">';
+  html+='<div style="font-size:13px;font-weight:700;margin-bottom:6px">Vérifier un document</div>';
+  html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:12px">Scanner le QR du contrat papier (ou coller l\'identifiant du dossier) pour recalculer son empreinte en direct et la comparer à celle imprimée.</div>';
+  html+='<input id="tbo-verif-input" type="text" placeholder="Identifiant du dossier (depuis le QR)" style="width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box"/>';
+  html+='<button id="tbo-verif-scan" onclick="_scannerQrVerifTontine()" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">📷 Scanner le QR avec l\'appareil photo</button>';
+  html+='<button onclick="_verifierDocumentTontine()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Recalculer et vérifier</button>';
+  html+='<div id="tbo-verif-video-wrap" style="display:none;margin-top:10px"><video id="tbo-verif-video" style="width:100%;border-radius:10px" playsinline></video></div>';
+  html+='<div id="tbo-verif-resultat" style="margin-top:14px"></div>';
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+async function _verifierDocumentTontine(){
+  var id=(document.getElementById('tbo-verif-input').value||'').trim();
+  var res=document.getElementById('tbo-verif-resultat');
+  if(!id){res.innerHTML='<div style="color:#dc2626;font-size:12px">Entre ou scanne un identifiant de dossier.</div>';return;}
+  res.innerHTML='<div style="text-align:center;padding:16px"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/tontine/participants/'+encodeURIComponent(id)+'/verifier');
+    var d=r.data;
+    var html='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;margin-bottom:10px">';
+    html+='<div style="font-size:13px;font-weight:800;color:#059669;margin-bottom:8px">✅ Dossier trouvé — empreinte recalculée</div>';
+    html+='<div style="font-size:12px;color:#111827"><b>'+(d.participant.prenom||'')+' '+(d.participant.nom||'')+'</b> · '+d.participant.telephone+'</div>';
+    html+='<div style="font-size:11px;color:#6b7280;margin-top:2px">'+d.participant.categorie+' · '+F(d.participant.montant)+' F</div>';
+    html+='<div style="margin-top:10px;padding:10px;background:#fff;border-radius:8px;font-family:monospace;font-size:14px;font-weight:800;color:#111827;text-align:center;letter-spacing:1px">'+d.empreinteRecalculee+'</div>';
+    html+='<div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:4px">Compare cette valeur à celle imprimée sur le document papier</div>';
+    html+='</div>';
+    if(!d.toutesSignees){
+      html+='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px;font-size:11px;color:#d97706;margin-bottom:10px">⚠️ Ce dossier n\'a pas (ou plus) ses 4 cautions signées — un document présenté comme "complet" pour ce dossier serait suspect.</div>';
+    }
+    html+='<div style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Cautions (état actuel en base)</div>';
+    (d.cautions||[]).forEach(function(c){
+      var badge=c.statut==='accepte'?'✅ Signé le '+new Date(c.dateSignature).toLocaleString('fr-FR'):c.statut==='refuse'?'❌ Refusé':'⏳ Invité';
+      html+='<div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 10px;background:#f9fafb;border-radius:8px;margin-bottom:4px"><div>'+c.ordre+'. '+c.nom+' ('+c.telephone+')</div><div style="color:#6b7280">'+badge+'</div></div>';
+    });
+    res.innerHTML=html;
+  }catch(e){
+    res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:12px;font-weight:700">❌ '+e.message+'</div>';
+  }
+}
+
+// Scan QR via caméra — utilise BarcodeDetector natif si disponible (Chrome Android), sinon
+// invite à saisir l'identifiant manuellement.
+async function _scannerQrVerifTontine(){
+  var wrap=document.getElementById('tbo-verif-video-wrap');
+  var video=document.getElementById('tbo-verif-video');
+  if(!('BarcodeDetector' in window)){
+    alert('Scan caméra non disponible sur ce navigateur. Tape l\'identifiant manuellement (visible sous le QR sur le document, ou demande au participant de te le communiquer).');
+    return;
+  }
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject=stream;
+    wrap.style.display='';
+    await video.play();
+    var detector=new window.BarcodeDetector({formats:['qr_code']});
+    var arret=false;
+    var boucle=async function(){
+      if(arret)return;
+      try{
+        var codes=await detector.detect(video);
+        if(codes.length){
+          arret=true;
+          document.getElementById('tbo-verif-input').value=codes[0].rawValue;
+          stream.getTracks().forEach(function(t){t.stop();});
+          wrap.style.display='none';
+          _verifierDocumentTontine();
+          return;
+        }
+      }catch(e){}
+      requestAnimationFrame(boucle);
+    };
+    boucle();
+  }catch(e){
+    alert('Accès à la caméra refusé ou indisponible : '+e.message);
+  }
+}
+
 async function _renderTontineBOAttente(body){
   var r=await apiGet('/admin/tontine/participants-non-groupes');
   var list=r.data||[];
@@ -11270,6 +11351,10 @@ async function _renderTontineBOAttente(body){
       html+='<div>'+c.ordre+'. '+nomReel+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
       html+='<div>'+badge+'</div></div>';
     });
+    var tousSignesP=(p.cautions||[]).length===4 && (p.cautions||[]).every(function(c){return c.statut==='accepte';});
+    if(tousSignesP){
+      html+='<button onclick="telechargerAttestationTontine(\''+p.id+'\')" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger l\'attestation (4 cautions signées)</button>';
+    }
     html+='</div>';
   });
   body.innerHTML=html;
@@ -11306,6 +11391,23 @@ async function _renderTontineBOStats(body){
     html+='<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#f9fafb;border-radius:10px;margin-bottom:6px;font-size:13px"><span>'+g.statut+'</span><b>'+g.n+'</b></div>';
   });
   body.innerHTML=html;
+}
+async function telechargerAttestationTontine(participantId){
+  try{
+    var r=await fetch(API+'/tontine/participants/'+participantId+'/attestation',{
+      headers:{'Authorization':'Bearer '+G.token}
+    });
+    if(!r.ok){
+      var d=await r.json().catch(function(){return{};});
+      alert(d.message||'Impossible de générer le document.');
+      return;
+    }
+    var blob=await r.blob();
+    var url=URL.createObjectURL(blob);
+    window.open(url,'_blank');
+  }catch(e){
+    alert('Erreur : '+e.message);
+  }
 }
 async function ouvrirGroupeTontineBO(id){
   openSh('tontine-groupe-detail');
@@ -11351,6 +11453,10 @@ async function ouvrirGroupeTontineBO(id){
         else if(c.dateInvitation)html+='<div style="font-size:9px;color:#9ca3af;margin-top:3px">invité le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR')+'</div>';
         html+='</div></div>';
       });
+      var tousSignes=(m.cautions||[]).length===4 && (m.cautions||[]).every(function(c){return c.statut==='accepte';});
+      if(tousSignes){
+        html+='<button onclick="telechargerAttestationTontine(\''+m.id+'\')" style="width:100%;margin-top:10px;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger l\'attestation (4 cautions signées)</button>';
+      }
       html+='</div>';
     });
 
