@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.5-2026-08-15"/>
+<meta name="version" content="v1.7-2026-08-16"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1426,6 +1426,18 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
     <div id="tgd-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
   </div>
 </div>
+
+<div class="sh-ov" id="sh-tontine-signatures">
+  <div class="sh" style="max-height:97vh;border-radius:20px 20px 0 0">
+    <div class="sh-bar"></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" style="font-size:18px">✍️ Signatures physiques</div><div style="color:var(--m);font-size:12px;margin-top:2px" id="tsig-sub">--</div></div>
+      <button class="sh-x" onclick="closeSh('tontine-signatures')">✕</button>
+    </div>
+    <div id="tsig-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
+  </div>
+</div>
+
 
 <div class="scr" id="s-moncompte">
   <div style="background:#fff;padding:52px 20px 12px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
@@ -11234,7 +11246,7 @@ async function _renderTontineBOGroupes(body){
   var r=await apiGet('/admin/tontine/groupes');
   var list=r.data||[];
   if(!list.length){body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucun groupe pour l\'instant</div>';return;}
-  var STATUT_CFG={formation:{l:'En formation',c:'#d97706',bg:'#fffbeb'},en_cours:{l:'En cours',c:'#059669',bg:'#f0fdf4'},termine:{l:'Terminé',c:'#6b7280',bg:'#f3f4f6'},annule:{l:'Annulé',c:'#dc2626',bg:'#fef2f2'}};
+  var STATUT_CFG={formation:{l:'En formation',c:'#d97706',bg:'#fffbeb'},attente_signatures:{l:'⏳ Signatures physiques',c:'#7c3aed',bg:'#faf5ff'},en_cours:{l:'En cours',c:'#059669',bg:'#f0fdf4'},termine:{l:'Terminé',c:'#6b7280',bg:'#f3f4f6'},annule:{l:'Annulé',c:'#dc2626',bg:'#fef2f2'}};
   var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
   var html='';
   list.forEach(function(g){
@@ -11331,33 +11343,82 @@ async function _scannerQrVerifTontine(){
 }
 
 async function _renderTontineBOAttente(body){
-  var r=await apiGet('/admin/tontine/participants-non-groupes');
-  var list=r.data||[];
-  if(!list.length){body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucun participant en attente de groupe</div>';return;}
   var STATUT_P={attente_cautions:'En attente de cautions',pret:'Prêt (affectation groupe)'};
   var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+  var r1=await apiGet('/admin/tontine/participants-non-groupes');
+  var listNonGroupes=r1.data||[];
+  var r2=await apiGet('/admin/tontine/participants-attente-formation');
+  var listFormation=r2.data||[];
+
+  if(!listNonGroupes.length && !listFormation.length){
+    body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucun participant en attente</div>';
+    return;
+  }
+
   var html='';
-  list.forEach(function(p){
-    html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-    html+='<div style="font-size:13px;font-weight:700">'+(p.prenom||'')+' '+(p.nom||'')+'</div>';
-    html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#fffbeb;color:#d97706">'+(STATUT_P[p.statut]||p.statut)+'</span>';
-    html+='</div>';
-    html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+p.telephone+' · '+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F · inscrit le '+new Date(p.dateInscription).toLocaleDateString('fr-FR')+'</div>';
-    (p.cautions||[]).forEach(function(c){
-      var nomReel=(c.garantPrenomCompte||c.garantNomCompte)?((c.garantPrenomCompte||'')+' '+(c.garantNomCompte||'')).trim():(c.garantNomSaisi||'Nom non renseigné');
-      var badge=c.statut==='accepte'?'<span style="color:#059669;font-weight:700">✅ Signé'+(c.dateSignature?' le '+new Date(c.dateSignature).toLocaleString('fr-FR'):'')+'</span>':c.statut==='refuse'?'<span style="color:#dc2626;font-weight:700">❌ Refusé</span>':'<span style="color:#d97706;font-weight:700">⏳ Invité'+(c.dateInvitation?' le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR'):'')+'</span>';
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:6px 10px;background:#f9fafb;border-radius:8px;margin-bottom:4px">';
-      html+='<div>'+c.ordre+'. '+nomReel+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
-      html+='<div>'+badge+'</div></div>';
+
+  if(listFormation.length){
+    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Dans un groupe encore en formation ('+listFormation.length+')</div>';
+    listFormation.forEach(function(p){
+      var joursAttente=Math.floor((Date.now()-new Date(p.dateInscription).getTime())/86400000);
+      html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html+='<div style="font-size:13px;font-weight:700">'+(p.prenom||'')+' '+(p.nom||'')+'</div>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#f3f4f6;color:#6b7280">'+p.nbMembres+'/5 dans le groupe</span>';
+      html+='</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:10px">'+p.telephone+' · '+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F · patiente depuis '+joursAttente+' jour(s)</div>';
+      html+='<button onclick="ouvrirBasculeTontine(\''+p.id+'\',\''+(p.prenom||'')+' '+(p.nom||'')+'\','+p.montant+')" style="width:100%;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Basculer vers un autre palier</button>';
+      html+='</div>';
     });
-    var tousSignesP=(p.cautions||[]).length===4 && (p.cautions||[]).every(function(c){return c.statut==='accepte';});
-    if(tousSignesP){
-      html+='<button onclick="telechargerAttestationTontine(\''+p.id+'\')" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger l\'attestation (4 cautions signées)</button>';
-    }
-    html+='</div>';
-  });
+  }
+
+  if(listNonGroupes.length){
+    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px">Sans groupe — en attente de cautions ('+listNonGroupes.length+')</div>';
+    listNonGroupes.forEach(function(p){
+      html+='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html+='<div style="font-size:13px;font-weight:700">'+(p.prenom||'')+' '+(p.nom||'')+'</div>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#fffbeb;color:#d97706">'+(STATUT_P[p.statut]||p.statut)+'</span>';
+      html+='</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">'+p.telephone+' · '+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F · inscrit le '+new Date(p.dateInscription).toLocaleDateString('fr-FR')+'</div>';
+      (p.cautions||[]).forEach(function(c){
+        var nomReel=(c.garantPrenomCompte||c.garantNomCompte)?((c.garantPrenomCompte||'')+' '+(c.garantNomCompte||'')).trim():(c.garantNomSaisi||'Nom non renseigné');
+        var badge=c.statut==='accepte'?'<span style="color:#059669;font-weight:700">✅ Signé'+(c.dateSignature?' le '+new Date(c.dateSignature).toLocaleString('fr-FR'):'')+'</span>':c.statut==='refuse'?'<span style="color:#dc2626;font-weight:700">❌ Refusé</span>':'<span style="color:#d97706;font-weight:700">⏳ Invité'+(c.dateInvitation?' le '+new Date(c.dateInvitation).toLocaleDateString('fr-FR'):'')+'</span>';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:6px 10px;background:#f9fafb;border-radius:8px;margin-bottom:4px">';
+        html+='<div>'+c.ordre+'. '+nomReel+' <span style="color:#9ca3af">('+c.garantTelephone+')</span></div>';
+        html+='<div>'+badge+'</div></div>';
+      });
+      var tousSignesP=(p.cautions||[]).length===4 && (p.cautions||[]).every(function(c){return c.statut==='accepte';});
+      if(tousSignesP){
+        html+='<button onclick="telechargerAttestationTontine(\''+p.id+'\')" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger l\'attestation (4 cautions signées)</button>';
+      }
+      html+='</div>';
+    });
+  }
+
   body.innerHTML=html;
+}
+async function ouvrirBasculeTontine(participantId,nomClient,montantActuel){
+  try{
+    var r=await apiGet('/admin/tontine/groupes-formation');
+    var groupes=(r.data||[]).filter(function(g){return g.montant!=montantActuel || g.nbMembres===0;});
+    if(!groupes.length){alert('Aucun autre palier en formation disponible pour le moment.');return;}
+    var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+    var msg='Basculer '+nomClient+' vers quel palier ?\n\n';
+    groupes.forEach(function(g,i){
+      msg+=(i+1)+'. '+(CAT_LABEL[g.categorie]||g.categorie)+' — '+F(g.montant)+' F ('+g.nbMembres+'/5 — manque '+(5-g.nbMembres)+')\n';
+    });
+    var choix=prompt(msg+'\nTape le numéro du palier choisi :');
+    var idx=parseInt(choix,10)-1;
+    if(isNaN(idx)||!groupes[idx])return;
+    var cible=groupes[idx];
+    if(!confirm('Basculer vers '+F(cible.montant)+' F ('+(CAT_LABEL[cible.categorie]||cible.categorie)+') ?\n\n⚠️ Les 4 cautions actuelles devront revalider leur engagement pour ce nouveau montant — elles recevront une nouvelle invitation.'))return;
+    await apiPost('/admin/tontine/participants/'+participantId+'/basculer',{montant:cible.montant});
+    alert('Basculement effectué. Les 4 cautions ont été réinvitées à valider le nouveau montant.');
+    chargerTontineBO();
+  }catch(e){
+    alert('Erreur : '+e.message);
+  }
 }
 async function _renderTontineBODefaillances(body){
   var r=await apiGet('/admin/tontine/defaillances');
@@ -11417,7 +11478,7 @@ async function ouvrirGroupeTontineBO(id){
     var r=await apiGet('/admin/tontine/groupe/'+id);
     var d=r.data||{};
     var g=d.groupe;
-    var STATUT_G={formation:'En formation',en_cours:'En cours',termine:'Terminé',annule:'Annulé'};
+    var STATUT_G={formation:'En formation',attente_signatures:'⏳ Signatures physiques en attente',en_cours:'En cours',termine:'Terminé',annule:'Annulé'};
     document.getElementById('tgd-title').textContent=g.categorie.toUpperCase()+'-'+String(g.numero).padStart(6,'0');
     document.getElementById('tgd-sub').textContent=F(g.montant)+' F par tour · '+(STATUT_G[g.statut]||g.statut)+' · '+(d.membres||[]).length+'/5 membres';
 
@@ -11427,7 +11488,15 @@ async function ouvrirGroupeTontineBO(id){
       invite:{l:'En attente de réponse',c:'#d97706',bg:'#fffbeb',i:'⏳'}
     };
 
-    var html='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Membres du groupe</div>';
+    var html='';
+    if(g.statut==='attente_signatures'){
+      html+='<div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:14px;padding:14px 16px;margin-bottom:16px">';
+      html+='<div style="font-size:13px;font-weight:800;color:#6d28d9;margin-bottom:4px">⏳ En attente des signatures physiques</div>';
+      html+='<div style="font-size:11px;color:#7c3aed;margin-bottom:10px">La Tontine ne démarrera (prélèvements activés) que lorsque les 5 participants ET l\'ensemble de leurs cautions auront signé physiquement en agence.</div>';
+      html+='<button onclick="ouvrirSignaturesTontineBO(\''+g.id+'\')" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✍️ Gérer les signatures physiques</button>';
+      html+='</div>';
+    }
+    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Membres du groupe</div>';
     (d.membres||[]).forEach(function(m){
       html+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.03)">';
       html+='<div style="display:flex;justify-content:space-between;align-items:center">';
@@ -11474,6 +11543,78 @@ async function ouvrirGroupeTontineBO(id){
     body.innerHTML=html;
   }catch(e){
     body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+
+async function ouvrirSignaturesTontineBO(groupeId){
+  openSh('tontine-signatures');
+  var body=document.getElementById('tsig-body');
+  body.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/admin/tontine/groupe/'+groupeId+'/signatures');
+    var d=r.data||{};
+    var g=d.groupe;
+    document.getElementById('tsig-sub').textContent=g.categorie.toUpperCase()+'-'+String(g.numero).padStart(6,'0')+' · '+F(g.montant)+' F';
+
+    var totalRequis=(d.membres||[]).length + (d.membres||[]).reduce(function(s,m){return s+(m.cautions||[]).length;},0);
+    var totalFait=(d.membres||[]).filter(function(m){return m.signatureFaite;}).length +
+      (d.membres||[]).reduce(function(s,m){return s+(m.cautions||[]).filter(function(c){return c.signatureFaite;}).length;},0);
+
+    var html='<div style="background:'+(totalFait===totalRequis?'#f0fdf4':'#faf5ff')+';border:1px solid '+(totalFait===totalRequis?'#bbf7d0':'#ddd6fe')+';border-radius:12px;padding:12px 14px;margin-bottom:16px;text-align:center">';
+    html+='<div style="font-size:20px;font-weight:800;color:'+(totalFait===totalRequis?'#059669':'#7c3aed')+'">'+totalFait+' / '+totalRequis+'</div>';
+    html+='<div style="font-size:11px;color:#6b7280">signatures physiques enregistrées'+(totalFait===totalRequis?' — Tontine activée ✅':'')+'</div>';
+    html+='</div>';
+
+    function lignePersonne(type,id,label,tel,signatureFaite,scanUrl){
+      var h='<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:10px;padding:10px 12px;margin-bottom:6px" id="tsig-row-'+id+'">';
+      h+='<div><div style="font-size:12px;font-weight:700;color:#1f2937">'+label+'</div><div style="font-size:10px;color:#9ca3af">'+tel+'</div></div>';
+      if(signatureFaite){
+        h+='<div style="text-align:right"><span style="font-size:10px;font-weight:700;color:#059669">✅ Signé</span>'+(scanUrl?'<div><a href="'+scanUrl+'" target="_blank" style="font-size:9px;color:#7c3aed">voir le scan</a></div>':'')+'</div>';
+      }else{
+        h+='<div><input type="file" id="tsig-file-'+id+'" accept="image/*;capture=camera" capture="environment" style="display:none" onchange="_uploadSignaturePhysique(\''+type+'\',\''+id+'\',this)"/>';
+        h+='<button onclick="document.getElementById(\'tsig-file-'+id+'\').click()" style="padding:7px 12px;border-radius:8px;border:1px solid #ddd6fe;background:#fff;color:#7c3aed;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">📷 Marquer signé</button></div>';
+      }
+      h+='</div>';
+      return h;
+    }
+
+    var html2='';
+    (d.membres||[]).forEach(function(m){
+      html2+='<div style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">Position '+(m.position||'-')+'</div>';
+      html2+=lignePersonne('participant',m.id,(m.prenom||'')+' '+(m.nom||'')+' (participant)',m.telephone,m.signatureFaite,m.scanUrl);
+      (m.cautions||[]).forEach(function(c){
+        var nomReel=(c.garantPrenomCompte||c.garantNomCompte)?((c.garantPrenomCompte||'')+' '+(c.garantNomCompte||'')).trim():(c.garantNomSaisi||'—');
+        html2+=lignePersonne('caution',c.id,'Caution '+c.ordre+' — '+nomReel,c.garantTelephone,c.signatureFaite,c.scanUrl);
+      });
+    });
+
+    body.innerHTML=html+html2;
+  }catch(e){
+    body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+
+async function _uploadSignaturePhysique(type,id,inputEl){
+  var file=inputEl.files[0];
+  if(!file)return;
+  var row=document.getElementById('tsig-row-'+id);
+  var boutonZone=row.querySelector('div:last-child');
+  boutonZone.innerHTML='<div class="spin" style="width:16px;height:16px"></div>';
+  try{
+    var fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',CLOUDINARY_PRESET);
+    fd.append('folder','manipay/tontine-signatures');
+    var rc=await fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd});
+    var dc=await rc.json();
+    if(!rc.ok||!dc.secure_url)throw new Error('Upload échoué');
+    var r=await apiPost('/admin/tontine/signature-physique',{type:type,id:id,scanUrl:dc.secure_url});
+    row.innerHTML='<div><div style="font-size:12px;font-weight:700;color:#1f2937">✅ Signature enregistrée</div></div><div style="text-align:right"><span style="font-size:10px;font-weight:700;color:#059669">✅ Signé</span></div>';
+    if(r.data&&r.data.groupeActive){
+      alert('🎉 Toutes les signatures sont réunies — la Tontine démarre officiellement !');
+    }
+  }catch(e){
+    boutonZone.innerHTML='<span style="color:#dc2626;font-size:11px">Erreur : '+e.message+'</span>';
   }
 }
 
