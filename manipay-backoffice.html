@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v1.7-2026-08-16"/>
+<meta name="version" content="v1.8-2026-08-16"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1408,6 +1408,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="tbo-tab-attente" onclick="setTontineBOTab('attente')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⏳ En attente</button>
       <button id="tbo-tab-defaillances" onclick="setTontineBOTab('defaillances')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⚠️ Défaillances</button>
       <button id="tbo-tab-verifier" onclick="setTontineBOTab('verifier')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🔍 Vérifier</button>
+      <button id="tbo-tab-rechercher" onclick="setTontineBOTab('rechercher')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📇 Rechercher</button>
       <button id="tbo-tab-stats" onclick="setTontineBOTab('stats')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
     </div>
   </div>
@@ -11223,7 +11224,7 @@ var _isSuperBO = false;
 var _tboActiveTab='groupes';
 function setTontineBOTab(t){
   _tboActiveTab=t;
-  ['groupes','attente','defaillances','verifier','stats'].forEach(function(t2){
+  ['groupes','attente','defaillances','verifier','rechercher','stats'].forEach(function(t2){
     var btn=document.getElementById('tbo-tab-'+t2);
     if(btn){btn.style.color=t2===t?'#7c3aed':'#6b7280';btn.style.borderBottom=t2===t?'2px solid #7c3aed':'2px solid transparent';}
   });
@@ -11237,6 +11238,7 @@ async function chargerTontineBO(){
     else if(_tboActiveTab==='attente')await _renderTontineBOAttente(body);
     else if(_tboActiveTab==='defaillances')await _renderTontineBODefaillances(body);
     else if(_tboActiveTab==='verifier')_renderTontineBOVerifier(body);
+    else if(_tboActiveTab==='rechercher')_renderTontineBORecherche(body);
     else await _renderTontineBOStats(body);
   }catch(e){
     body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
@@ -11442,17 +11444,77 @@ async function _renderTontineBODefaillances(body){
 async function _renderTontineBOStats(body){
   var r=await apiGet('/admin/tontine/stats');
   var d=r.data||{};
+  var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+  var STATUT_LABEL={formation:'En formation',attente_signatures:'Signatures physiques',en_cours:'En cours',termine:'Terminé',annule:'Annulé'};
+
   var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-  html+='<div style="background:#faf5ff;border-radius:14px;padding:16px"><div style="font-size:11px;color:#7c3aed;font-weight:700">PARTICIPANTS</div><div style="font-size:24px;font-weight:900;color:#6d28d9">'+d.totalParticipants+'</div></div>';
-  html+='<div style="background:#fef2f2;border-radius:14px;padding:16px"><div style="font-size:11px;color:#dc2626;font-weight:700">DÉFAILLANCES</div><div style="font-size:24px;font-weight:900;color:#dc2626">'+d.defaillancesEnCours+'</div></div>';
-  html+='<div style="background:#f0fdf4;border-radius:14px;padding:16px;grid-column:span 2"><div style="font-size:11px;color:#059669;font-weight:700">COMMISSION TOTALE COLLECTÉE</div><div style="font-size:24px;font-weight:900;color:#059669">'+F(d.commissionTotale)+' F</div></div>';
+  html+='<div style="background:#faf5ff;border-radius:14px;padding:16px"><div style="font-size:11px;color:#7c3aed;font-weight:700">PARTICIPANTS ACTIFS</div><div style="font-size:24px;font-weight:900;color:#6d28d9">'+d.totalParticipants+'</div></div>';
+  html+='<div style="background:'+(d.tauxDefaillancePct>5?'#fef2f2':'#f0fdf4')+';border-radius:14px;padding:16px"><div style="font-size:11px;color:'+(d.tauxDefaillancePct>5?'#dc2626':'#059669')+';font-weight:700">TAUX DE DÉFAILLANCE</div><div style="font-size:24px;font-weight:900;color:'+(d.tauxDefaillancePct>5?'#dc2626':'#059669')+'">'+d.tauxDefaillancePct+'%</div><div style="font-size:10px;color:#9ca3af">'+d.defaillancesEnCours+' sur '+d.versementsTotalTraites+' versement(s)</div></div>';
+  html+='<div style="background:#eff6ff;border-radius:14px;padding:16px"><div style="font-size:11px;color:#2563eb;font-weight:700">DÉLAI MOYEN DE FORMATION</div><div style="font-size:22px;font-weight:900;color:#2563eb">'+(d.dureeMoyenneFormationJours!=null?d.dureeMoyenneFormationJours+' j':'—')+'</div><div style="font-size:10px;color:#9ca3af">de l\'inscription au tirage</div></div>';
+  var totalGroupes=(d.groupesParStatut||[]).reduce(function(s,g){return s+parseInt(g.n);},0);
+  html+='<div style="background:#fffbeb;border-radius:14px;padding:16px"><div style="font-size:11px;color:#d97706;font-weight:700">GROUPES TOTAL</div><div style="font-size:24px;font-weight:900;color:#d97706">'+totalGroupes+'</div></div>';
+  if(d.commissionTotale!==undefined){
+    html+='<div style="background:#f0fdf4;border-radius:14px;padding:16px;grid-column:span 2;border:1px solid #bbf7d0"><div style="font-size:11px;color:#059669;font-weight:700">🔒 COMMISSION TONTINE (super Back-office uniquement)</div><div style="font-size:24px;font-weight:900;color:#059669">'+F(d.commissionTotale)+' F</div><div style="font-size:10px;color:#9ca3af">Dissociée du résultat général ManiPay (accueil)</div></div>';
+  }
   html+='</div>';
+
   html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Groupes par statut</div>';
   (d.groupesParStatut||[]).forEach(function(g){
-    html+='<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#f9fafb;border-radius:10px;margin-bottom:6px;font-size:13px"><span>'+g.statut+'</span><b>'+g.n+'</b></div>';
+    html+='<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#f9fafb;border-radius:10px;margin-bottom:6px;font-size:13px"><span>'+(STATUT_LABEL[g.statut]||g.statut)+'</span><b>'+g.n+'</b></div>';
   });
+
+  html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Répartition par palier</div>';
+  (d.parPalier||[]).forEach(function(p){
+    var alerte=p.nbEnFormation>0 && p.nbGroupes==p.nbEnFormation;
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:'+(alerte?'#fffbeb':'#f9fafb')+';border-radius:10px;margin-bottom:6px;font-size:12px">';
+    html+='<span>'+(CAT_LABEL[p.categorie]||p.categorie)+' · '+F(p.montant)+' F</span>';
+    html+='<span><b>'+p.nbGroupes+'</b> groupe(s)'+(p.nbEnFormation>0?' <span style="color:#d97706">('+p.nbEnFormation+' en formation)</span>':'')+'</span>';
+    html+='</div>';
+  });
+
   body.innerHTML=html;
 }
+
+async function _renderTontineBORecherche(body){
+  var html='<div style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:16px;margin-bottom:12px">';
+  html+='<div style="font-size:13px;font-weight:700;margin-bottom:6px">Rechercher un groupe</div>';
+  html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:12px">Numéro de téléphone (participant ou caution), montant du palier, ou numéro de groupe.</div>';
+  html+='<div style="display:flex;gap:8px">';
+  html+='<input id="tbo-rech-input" type="text" placeholder="Ex: 0900000150, 500000, 10..." style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;box-sizing:border-box" onkeydown="if(event.key===\'Enter\')_rechercherTontineBO()"/>';
+  html+='<button onclick="_rechercherTontineBO()" style="padding:10px 16px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍</button>';
+  html+='</div></div>';
+  html+='<div id="tbo-rech-resultats"></div>';
+  body.innerHTML=html;
+}
+
+async function _rechercherTontineBO(){
+  var q=(document.getElementById('tbo-rech-input').value||'').trim();
+  var res=document.getElementById('tbo-rech-resultats');
+  if(!q)return;
+  res.innerHTML='<div style="text-align:center;padding:16px"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/admin/tontine/recherche?q='+encodeURIComponent(q));
+    var list=r.data||[];
+    if(!list.length){res.innerHTML='<div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px">Aucun résultat</div>';return;}
+    var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+    var STATUT_CFG={formation:{l:'En formation',c:'#d97706',bg:'#fffbeb'},attente_signatures:{l:'Signatures physiques',c:'#7c3aed',bg:'#faf5ff'},en_cours:{l:'En cours',c:'#059669',bg:'#f0fdf4'},termine:{l:'Terminé',c:'#6b7280',bg:'#f3f4f6'},annule:{l:'Annulé',c:'#dc2626',bg:'#fef2f2'}};
+    var html='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">'+list.length+' résultat(s)</div>';
+    list.forEach(function(g){
+      var cfg=STATUT_CFG[g.statut]||{l:g.statut,c:'#6b7280',bg:'#f3f4f6'};
+      html+='<div onclick="ouvrirGroupeTontineBO(\''+g.id+'\')" style="background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<div style="font-size:13px;font-weight:700;color:#7c3aed">'+(CAT_LABEL[g.categorie]||g.categorie).toUpperCase()+'-'+String(g.numero).padStart(6,'0')+'</div>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+cfg.bg+';color:'+cfg.c+'">'+cfg.l+'</span>';
+      html+='</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-top:2px">'+F(g.montant)+' F · '+g.nbMembres+'/5 membres</div>';
+      html+='</div>';
+    });
+    res.innerHTML=html;
+  }catch(e){
+    res.innerHTML='<div style="color:#dc2626;text-align:center;padding:16px;font-size:12px">'+e.message+'</div>';
+  }
+}
+
 async function telechargerAttestationTontine(participantId){
   try{
     var r=await fetch(API+'/tontine/participants/'+participantId+'/attestation',{
