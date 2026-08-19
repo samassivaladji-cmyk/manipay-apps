@@ -2307,12 +2307,32 @@ function _renderTontine(elig, statutD){
       h6+='<div style="font-size:11px;font-weight:700;color:'+(t.statut==='termine'?'#059669':t.statut==='preleve'||t.statut==='verse'?'#d97706':'#9ca3af')+'">'+(t.statut==='a_venir'?'À venir':t.statut==='preleve'?'Prélevé':t.statut==='verse'?'Versé':'Terminé')+'</div>';
       h6+='</div>';
     });
+    var prochainTour=(statutD.tours||[]).find(function(t){return t.statut==='a_venir';});
+    if(prochainTour && prochainTour.monVersementStatut!=='preleve'){
+      var montantAvecFrais=Math.round(g.montant*1.05);
+      h6+='<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:14px;margin-top:10px">';
+      h6+='<div style="font-size:12px;color:#6d28d9;margin-bottom:8px">Vous pouvez régler votre prochaine cotisation ('+F(montantAvecFrais)+' F) dès maintenant, sans attendre le prélèvement automatique.</div>';
+      h6+='<button id="btn-cotiser-maintenant" onclick="cotiserMaintenantTontine()" style="width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💰 Payer ma cotisation maintenant</button>';
+      h6+='</div>';
+    }
     h6+='<button onclick="telechargerAttestationTontineClient(\''+p.id+'\')" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📄 Télécharger mon attestation</button>';
     body.innerHTML=h6;
     return;
   }
 
   body.innerHTML='<div style="text-align:center;padding:24px;color:var(--m);font-size:13px">Statut en cours de mise à jour...</div>';
+}
+async function cotiserMaintenantTontine(){
+  var btn=document.getElementById('btn-cotiser-maintenant');
+  if(btn){btn.disabled=true;btn.textContent='Traitement...';}
+  try{
+    var r=await post('/tontine/cotiser-maintenant',{});
+    T(r.data.message||'Cotisation réglée avec succès.');
+    ouvrirTontine();
+  }catch(e){
+    T(e.message,true);
+    if(btn){btn.disabled=false;btn.textContent='💰 Payer ma cotisation maintenant';}
+  }
 }
 async function choisirPalierTontine(montant){
   var body=document.getElementById('tontine-body');
