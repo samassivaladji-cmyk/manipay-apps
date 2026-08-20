@@ -461,11 +461,6 @@ html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:
       <div><div class="params-label">Tontine ManiPay</div><div class="params-sub">Épargne collective — réservé au KYC3</div></div>
       <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
     </button>
-    <button class="params-item" onclick="ouvrirTxMasquees()">
-      <div class="params-icon" style="background:#f3f4f6">🙈</div>
-      <div><div class="params-label">Transactions masquées</div><div class="params-sub">Sur cet appareil uniquement</div></div>
-      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
     <button class="params-item" onclick="ouvrirCautionsRecues()">
       <div class="params-icon" style="background:#fff7ed">🤝</div>
       <div><div class="params-label">Invitations de caution</div><div class="params-sub" id="cautions-recues-sub">On me demande de me porter garant</div></div>
@@ -1232,8 +1227,8 @@ var TX_CFG={
   tontine_caution_paiement:{c:'#dc2626',bg:'#fef2f2',i:'🛡️',l:'Paiement caution Tontine'},
 };
 
-// ── Masquage de transaction (stockage local à l'appareil uniquement — une réinstallation
-// de l'app fait réapparaître toutes les transactions masquées, c'est voulu) ──
+// ── Masquage de transaction (stockage local à l'appareil uniquement — irréversible depuis
+// l'app ; seule une réinstallation de l'app fait réapparaître les transactions masquées) ──
 function _getTxMasquees(){
   try{return JSON.parse(localStorage.getItem('manipay_tx_masquees')||'{}');}catch(e){return {};}
 }
@@ -1243,48 +1238,38 @@ function _setTxMasquees(obj){
 function estTxMasquee(id){
   return !!_getTxMasquees()[id];
 }
-function masquerTransaction(id, apercu){
+function masquerTransaction(id){
   var m=_getTxMasquees();
-  m[id]={date:new Date().toISOString(), apercu:apercu||''};
+  m[id]=true;
   _setTxMasquees(m);
 }
-function demasquerTransaction(id){
-  var m=_getTxMasquees();
-  delete m[id];
-  _setTxMasquees(m);
-}
+var _mtxTargetId=null;
 function masquerEtRetour(id){
-  if(!confirm('Masquer cette transaction de votre historique sur cet appareil ?\n\nElle reste bien enregistrée chez ManiPay (rien n\'est supprimé) et réapparaîtra automatiquement si vous réinstallez l\'application. Vous pourrez aussi la réafficher à tout moment depuis Paramètres.'))return;
-  var tx=_txCache[id];
-  var apercu=tx?((tx.type||'')+' · '+F(tx.montant||0)):'';
-  masquerTransaction(id, apercu);
-  T('Transaction masquée sur cet appareil.');
-  setTab('history');
-  chargerHistorique();
+  _mtxTargetId=id;
+  document.getElementById('mtx-pin').value='';
+  document.getElementById('mtx-err').style.display='none';
+  openSh('masquer-tx');
+  setTimeout(function(){var i=document.getElementById('mtx-pin');if(i)i.focus();},150);
 }
-function ouvrirTxMasquees(){
-  openSh('tx-masquees');
-  var body=document.getElementById('tx-masquees-body');
-  var m=_getTxMasquees();
-  var ids=Object.keys(m);
-  if(!ids.length){
-    body.innerHTML='<div style="text-align:center;padding:32px;color:var(--m);font-size:13px">Aucune transaction masquée sur cet appareil.</div>';
-    return;
+async function confirmerMasquerTx(){
+  var pin=document.getElementById('mtx-pin').value.trim();
+  var errEl=document.getElementById('mtx-err');
+  errEl.style.display='none';
+  if(pin.length!==4||isNaN(pin)){errEl.textContent='PIN à 4 chiffres requis';errEl.style.display='';return;}
+  var btn=document.getElementById('mtx-btn');
+  btn.disabled=true;btn.style.opacity='.6';
+  try{
+    await post('/users/me/verifier-pin',{pin:pin});
+    masquerTransaction(_mtxTargetId);
+    closeSh('masquer-tx');
+    setTab('history');
+    chargerHistorique();
+  }catch(e){
+    errEl.textContent=e.message;
+    errEl.style.display='';
+  }finally{
+    btn.disabled=false;btn.style.opacity='1';
   }
-  ids.sort(function(a,b){return new Date(m[b].date)-new Date(m[a].date);});
-  var html='<div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Masquées uniquement sur cet appareil — toujours visibles et intactes côté ManiPay.</div>';
-  ids.forEach(function(id){
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:8px">';
-    html+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m[id].apercu||'Transaction')+'</div><div style="font-size:11px;color:#9ca3af">masquée le '+new Date(m[id].date).toLocaleDateString('fr-FR')+'</div></div>';
-    html+='<button onclick="_reafficherTx(\''+id+'\')" style="flex-shrink:0;margin-left:10px;padding:8px 14px;border-radius:10px;border:1px solid #ddd6fe;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Réafficher</button>';
-    html+='</div>';
-  });
-  body.innerHTML=html;
-}
-function _reafficherTx(id){
-  demasquerTransaction(id);
-  ouvrirTxMasquees();
-  if(typeof chargerHistorique==='function')chargerHistorique();
 }
 
 function txRow(tx){
@@ -1425,7 +1410,6 @@ function voirDetailTx(id) {
   }
   el.innerHTML += '<div style="margin:14px 16px 0">'
     +'<button onclick="masquerEtRetour(\''+(tx.id||id)+'\')" style="width:100%;padding:14px;background:#f9fafb;color:#6b7280;border:1.5px solid #e5e7eb;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🙈 Masquer cette transaction</button>'
-    +'<div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:6px">Uniquement sur cet appareil — réversible depuis Paramètres</div>'
     +'</div>';
   setTab('tx-detail');
 }
@@ -3637,11 +3621,15 @@ document.querySelectorAll('.sh-ov').forEach(function(el){el.addEventListener('cl
   </div>
 </div>
 
-<div class="sh-ov" id="sh-tx-masquees">
+<div class="sh-ov" id="sh-masquer-tx">
   <div class="sh">
     <div class="sh-bar"></div>
-    <div class="sh-top"><div><div class="sh-title">🙈 Transactions masquées</div><div style="color:var(--m);font-size:12px">Uniquement sur cet appareil</div></div><button class="sh-x" onclick="closeSh('tx-masquees')">✕</button></div>
-    <div id="tx-masquees-body" style="padding:0 22px 40px"></div>
+    <div class="sh-top"><div><div class="sh-title">🙈 Masquer cette transaction</div></div><button class="sh-x" onclick="closeSh('masquer-tx')">✕</button></div>
+    <div style="padding:0 22px 32px">
+      <div id="mtx-err" style="display:none;background:#fef2f2;color:#dc2626;padding:10px;border-radius:10px;margin-bottom:14px;font-size:13px"></div>
+      <div style="margin-bottom:20px"><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block">Votre PIN</label><input id="mtx-pin" type="password" inputmode="numeric" maxlength="4" placeholder="...." style="width:100%;background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;font-size:24px;font-family:inherit;color:#111827;outline:none;text-align:center;letter-spacing:10px"/></div>
+      <button id="mtx-btn" onclick="confirmerMasquerTx()" style="width:100%;background:#111827;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer</button>
+    </div>
   </div>
 </div>
 
