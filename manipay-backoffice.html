@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.4-2026-08-19"/>
+<meta name="version" content="v2.5-2026-08-19"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1408,6 +1408,7 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <button id="tbo-tab-attente" onclick="setTontineBOTab('attente')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⏳ En attente</button>
       <button id="tbo-tab-defaillances" onclick="setTontineBOTab('defaillances')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">⚠️ Défaillances</button>
       <button id="tbo-tab-verifier" onclick="setTontineBOTab('verifier')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">🔍 Vérifier</button>
+      <button id="tbo-tab-averser" onclick="setTontineBOTab('averser')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#059669;white-space:nowrap">💰 À verser<span id="tbo-averser-badge" style="display:none;background:#dc2626;color:#fff;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
       <button id="tbo-tab-rechercher" onclick="setTontineBOTab('rechercher')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📇 Rechercher</button>
       <button id="tbo-tab-stats" onclick="setTontineBOTab('stats')" style="padding:10px 14px;font-size:12px;font-weight:700;border:none;background:none;cursor:pointer;font-family:inherit;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap">📊 Stats</button>
     </div>
@@ -11252,7 +11253,7 @@ var _isSuperBO = false;
 var _tboActiveTab='groupes';
 function setTontineBOTab(t){
   _tboActiveTab=t;
-  ['groupes','attente','defaillances','verifier','rechercher','stats'].forEach(function(t2){
+  ['groupes','attente','defaillances','verifier','rechercher','averser','stats'].forEach(function(t2){
     var btn=document.getElementById('tbo-tab-'+t2);
     if(btn){btn.style.color=t2===t?'#7c3aed':'#6b7280';btn.style.borderBottom=t2===t?'2px solid #7c3aed':'2px solid transparent';}
   });
@@ -11261,12 +11262,14 @@ function setTontineBOTab(t){
 async function chargerTontineBO(){
   var body=document.getElementById('tbo-body');
   body.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  if(_tboActiveTab!=='averser')_verifierToursAVerserEnFond();
   try{
     if(_tboActiveTab==='groupes')await _renderTontineBOGroupes(body);
     else if(_tboActiveTab==='attente')await _renderTontineBOAttente(body);
     else if(_tboActiveTab==='defaillances')await _renderTontineBODefaillances(body);
     else if(_tboActiveTab==='verifier')_renderTontineBOVerifier(body);
     else if(_tboActiveTab==='rechercher')_renderTontineBORecherche(body);
+    else if(_tboActiveTab==='averser')await _renderTontineBOAVerser(body);
     else await _renderTontineBOStats(body);
   }catch(e){
     body.innerHTML='<div style="color:var(--r);text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
@@ -11573,6 +11576,50 @@ async function _rechercherTontineBO(){
   }catch(e){
     res.innerHTML='<div style="color:#dc2626;text-align:center;padding:16px;font-size:12px">'+e.message+'</div>';
   }
+}
+
+async function _renderTontineBOAVerser(body){
+  var CAT_LABEL={hebdo:'Hebdo',bihebdo:'Bi-hebdo',mensuel:'Mensuel'};
+  try{
+    var r=await apiGet('/admin/tontine/tours-versables');
+    var list=r.data||[];
+    _majBadgeAVerser(list.length);
+    if(!list.length){
+      body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">✅ Aucun tour en attente de versement — tout est à jour</div>';
+      return;
+    }
+    var html='<div style="font-size:11px;color:#6b7280;margin-bottom:14px">'+list.length+' tour(s) prêt(s) à verser — 5/5 cotisations déjà réunies, peu importe la date prévue.</div>';
+    list.forEach(function(t){
+      html+='<div style="background:#fff;border:1px solid #bbf7d0;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html+='<div style="font-size:13px;font-weight:800;color:#7c3aed">'+(CAT_LABEL[t.categorie]||t.categorie).toUpperCase()+'-'+String(t.groupeNumero).padStart(6,'0')+'</div>';
+      html+='<span style="font-size:10px;color:#9ca3af">Tour '+t.numeroTour+'</span>';
+      html+='</div>';
+      html+='<div style="font-size:13px;font-weight:700;margin-bottom:2px">👤 '+(t.beneficiairePrenom||'')+' '+(t.beneficiaireNom||'')+'</div>';
+      html+='<div style="font-size:11px;color:#9ca3af;margin-bottom:10px">Prévu le '+new Date(t.datePrevue).toLocaleDateString('fr-FR')+' · '+F(t.montantTotal)+' F</div>';
+      html+='<button onclick="verserTourMaintenant(\''+t.id+'\')" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💰 Verser maintenant</button>';
+      html+='</div>';
+    });
+    body.innerHTML=html;
+  }catch(e){
+    body.innerHTML='<div style="color:#dc2626;text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+
+function _majBadgeAVerser(n){
+  var badge=document.getElementById('tbo-averser-badge');
+  if(!badge)return;
+  if(n>0){badge.textContent=n;badge.style.display='inline';}
+  else{badge.style.display='none';}
+}
+
+// Vérifie en arrière-plan s'il y a des tours à verser, dès l'arrivée sur l'onglet Tontine,
+// pour afficher le badge même si l'utilisateur ne clique pas sur "À verser" en premier.
+async function _verifierToursAVerserEnFond(){
+  try{
+    var r=await apiGet('/admin/tontine/tours-versables');
+    _majBadgeAVerser((r.data||[]).length);
+  }catch(e){}
 }
 
 async function ouvrirComptesSystemeTontine(){
