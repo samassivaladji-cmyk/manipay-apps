@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.1-2026-08-17"/>
+<meta name="version" content="v2.4-2026-08-19"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1439,6 +1439,34 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   </div>
 </div>
 
+<div class="sh-ov" id="sh-tontine-comptes-systeme">
+  <div class="sh" style="max-height:97vh;border-radius:20px 20px 0 0">
+    <div class="sh-bar"></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" style="font-size:18px">💰 Comptes système Tontine</div><div style="color:var(--m);font-size:12px;margin-top:2px">14 réserves par palier + 1 commission</div></div>
+      <button class="sh-x" onclick="closeSh('tontine-comptes-systeme')">✕</button>
+    </div>
+    <div id="tcs-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<div class="sh-ov" id="sh-tontine-virer-commission">
+  <div class="sh" style="border-radius:20px 20px 0 0">
+    <div class="sh-bar"></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" style="font-size:18px">💸 Virer commission Tontine</div><div style="color:var(--m);font-size:12px;margin-top:2px">Vers votre compte personnel</div></div>
+      <button class="sh-x" onclick="closeSh('tontine-virer-commission')">✕</button>
+    </div>
+    <div style="padding:16px 20px 32px">
+      <div id="tvc-err" style="display:none;background:#fef2f2;color:#dc2626;padding:10px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Solde disponible</div>
+      <div style="font-size:22px;font-weight:800;color:#059669;margin-bottom:14px" id="tvc-solde">--</div>
+      <input class="inp" id="tvc-montant" type="number" placeholder="Ex: 5000" style="margin-bottom:12px"/>
+      <input class="inp" id="tvc-desc" type="text" placeholder="Description (optionnel)" style="margin-bottom:16px"/>
+      <button onclick="confirmerVirerCommissionTontine()" style="width:100%;background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer le virement</button>
+    </div>
+  </div>
+</div>
 
 <div class="scr" id="s-moncompte">
   <div style="background:#fff;padding:52px 20px 12px;border-bottom:1px solid #f3f4f6;position:sticky;top:0;z-index:10">
@@ -11454,9 +11482,23 @@ async function _renderTontineBOStats(body){
   var totalGroupes=(d.groupesParStatut||[]).reduce(function(s,g){return s+parseInt(g.n);},0);
   html+='<div style="background:#fffbeb;border-radius:14px;padding:16px"><div style="font-size:11px;color:#d97706;font-weight:700">GROUPES TOTAL</div><div style="font-size:24px;font-weight:900;color:#d97706">'+totalGroupes+'</div></div>';
   if(d.commissionTotale!==undefined){
-    html+='<div style="background:#f0fdf4;border-radius:14px;padding:16px;grid-column:span 2;border:1px solid #bbf7d0"><div style="font-size:11px;color:#059669;font-weight:700">COMMISSION TONTINE</div><div style="font-size:24px;font-weight:900;color:#059669">'+F(d.commissionTotale)+' F</div><div style="font-size:10px;color:#9ca3af">Dissociée du résultat général ManiPay (accueil)</div></div>';
+    html+='<div style="background:#f0fdf4;border-radius:14px;padding:16px;grid-column:span 2;border:1px solid #bbf7d0">';
+    html+='<div style="font-size:11px;color:#059669;font-weight:700">COMMISSION TONTINE — SOLDE ACTUEL (compte n°15)</div>';
+    html+='<div style="font-size:24px;font-weight:900;color:#059669">'+F(d.commissionSoldeActuel)+' F</div>';
+    html+='<div style="font-size:10px;color:#9ca3af;margin-bottom:10px">Total gagné depuis le début : '+F(d.commissionTotale)+' F · Dissociée du résultat général ManiPay (accueil)</div>';
+    html+='<div style="display:flex;gap:8px">';
+    html+='<button onclick="ouvrirComptesSystemeTontine()" style="flex:1;padding:9px;border-radius:10px;border:1px solid #bbf7d0;background:#fff;color:#059669;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Voir le détail</button>';
+    if(isSuperAdmin()){
+      html+='<button onclick="ouvrirVirerCommissionTontine('+(d.commissionSoldeActuel||0)+')" style="flex:1;padding:9px;border-radius:10px;border:none;background:#059669;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💸 Virer</button>';
+    }
+    html+='</div></div>';
   }
-  html+='<div style="background:#faf5ff;border-radius:14px;padding:16px;grid-column:span 2;border:1px solid #ddd6fe"><div style="font-size:11px;color:#7c3aed;font-weight:700">SOLDE TOTAL EN CIRCULATION (14 comptes réserve)</div><div style="font-size:24px;font-weight:900;color:#6d28d9">'+F(d.soldeReserveTotal||0)+' F</div><div style="font-size:10px;color:#9ca3af">Argent des cotisations prélevées, pas encore versées aux bénéficiaires</div></div>';
+  html+='<div style="background:#faf5ff;border-radius:14px;padding:16px;grid-column:span 2;border:1px solid #ddd6fe">';
+  html+='<div style="font-size:11px;color:#7c3aed;font-weight:700">SOLDE TOTAL EN CIRCULATION (14 comptes réserve)</div>';
+  html+='<div style="font-size:24px;font-weight:900;color:#6d28d9">'+F(d.soldeReserveTotal||0)+' F</div>';
+  html+='<div style="font-size:10px;color:#9ca3af;margin-bottom:10px">Argent des cotisations prélevées, pas encore versées aux bénéficiaires — jamais virable, appartient aux participants</div>';
+  html+='<button onclick="ouvrirComptesSystemeTontine()" style="width:100%;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#fff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Voir le détail des 14 comptes</button>';
+  html+='</div>';
   html+='</div>';
 
   if(d.palierPlusRentable || d.palierPlusDeParticipants){
@@ -11533,6 +11575,70 @@ async function _rechercherTontineBO(){
   }
 }
 
+async function ouvrirComptesSystemeTontine(){
+  openSh('tontine-comptes-systeme');
+  var body=document.getElementById('tcs-body');
+  body.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/admin/tontine/comptes-systeme');
+    var list=r.data||[];
+    var reserves=list.filter(function(c){return c.typeCompte==='reserve_tontine';});
+    var commission=list.filter(function(c){return c.typeCompte==='commission_tontine';});
+    var html='';
+    if(commission.length){
+      html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Commission</div>';
+      commission.forEach(function(c){
+        html+='<div style="display:flex;justify-content:space-between;padding:12px 14px;background:#f0fdf4;border-radius:10px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">'+c.prenom+' '+c.nom+'</span><b style="color:#059669">'+F(c.solde)+' F</b></div>';
+      });
+    }
+    html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Réserves par palier ('+reserves.length+')</div>';
+    reserves.forEach(function(c){
+      html+='<div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f9fafb;border-radius:10px;margin-bottom:6px"><span style="font-size:12px">'+c.nom+'</span><b style="font-size:13px">'+F(c.solde)+' F</b></div>';
+    });
+    body.innerHTML=html;
+  }catch(e){
+    body.innerHTML='<div style="color:#dc2626;text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+
+function ouvrirVirerCommissionTontine(soldeActuel){
+  openSh('tontine-virer-commission');
+  document.getElementById('tvc-solde').textContent=F(soldeActuel)+' F';
+  document.getElementById('tvc-montant').value='';
+  document.getElementById('tvc-desc').value='';
+  document.getElementById('tvc-err').style.display='none';
+}
+async function confirmerVirerCommissionTontine(){
+  var montant=parseFloat(document.getElementById('tvc-montant').value);
+  var desc=document.getElementById('tvc-desc').value;
+  var errEl=document.getElementById('tvc-err');
+  errEl.style.display='none';
+  if(!montant||montant<=0){errEl.textContent='Montant invalide';errEl.style.display='block';return;}
+  try{
+    var r=await apiPost('/admin/tontine/commission/virer',{montant:montant,description:desc});
+    closeSh('tontine-virer-commission');
+    alert(r.data.message||'Virement effectué.');
+    chargerTontineBO();
+  }catch(e){
+    errEl.textContent=e.message;
+    errEl.style.display='block';
+  }
+}
+
+async function verserTourMaintenant(tourId){
+  if(!confirm('Verser ce tour au bénéficiaire maintenant, avant la date prévue ?'))return;
+  try{
+    var r=await apiPost('/admin/tontine/tours/'+tourId+'/verser-maintenant',{});
+    alert(r.data.message||'Versement effectué.');
+    // Recharge le détail du groupe actuellement ouvert
+    var groupeId=document.getElementById('tgd-title')?document.getElementById('tgd-title').dataset.groupeId:null;
+    if(groupeId)ouvrirGroupeTontineBO(groupeId);
+    else chargerTontineBO();
+  }catch(e){
+    alert('Erreur : '+e.message);
+  }
+}
+
 async function telechargerAttestationTontine(participantId){
   try{
     var r=await fetch(API+'/tontine/participants/'+participantId+'/attestation',{
@@ -11553,6 +11659,8 @@ async function telechargerAttestationTontine(participantId){
 async function ouvrirGroupeTontineBO(id){
   openSh('tontine-groupe-detail');
   var body=document.getElementById('tgd-body');
+  var titleEl=document.getElementById('tgd-title');
+  if(titleEl)titleEl.dataset.groupeId=id;
   body.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
   try{
     var r=await apiGet('/admin/tontine/groupe/'+id);
@@ -11617,6 +11725,11 @@ async function ouvrirGroupeTontineBO(id){
       (t.versements||[]).forEach(function(v){
         html+='<div style="font-size:11px;color:'+(v.statut==='defaillant'?'#dc2626':v.statut==='preleve'?'#059669':'#9ca3af')+';margin-top:4px">• '+(v.participantPrenom||'')+' '+(v.participantNom||'')+' — '+v.statut+(v.payeParCautionId?' (via caution)':'')+'</div>';
       });
+      var nbPreleves=(t.versements||[]).filter(function(v){return v.statut==='preleve';}).length;
+      var nbTotal=(d.membres||[]).length||5;
+      if(t.statut!=='termine' && nbPreleves>=nbTotal){
+        html+='<button onclick="verserTourMaintenant(\''+t.id+'\')" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💰 Verser maintenant ('+nbPreleves+'/'+nbTotal+' cotisations réunies)</button>';
+      }
       html+='</div>';
     });
     if(!(d.tours||[]).length)html+='<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Aucun tour pour l\'instant — le tirage au sort n\'a pas encore eu lieu</div>';
