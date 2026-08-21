@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.8-2026-08-21-test2min"/>
+<meta name="version" content="v2.9-2026-08-21-final"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1229,7 +1229,7 @@ var TX_CFG={
 
 // ── Masquage de transaction (stockage local à l'appareil, durée fixe 24h — réapparaît
 // automatiquement après ce délai, sans action de l'utilisateur ni indication visible) ──
-var TX_MASQUAGE_DUREE_MS = 2*60*1000; // ⚠️ TEST — 2 minutes au lieu de 24h, à remettre après vérification
+var TX_MASQUAGE_DUREE_MS = 24*60*60*1000;
 function _getTxMasquees(){
   try{return JSON.parse(localStorage.getItem('manipay_tx_masquees')||'{}');}catch(e){return {};}
 }
