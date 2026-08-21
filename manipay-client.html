@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.5-2026-08-09-u"/>
+<meta name="version" content="v2.6-2026-08-21-a"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1433,7 +1433,8 @@ async function annulerTransaction(txId){
 async function chargerTxns(){
   var el=document.getElementById('h-txns');
   el.innerHTML='<div style="padding:20px;text-align:center"><div class="spin"></div></div>';
-  try{var r=await get('/transactions?limit=5');var list=r.data||[];
+  try{var r=await get('/transactions?limit=8');var list=r.data||[];
+    list=list.filter(function(tx){return !estTxMasquee(tx.id);}).slice(0,5);
     list.forEach(function(tx){_txCache[tx.id]=tx;});
     el.innerHTML=list.length?list.map(txRow).join(''):'<div style="text-align:center;padding:24px;color:var(--m);font-size:14px">Aucune transaction pour l\'instant</div>';}
   catch(e){el.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:var(--r);padding:12px;border-radius:12px;font-size:13px">'+e.message+'</div>';}
@@ -1460,8 +1461,8 @@ function renderHistRow(item){
   return item&&item._kind==='commission'?commRow(item):txRow(item);
 }
 async function chargerHistorique(){
-  var chips=['all','transfert','paiement_marchand','virement','gain'].map(f=>'<button onclick="setHistFilter(\''+f+'\')" class="chip'+(histFilter===f?' on':'')+'">'
-    +{all:'Tous',transfert:'Envois/Reçus',paiement_marchand:'Paiements',virement:'Virements',gain:'Gains'}[f]+'</button>').join('');
+  var chips=['all','transfert','paiement_marchand','virement','gain','tontine'].map(f=>'<button onclick="setHistFilter(\''+f+'\')" class="chip'+(histFilter===f?' on':'')+'">'
+    +{all:'Tous',transfert:'Envois/Reçus',paiement_marchand:'Paiements',virement:'Virements',gain:'Gains',tontine:'Tontine'}[f]+'</button>').join('');
   document.getElementById('hist-chips').innerHTML=chips;
   // Bascule recherche Num&#233;ro <-> Date pour Virements et Gains
   var parDate=['virement','gain'].includes(histFilter);
@@ -1482,6 +1483,18 @@ async function chargerHistorique(){
         .map(function(c){c._kind='commission';return c;});
       list2.sort(function(a,b){return new Date(b.date_calcul||0)-new Date(a.date_calcul||0);});
       _histAllData=list2;
+      filtrerHistorique();
+      return;
+    }
+    if(histFilter==='tontine'){
+      // Un seul onglet regroupant les cotisations versées ET les réceptions reçues
+      var rCot=await get('/transactions?limit=500&type=tontine_versement');
+      var rRec=await get('/transactions?limit=500&type=tontine_reception');
+      var listT=(rCot.data||[]).concat(rRec.data||[]);
+      listT.sort(function(a,b){return new Date(b.dateCreation||b.date_creation||0)-new Date(a.dateCreation||a.date_creation||0);});
+      listT=listT.filter(function(tx){return !estTxMasquee(tx.id);});
+      listT.forEach(function(tx){_txCache[tx.id]=tx;});
+      _histAllData=listT;
       filtrerHistorique();
       return;
     }
