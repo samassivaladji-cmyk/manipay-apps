@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.6-2026-08-21-a"/>
+<meta name="version" content="v2.7-2026-08-21-b"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1771,7 +1771,16 @@ function ouvrirSendWave(tel, nom) {
   document.getElementById('sw-recap').style.display = 'none';
   window._swTel = tel;
   setTab('send-wave');
-  setTimeout(function(){ document.getElementById('sw-amt').focus(); }, 400);
+  var scr=document.getElementById('s-send-wave');
+  if(scr)scr.scrollTop=0;
+  window.scrollTo(0,0);
+  setTimeout(function(){
+    document.getElementById('sw-amt').focus();
+    // Le focus fait remonter le clavier, ce qui repousse le nom du destinataire hors
+    // écran — on force le retour en haut juste après pour qu'il reste toujours visible.
+    if(scr)scr.scrollTop=0;
+    window.scrollTo(0,0);
+  }, 400);
 }
 
 function calcSW() {
