@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.7-2026-08-21"/>
+<meta name="version" content="v2.8-2026-08-21"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -11545,7 +11545,6 @@ async function _renderTontineBOStats(body){
   html+='</div>';
   html+='<div id="tbo-avances-card"></div>';
   html+='</div>';
-  _chargerAvancesTontineCard();
 
   if(d.palierPlusRentable || d.palierPlusDeParticipants){
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
@@ -11579,6 +11578,7 @@ async function _renderTontineBOStats(body){
   });
 
   body.innerHTML=html;
+  _chargerAvancesTontineCard();
 }
 
 async function _renderTontineBORecherche(body){
