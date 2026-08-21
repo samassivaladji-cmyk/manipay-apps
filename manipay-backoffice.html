@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.5-2026-08-19"/>
+<meta name="version" content="v2.7-2026-08-21"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -11454,10 +11454,51 @@ async function ouvrirBasculeTontine(participantId,nomClient,montantActuel){
   }
 }
 async function _renderTontineBODefaillances(body){
+  var html='';
+  try{
+    var rBan=await apiGet('/admin/tontine/bannis');
+    var listBan=rBan.data||[];
+    if(listBan.length){
+      html+='<div style="background:#111827;border-radius:12px;padding:12px 14px;margin-bottom:12px">';
+      html+='<div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:2px">🚫 '+listBan.length+' banni(s) définitivement</div>';
+      html+='<div style="font-size:11px;color:#d1d5db">Tolérance zéro — ne peuvent plus jamais s\'inscrire à une Tontine sous leur nom.</div>';
+      html+='</div>';
+      listBan.forEach(function(d){
+        html+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:8px">';
+        html+='<div style="font-size:13px;font-weight:700">🚫 '+(d.prenom||'')+' '+(d.nom||'')+'</div>';
+        html+='<div style="font-size:11px;color:#9ca3af">'+d.telephone+' · banni le '+new Date(d.banniLe).toLocaleDateString('fr-FR')+'</div>';
+        html+='</div>';
+      });
+    }
+  }catch(e){}
+  try{
+    var rRouge=await apiGet('/admin/tontine/participants-rouge');
+    var listRouge=rRouge.data||[];
+    if(listRouge.length){
+      html+='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;margin-bottom:16px;margin-top:16px">';
+      html+='<div style="font-size:12px;font-weight:800;color:#dc2626;margin-bottom:2px">🔴 '+listRouge.length+' cotisation(s) toujours impayée(s) après 2 jours</div>';
+      html+='<div style="font-size:11px;color:#991b1b">Ni le participant ni ses 4 cautions n\'ont pu régler, même après la fenêtre de rattrapage de 2 jours. Dossier de recouvrement en cours.</div>';
+      html+='</div>';
+      listRouge.forEach(function(d){
+        html+='<div style="background:#fff;border:1px solid #fecaca;border-radius:14px;padding:14px 16px;margin-bottom:8px">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        html+='<div style="font-size:13px;font-weight:700">🔴 '+(d.prenom||'')+' '+(d.nom||'')+'</div>';
+        html+='<div style="font-size:13px;font-weight:800;color:#dc2626">'+F(d.montant)+' F</div>';
+        html+='</div>';
+        html+='<div style="font-size:11px;color:#6b7280">'+d.telephone+' · '+(d.categorie||'').toUpperCase()+'-'+String(d.groupeNumero).padStart(6,'0')+' · Tour '+d.numeroTour+' · '+new Date(d.datePrevue).toLocaleDateString('fr-FR')+'</div>';
+        html+='<button onclick="ouvrirGroupeTontineBO(\''+d.groupeId+'\')" style="width:100%;margin-top:8px;padding:9px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Voir le groupe</button>';
+        html+='</div>';
+      });
+      html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px">Défaillances en cours de résolution</div>';
+    }
+  }catch(e){}
   var r=await apiGet('/admin/tontine/defaillances');
   var list=r.data||[];
-  if(!list.length){body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune défaillance en cours ✅</div>';return;}
-  var html='';
+  if(!list.length){
+    if(!html)body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucune défaillance en cours ✅</div>';
+    else body.innerHTML=html;
+    return;
+  }
   list.forEach(function(d){
     var resolu=!!d.payeParCautionId;
     html+='<div style="background:'+(resolu?'#f0fdf4':'#fef2f2')+';border:1px solid '+(resolu?'#bbf7d0':'#fecaca')+';border-radius:14px;padding:14px 16px;margin-bottom:8px">';
@@ -11502,7 +11543,9 @@ async function _renderTontineBOStats(body){
   html+='<div style="font-size:10px;color:#9ca3af;margin-bottom:10px">Argent des cotisations prélevées, pas encore versées aux bénéficiaires — jamais virable, appartient aux participants</div>';
   html+='<button onclick="ouvrirComptesSystemeTontine()" style="width:100%;padding:9px;border-radius:10px;border:1px solid #ddd6fe;background:#fff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Voir le détail des 14 comptes</button>';
   html+='</div>';
+  html+='<div id="tbo-avances-card"></div>';
   html+='</div>';
+  _chargerAvancesTontineCard();
 
   if(d.palierPlusRentable || d.palierPlusDeParticipants){
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
@@ -11622,6 +11665,21 @@ async function _verifierToursAVerserEnFond(){
   }catch(e){}
 }
 
+async function _chargerAvancesTontineCard(){
+  var el=document.getElementById('tbo-avances-card');
+  if(!el)return;
+  try{
+    var r=await apiGet('/admin/tontine/avances');
+    var d=r.data||{};
+    var total=d.totalEnAttenteRecouvrement||0;
+    var html='<div style="background:'+(total>0?'#fffbeb':'#f0fdf4')+';border-radius:14px;padding:16px;border:1px solid '+(total>0?'#fde68a':'#bbf7d0')+'">';
+    html+='<div style="font-size:11px;color:'+(total>0?'#d97706':'#059669')+';font-weight:700">💰 AVANCES MANIPAY EN COURS (Option B)</div>';
+    html+='<div style="font-size:22px;font-weight:900;color:'+(total>0?'#d97706':'#059669')+'">'+F(total)+' F</div>';
+    html+='<div style="font-size:10px;color:#9ca3af">Argent avancé pour garantir des versements malgré des défaillances, pas encore recouvré</div>';
+    html+='</div>';
+    el.innerHTML=html;
+  }catch(e){}
+}
 async function ouvrirComptesSystemeTontine(){
   openSh('tontine-comptes-systeme');
   var body=document.getElementById('tcs-body');
@@ -11722,6 +11780,13 @@ async function ouvrirGroupeTontineBO(id){
       refuse:{l:'Refusé',c:'#dc2626',bg:'#fef2f2',i:'❌'},
       invite:{l:'En attente de réponse',c:'#d97706',bg:'#fffbeb',i:'⏳'}
     };
+    var COULEUR_CFG={
+      vert:{l:'Anticipé',c:'#059669',bg:'#f0fdf4'},
+      orange:{l:'Normal',c:'#d97706',bg:'#fffbeb'},
+      bleu:{l:'Résolu (soi-même)',c:'#2563eb',bg:'#eff6ff'},
+      jaune:{l:'Résolu (caution)',c:'#ca8a04',bg:'#fefce8'},
+      rouge:{l:'Défaillance définitive',c:'#dc2626',bg:'#fef2f2'}
+    };
 
     var html='';
     if(g.statut==='attente_signatures'){
@@ -11733,13 +11798,14 @@ async function ouvrirGroupeTontineBO(id){
     }
     html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Membres du groupe</div>';
     (d.membres||[]).forEach(function(m){
+      var cl=COULEUR_CFG[m.couleurActuelle]||COULEUR_CFG.orange;
       html+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.03)">';
       html+='<div style="display:flex;justify-content:space-between;align-items:center">';
       html+='<div style="display:flex;align-items:center;gap:8px">';
       html+='<div style="width:26px;height:26px;border-radius:8px;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">'+(m.position||'-')+'</div>';
-      html+='<div><div style="font-size:14px;font-weight:800">'+(m.prenom||'')+' '+(m.nom||'')+'</div><div style="font-size:11px;color:#9ca3af">'+m.telephone+'</div></div>';
+      html+='<div><div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px">'+(m.prenom||'')+' '+(m.nom||'')+'<span title="'+cl.l+'" style="width:9px;height:9px;border-radius:50%;background:'+cl.c+';display:inline-block"></span></div><div style="font-size:11px;color:#9ca3af">'+m.telephone+'</div></div>';
       html+='</div>';
-      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+(m.statut==='defaillant'?'#fef2f2':'#f3f4f6')+';color:'+(m.statut==='defaillant'?'#dc2626':'#6b7280')+'">'+m.statut+'</span>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+cl.bg+';color:'+cl.c+'">'+cl.l+'</span>';
       html+='</div>';
 
       html+='<div style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px">Ses 4 cautions</div>';
@@ -11770,7 +11836,11 @@ async function ouvrirGroupeTontineBO(id){
       html+='<div style="display:flex;justify-content:space-between"><b style="font-size:13px">Tour '+t.numeroTour+' — '+(t.beneficiairePrenom||'')+' '+(t.beneficiaireNom||'')+'</b><span style="font-size:11px;color:#6b7280">'+t.statut+'</span></div>';
       html+='<div style="font-size:11px;color:#9ca3af;margin-top:2px">'+new Date(t.datePrevue).toLocaleDateString('fr-FR')+' · '+F(t.montantTotal)+' F</div>';
       (t.versements||[]).forEach(function(v){
-        html+='<div style="font-size:11px;color:'+(v.statut==='defaillant'?'#dc2626':v.statut==='preleve'?'#059669':'#9ca3af')+';margin-top:4px">• '+(v.participantPrenom||'')+' '+(v.participantNom||'')+' — '+v.statut+(v.payeParCautionId?' (via caution)':'')+'</div>';
+        var cl=COULEUR_CFG[v.couleur]||COULEUR_CFG.orange;
+        html+='<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:'+cl.c+';margin-top:4px">';
+        html+='<span style="width:8px;height:8px;border-radius:50%;background:'+cl.c+';flex-shrink:0"></span>';
+        html+='<span>'+(v.participantPrenom||'')+' '+(v.participantNom||'')+' — '+cl.l+(v.payeParCautionId?' (via caution)':'')+'</span>';
+        html+='</div>';
       });
       var nbPreleves=(t.versements||[]).filter(function(v){return v.statut==='preleve';}).length;
       var nbTotal=(d.membres||[]).length||5;
