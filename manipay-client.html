@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.7-2026-08-21-b"/>
+<meta name="version" content="v2.8-2026-08-21-test2min"/>
 <meta name="theme-color" content="#059669"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Client</title>
@@ -1227,8 +1227,9 @@ var TX_CFG={
   tontine_caution_paiement:{c:'#dc2626',bg:'#fef2f2',i:'🛡️',l:'Paiement caution Tontine'},
 };
 
-// ── Masquage de transaction (stockage local à l'appareil uniquement — irréversible depuis
-// l'app ; seule une réinstallation de l'app fait réapparaître les transactions masquées) ──
+// ── Masquage de transaction (stockage local à l'appareil, durée fixe 24h — réapparaît
+// automatiquement après ce délai, sans action de l'utilisateur ni indication visible) ──
+var TX_MASQUAGE_DUREE_MS = 2*60*1000; // ⚠️ TEST — 2 minutes au lieu de 24h, à remettre après vérification
 function _getTxMasquees(){
   try{return JSON.parse(localStorage.getItem('manipay_tx_masquees')||'{}');}catch(e){return {};}
 }
@@ -1236,11 +1237,15 @@ function _setTxMasquees(obj){
   try{localStorage.setItem('manipay_tx_masquees', JSON.stringify(obj));}catch(e){}
 }
 function estTxMasquee(id){
-  return !!_getTxMasquees()[id];
+  var m=_getTxMasquees();
+  var exp=m[id];
+  if(!exp)return false;
+  if(Date.now()>exp){delete m[id];_setTxMasquees(m);return false;}
+  return true;
 }
 function masquerTransaction(id){
   var m=_getTxMasquees();
-  m[id]=true;
+  m[id]=Date.now()+TX_MASQUAGE_DUREE_MS;
   _setTxMasquees(m);
 }
 var _mtxTargetId=null;
