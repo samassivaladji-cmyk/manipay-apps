@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v3.1-2026-08-21"/>
+<meta name="version" content="v3.2-2026-08-22"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -4744,33 +4744,33 @@ function filtrerRembComptesLocal(){
   });
   listEl.innerHTML=html;
 }
+var _filtrerUsersTimer=null;
 function filtrerUsers(q){
-  // Toujours exclure le Super BO de la vue admin/backoffice (sauf si on est Super BO)
-  var base=usersData.filter(function(u){
-    if(!isSuperAdmin() && u.telephone===SUPER_ADMIN_TEL && u.statut!=='bloque') return false;
-    return true;
-  });
-  if(!q){renderU(base);return;}
-  var f=base.filter(function(u){return(u.prenom+' '+u.nom).toLowerCase().indexOf(q.toLowerCase())>=0||u.telephone.indexOf(q)>=0;});
-  renderU(f);
+  clearTimeout(_filtrerUsersTimer);
+  _filtrerUsersTimer=setTimeout(function(){ _rechercherUsersServeur(q); }, 300);
 }
-function renderU(list){
+async function _rechercherUsersServeur(q){
+  if(!q){ chargerUsers(); return; }
   var el=document.getElementById('u-list');
-  if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--m);font-size:13px">Aucun resultat</div>';return;}
-  el.innerHTML='';
-  list.forEach(function(u){
-    var c=ROLE_C[u.role]||'#888';
-    var solde=u.comptes&&u.comptes[0]?Number(u.comptes[0].solde):(u.solde!==undefined&&u.solde!==null?Number(u.solde):0);
-    var soldeHtml=perm('soldes')?'<div style="color:'+c+';font-size:12px;font-weight:700">'+F(solde)+'</div>':'<div style="color:#d1d5db;font-size:12px">*****</div>';
-    var div=document.createElement('div');
-    div.style.cssText='background:#fff;border:1px solid #f3f4f6;border-radius:14px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px';
-    div.innerHTML='<div style="width:42px;height:42px;border-radius:12px;background:'+c+'22;color:'+c+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0">'+(u.prenom||'?')[0].toUpperCase()+'</div>'
-      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</span><span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:'+c+'22;color:'+c+'">'+u.role+'</span></div>'
-      +'<div style="color:#6b7280;font-size:11px;margin-top:2px">'+u.telephone+'</div></div>'
-      +'<div style="text-align:right;flex-shrink:0">'+soldeHtml+'<div style="font-size:9px;font-weight:700;margin-top:2px;color:'+(u.statut==='actif'?'#22c55e':'#f59e0b')+'">'+u.statut+'</div></div>';
-    div.addEventListener('click',function(){voirU(u.id);});
-    el.appendChild(div);
-  });
+  el.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
+  try{
+    var u=G.user;
+    var p='/users?limit=100&q='+encodeURIComponent(q);
+    if(u.role==='superviseur'){
+      var allowedRoles=['agent','business','mini_master','master'];
+      var roleToLoad=allowedRoles.indexOf(uFilter)>=0?uFilter:'agent';
+      p+='&role='+roleToLoad;
+      if(u.zone)p+='&zone='+encodeURIComponent(u.zone);
+    } else if(uFilter && uFilter!=='all' && uFilter!=='super_bo'){
+      p+='&role='+uFilter;
+    }
+    var r=await apiGet(p);
+    var data=r.data||[];
+    if(uFilter==='super_bo') data=data.filter(function(x){return x.telephone===SUPER_ADMIN_TEL;});
+    usersData=data;
+    var toRender=isSuperAdmin()?usersData:usersData.filter(function(x){return x.telephone!==SUPER_ADMIN_TEL||x.statut==='bloque';});
+    renderU(toRender);
+  }catch(e){el.innerHTML='<div style="color:var(--r);padding:12px;font-size:13px">'+e.message+'</div>';}
 }
 
 // ═══ RATTACHEMENTS ═══
