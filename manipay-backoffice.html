@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.9-2026-08-21"/>
+<meta name="version" content="v3.1-2026-08-21"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1480,10 +1480,21 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
   <div class="sh" style="max-height:97vh;border-radius:20px 20px 0 0">
     <div class="sh-bar"></div>
     <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
-      <div><div class="sh-title" style="font-size:18px">💰 Comptes système Tontine</div><div style="color:var(--m);font-size:12px;margin-top:2px">14 réserves par palier + 1 commission</div></div>
+      <div><div class="sh-title" style="font-size:18px">💰 Comptes système Tontine</div><div style="color:var(--m);font-size:12px;margin-top:2px">14 réserves + 1 commission + 1 avances</div></div>
       <button class="sh-x" onclick="closeSh('tontine-comptes-systeme')">✕</button>
     </div>
     <div id="tcs-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<div class="sh-ov" id="sh-tontine-historique-avances">
+  <div class="sh" style="max-height:97vh;border-radius:20px 20px 0 0">
+    <div class="sh-bar"></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" style="font-size:18px">📜 Historique — Avances ManiPay</div><div style="color:var(--m);font-size:12px;margin-top:2px">Compte n°16 — chaque sortie et entrée</div></div>
+      <button class="sh-x" onclick="closeSh('tontine-historique-avances')">✕</button>
+    </div>
+    <div id="tha-body" style="padding:16px 18px 40px"><div style="text-align:center;padding:32px"><div class="spin"></div></div></div>
   </div>
 </div>
 
@@ -1501,6 +1512,30 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
       <input class="inp" id="tvc-montant" type="number" placeholder="Ex: 5000" style="margin-bottom:12px"/>
       <input class="inp" id="tvc-desc" type="text" placeholder="Description (optionnel)" style="margin-bottom:16px"/>
       <button onclick="confirmerVirerCommissionTontine()" style="width:100%;background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer le virement</button>
+    </div>
+  </div>
+</div>
+
+<div class="sh-ov" id="sh-virer-systeme">
+  <div class="sh" style="border-radius:20px 20px 0 0">
+    <div class="sh-bar"></div>
+    <div class="sh-top" style="padding:16px 20px 14px;border-bottom:1px solid #f3f4f6">
+      <div><div class="sh-title" style="font-size:18px" id="vs-title">💸 Virer vers un numéro</div><div style="color:var(--m);font-size:12px;margin-top:2px" id="vs-sub">--</div></div>
+      <button class="sh-x" onclick="closeSh('virer-systeme')">✕</button>
+    </div>
+    <div style="padding:16px 20px 32px">
+      <div id="vs-warn-reserve" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;color:#dc2626;margin-bottom:4px">⚠️ Compte réserve — argent des participants</div>
+        <div style="font-size:11px;color:#991b1b;margin-bottom:10px">Cet argent est en principe réservé au versement d'un bénéficiaire de Tontine. Le sortir de ce compte peut empêcher un versement prévu et forcer une avance ManiPay pour compenser.</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#991b1b;font-weight:700"><input type="checkbox" id="vs-confirme-risque" style="width:18px;height:18px"/> Je comprends le risque et je confirme</label>
+      </div>
+      <div id="vs-err" style="display:none;background:#fef2f2;color:#dc2626;padding:10px;border-radius:10px;margin-bottom:12px;font-size:13px"></div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Solde disponible</div>
+      <div style="font-size:22px;font-weight:800;color:#111827;margin-bottom:14px" id="vs-solde">--</div>
+      <input class="inp" id="vs-tel" type="tel" placeholder="Numéro du destinataire" style="margin-bottom:12px"/>
+      <input class="inp" id="vs-montant" type="number" placeholder="Montant (FCFA)" style="margin-bottom:12px"/>
+      <input class="inp" id="vs-desc" type="text" placeholder="Description (optionnel)" style="margin-bottom:16px"/>
+      <button id="vs-btn" onclick="confirmerVirerCompteSysteme()" style="width:100%;background:#111827;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Confirmer le virement</button>
     </div>
   </div>
 </div>
@@ -11775,20 +11810,78 @@ async function ouvrirComptesSystemeTontine(){
     var list=r.data||[];
     var reserves=list.filter(function(c){return c.typeCompte==='reserve_tontine';});
     var commission=list.filter(function(c){return c.typeCompte==='commission_tontine';});
+    var avance=list.filter(function(c){return c.typeCompte==='avance_tontine';});
+
+    function ligneCompte(c,bg,soldeColor){
+      var idCourt=c.id.slice(0,8)+'…'+c.id.slice(-4);
+      var html='<div style="background:'+bg+';border-radius:10px;padding:12px 14px;margin-bottom:6px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:13px;font-weight:700">'+c.prenom+' '+c.nom+'</span>'
+        +'<b style="color:'+soldeColor+';font-size:13px">'+F(c.solde)+' F</b>'
+        +'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'
+        +'<span style="font-size:10px;color:#9ca3af;font-family:monospace">'+idCourt+'</span>'
+        +'<button onclick="_copierIdCompte(\''+c.id+'\',this)" style="font-size:10px;color:#7c3aed;background:none;border:none;font-weight:700;cursor:pointer;font-family:inherit">📋 Copier l\'ID</button>'
+        +'</div>';
+      if(isSuperAdmin()){
+        html+='<button onclick="ouvrirVirerCompteSysteme(\''+c.id+'\',\''+c.typeCompte+'\','+c.solde+')" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">💸 Virer vers un numéro</button>';
+      }
+      html+='</div>';
+      return html;
+    }
+
     var html='';
     if(commission.length){
-      html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Commission</div>';
-      commission.forEach(function(c){
-        html+='<div style="display:flex;justify-content:space-between;padding:12px 14px;background:#f0fdf4;border-radius:10px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">'+c.prenom+' '+c.nom+'</span><b style="color:#059669">'+F(c.solde)+' F</b></div>';
+      html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Commission (compte n°15)</div>';
+      commission.forEach(function(c){ html+=ligneCompte(c,'#f0fdf4','#059669'); });
+    }
+    if(avance.length){
+      html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Avances ManiPay (compte n°16)</div>';
+      avance.forEach(function(c){
+        var negatif=c.solde<0;
+        html+=ligneCompte(c,negatif?'#fffbeb':'#f0fdf4',negatif?'#d97706':'#059669');
       });
+      html+='<button onclick="ouvrirHistoriqueAvancesTontine()" style="width:100%;padding:9px;border-radius:10px;border:1px solid #fde68a;background:#fffbeb;color:#d97706;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">📜 Voir l\'historique des mouvements</button>';
     }
     html+='<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;margin:16px 0 8px">Réserves par palier ('+reserves.length+')</div>';
-    reserves.forEach(function(c){
-      html+='<div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f9fafb;border-radius:10px;margin-bottom:6px"><span style="font-size:12px">'+c.nom+'</span><b style="font-size:13px">'+F(c.solde)+' F</b></div>';
+    reserves.forEach(function(c){ html+=ligneCompte(c,'#f9fafb','#111827'); });
+    body.innerHTML=html;
+  }catch(e){
+    body.innerHTML='<div style="color:#dc2626;text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+async function ouvrirHistoriqueAvancesTontine(){
+  openSh('tontine-historique-avances');
+  var body=document.getElementById('tha-body');
+  body.innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div></div>';
+  try{
+    var r=await apiGet('/admin/tontine/avances/historique');
+    var list=r.data||[];
+    if(!list.length){
+      body.innerHTML='<div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px">Aucun mouvement pour l\'instant</div>';
+      return;
+    }
+    var html='';
+    list.forEach(function(m){
+      var sortie=m.sens==='sortie';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;background:'+(sortie?'#fffbeb':'#f0fdf4')+';border-radius:10px;padding:12px 14px;margin-bottom:6px">';
+      html+='<div><div style="font-size:12px;font-weight:700;color:'+(sortie?'#d97706':'#059669')+'">'+(sortie?'↗️ Sortie (avance)':'↘️ Entrée (recouvrement)')+'</div>';
+      html+='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+new Date(m.dateCreation).toLocaleString('fr-FR')+' · '+m.reference+'</div></div>';
+      html+='<b style="font-size:13px;color:'+(sortie?'#d97706':'#059669')+'">'+(sortie?'-':'+')+F(m.montant)+' F</b>';
+      html+='</div>';
     });
     body.innerHTML=html;
   }catch(e){
     body.innerHTML='<div style="color:#dc2626;text-align:center;padding:20px;font-size:13px">'+e.message+'</div>';
+  }
+}
+function _copierIdCompte(id,btn){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(id).then(function(){
+      var old=btn.textContent;btn.textContent='✅ Copié';setTimeout(function(){btn.textContent=old;},1500);
+    });
+  }else{
+    prompt('Copie cet identifiant :',id);
   }
 }
 
@@ -11813,6 +11906,46 @@ async function confirmerVirerCommissionTontine(){
   }catch(e){
     errEl.textContent=e.message;
     errEl.style.display='block';
+  }
+}
+
+var _vsCompteId=null,_vsSolde=0;
+function ouvrirVirerCompteSysteme(compteId,typeCompte,solde){
+  _vsCompteId=compteId;_vsSolde=solde;
+  var estReserve=typeCompte==='reserve_tontine';
+  document.getElementById('vs-warn-reserve').style.display=estReserve?'':'none';
+  if(estReserve)document.getElementById('vs-confirme-risque').checked=false;
+  document.getElementById('vs-sub').textContent=typeCompte==='reserve_tontine'?'Compte réserve':typeCompte==='commission_tontine'?'Compte commission':'Compte avances';
+  document.getElementById('vs-solde').textContent=F(solde)+' F';
+  document.getElementById('vs-tel').value='';
+  document.getElementById('vs-montant').value='';
+  document.getElementById('vs-desc').value='';
+  document.getElementById('vs-err').style.display='none';
+  openSh('virer-systeme');
+}
+async function confirmerVirerCompteSysteme(){
+  var tel=document.getElementById('vs-tel').value.trim();
+  var montant=parseFloat(document.getElementById('vs-montant').value);
+  var desc=document.getElementById('vs-desc').value;
+  var errEl=document.getElementById('vs-err');
+  errEl.style.display='none';
+  if(!tel){errEl.textContent='Numéro du destinataire requis';errEl.style.display='block';return;}
+  if(!montant||montant<=0){errEl.textContent='Montant invalide';errEl.style.display='block';return;}
+  if(document.getElementById('vs-warn-reserve').style.display!=='none' && !document.getElementById('vs-confirme-risque').checked){
+    errEl.textContent='Coche la case de confirmation pour un compte réserve';errEl.style.display='block';return;
+  }
+  var btn=document.getElementById('vs-btn');
+  btn.disabled=true;btn.style.opacity='.6';
+  try{
+    var r=await apiPost('/admin/tontine/comptes-systeme/'+_vsCompteId+'/virer',{telephoneDestinataire:tel,montant:montant,description:desc});
+    closeSh('virer-systeme');
+    alert(r.data.message||'Virement effectué.');
+    ouvrirComptesSystemeTontine();
+  }catch(e){
+    errEl.textContent=e.message;
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false;btn.style.opacity='1';
   }
 }
 
