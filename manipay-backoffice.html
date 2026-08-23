@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="version" content="v2.8-2026-08-21"/>
+<meta name="version" content="v2.9-2026-08-21"/>
 <meta name="theme-color" content="#ca8a04"/>
 <script>(function(){try{if(sessionStorage.getItem('_vc'))return;sessionStorage.setItem('_vc','1');var mv=document.querySelector('meta[name="version"]');var cur=mv?mv.content:null;if(!cur)return;fetch(location.pathname+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/<meta name="version" content="([^"]+)"/);if(m&&m[1]&&m[1]!==cur){location.reload();}}).catch(function(){});}catch(e){}})();</script>
 <title>ManiPay — Back-office v4.32</title>
@@ -1294,6 +1294,42 @@ body{min-height:100vh;background:#f9fafb;font-family:-apple-system,BlinkMacSyste
 
       <div style="font-size:13px;font-weight:800;margin-bottom:10px">Statut</div>
       <div id="seg-statuts" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Solde actuel du compte (FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-solde-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-solde-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Gains de parrainage totaux (FCFA)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-gains-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-gains-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Inactif depuis (jours)</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="seg-inactif-min" type="number" placeholder="Min" class="inp" style="flex:1"/>
+        <input id="seg-inactif-max" type="number" placeholder="Max" class="inp" style="flex:1"/>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">Zone</div>
+      <input id="seg-zone" type="text" placeholder="Ex: Abidjan, Cocody..." class="inp" style="margin-bottom:16px"/>
+
+      <div style="font-size:13px;font-weight:800;margin-bottom:10px">Ticket support</div>
+      <div id="seg-ticket" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;padding:12px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:#6d28d9">🎡 Tontine</div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:6px">Participe actuellement</div>
+        <div id="seg-tontine-participe" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:6px">Couleur (comportement de paiement)</div>
+        <div id="seg-tontine-couleur" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:6px">Catégorie</div>
+        <div id="seg-tontine-categorie" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+        <div style="font-size:11px;font-weight:700;margin-bottom:6px">Banni définitivement</div>
+        <div id="seg-tontine-banni" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
 
       <div style="font-size:13px;font-weight:800;margin-bottom:6px">Date d'inscription</div>
       <div style="display:flex;gap:8px;margin-bottom:18px">
@@ -5210,7 +5246,7 @@ function renderSansFilleul(list){
 }
 
 // ═══ SEGMENTATION ═══
-var segRolesSel={},segKycSel={},segStatutSel={};
+var segRolesSel={},segKycSel={},segStatutSel={},segTicketSel={},segTontineParticipeSel={},segTontineCouleurSel={},segTontineCategorieSel={},segTontineBanniSel={};
 var segResults=[];var segSelected={};
 async function chercherProfilNumero(){
   var tel=document.getElementById('seg-tel-lookup').value.trim();
@@ -5311,19 +5347,48 @@ function initSegmentationUI(){
       statutEl.appendChild(btn);
     });
   }
+  _initSegChipGroup('seg-ticket',[['true','Ouvert'],['false','Aucun']],segTicketSel,'#ca8a04');
+  _initSegChipGroup('seg-tontine-participe',[['true','Oui'],['false','Non']],segTontineParticipeSel,'#7c3aed');
+  _initSegChipGroup('seg-tontine-couleur',[['vert','🟢 Vert'],['orange','🟠 Orange'],['bleu','🔵 Bleu'],['jaune','🟡 Jaune'],['rouge','🔴 Rouge']],segTontineCouleurSel,'#7c3aed');
+  _initSegChipGroup('seg-tontine-categorie',[['hebdo','Hebdo'],['bihebdo','Bi-hebdo'],['mensuel','Mensuel']],segTontineCategorieSel,'#7c3aed');
+  _initSegChipGroup('seg-tontine-banni',[['true','Oui'],['false','Non']],segTontineBanniSel,'#dc2626');
+}
+function _initSegChipGroup(elId,options,selObj,activeColor){
+  var el=document.getElementById(elId);
+  if(!el||el.dataset.init)return;
+  el.dataset.init='1';
+  options.forEach(function(o){
+    var btn=document.createElement('button');
+    btn.type='button';btn.textContent=o[1];
+    btn.style.cssText='padding:7px 14px;border-radius:99px;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+    btn.addEventListener('click',function(){
+      selObj[o[0]]=!selObj[o[0]];
+      btn.style.borderColor=selObj[o[0]]?activeColor:'#e5e7eb';
+      btn.style.background=selObj[o[0]]?activeColor+'22':'#fff';
+      btn.style.color=selObj[o[0]]?activeColor:'#6b7280';
+    });
+    el.appendChild(btn);
+  });
 }
 function segNum(id){var v=document.getElementById(id).value;return v===''?undefined:Number(v);}
 function segDate(id){var v=document.getElementById(id).value;return v?v:undefined;}
+function segBoolChip(selObj){
+  if(selObj['true'])return true;
+  if(selObj['false'])return false;
+  return undefined;
+}
 async function lancerSegmentation(){
   var wrap=document.getElementById('seg-results-wrap');
   var listEl=document.getElementById('seg-results-list');
   wrap.style.display='';
   listEl.innerHTML='<div style="padding:40px;text-align:center"><div class="spin"></div></div>';
   document.getElementById('seg-results-count').textContent='Recherche...';
+  var zoneVal=(document.getElementById('seg-zone').value||'').trim();
   var body={
     roles:Object.keys(segRolesSel).filter(function(k){return segRolesSel[k];}),
     kycNiveaux:Object.keys(segKycSel).filter(function(k){return segKycSel[k];}),
     statuts:Object.keys(segStatutSel).filter(function(k){return segStatutSel[k];}),
+    zones:zoneVal?zoneVal.split(',').map(function(s){return s.trim();}).filter(Boolean):[],
     filleulsMin:segNum('seg-filleuls-min'),filleulsMax:segNum('seg-filleuls-max'),
     periodeDebut:segDate('seg-periode-debut'),periodeFin:segDate('seg-periode-fin'),
     depotMin:segNum('seg-depot-min'),depotMax:segNum('seg-depot-max'),
@@ -5331,12 +5396,23 @@ async function lancerSegmentation(){
     transfertMin:segNum('seg-transfert-min'),transfertMax:segNum('seg-transfert-max'),
     paiementEnvoyeMin:segNum('seg-paye-min'),paiementEnvoyeMax:segNum('seg-paye-max'),
     paiementRecuMin:segNum('seg-recu-min'),paiementRecuMax:segNum('seg-recu-max'),
+    soldeMin:segNum('seg-solde-min'),soldeMax:segNum('seg-solde-max'),
+    gainsMin:segNum('seg-gains-min'),gainsMax:segNum('seg-gains-max'),
+    inactifDepuisMin:segNum('seg-inactif-min'),inactifDepuisMax:segNum('seg-inactif-max'),
+    ticketOuvert:segBoolChip(segTicketSel),
+    tontineParticipe:segBoolChip(segTontineParticipeSel),
+    tontineBanni:segBoolChip(segTontineBanniSel),
+    tontineCouleurs:Object.keys(segTontineCouleurSel).filter(function(k){return segTontineCouleurSel[k];}),
+    tontinePaliers:Object.keys(segTontineCategorieSel).filter(function(k){return segTontineCategorieSel[k];}),
     dateInscriptionDebut:segDate('seg-inscr-debut'),dateInscriptionFin:segDate('seg-inscr-fin')
   };
   // Nettoyer les tableaux vides (sinon le backend filtre sur liste vide = aucun résultat)
   if(!body.roles.length)delete body.roles;
   if(!body.kycNiveaux.length)delete body.kycNiveaux;
   if(!body.statuts.length)delete body.statuts;
+  if(!body.zones.length)delete body.zones;
+  if(!body.tontineCouleurs.length)delete body.tontineCouleurs;
+  if(!body.tontinePaliers.length)delete body.tontinePaliers;
   try{
     var r=await fetch(API+'/admin/segmentation',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.token},body:JSON.stringify(body)});
     var d=await r.json();if(!r.ok)throw new Error(d.message||'Erreur');
@@ -5368,9 +5444,19 @@ function renderSegResults(){
       if(u.volumes.paiementRecu)parts.push('Reçu: '+F(u.volumes.paiementRecu));
       if(parts.length)volTxt='<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+parts.join(' · ')+'</div>';
     }
+    var extraParts=[];
+    if(u.solde!==undefined)extraParts.push('Solde: '+F(u.solde)+' F');
+    if(u.gainsParrainage)extraParts.push('Gains: '+F(u.gainsParrainage)+' F');
+    var extraTxt=extraParts.length?'<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+extraParts.join(' · ')+'</div>':'';
+    var tontineTxt='';
+    if(u.tontine){
+      var CL={vert:'#059669',orange:'#d97706',bleu:'#2563eb',jaune:'#ca8a04',rouge:'#dc2626'};
+      if(u.tontine.banni)tontineTxt='<span style="font-size:9px;font-weight:700;color:#fff;background:#111827;padding:1px 6px;border-radius:99px;margin-left:4px">🚫 Banni</span>';
+      else if(u.tontine.participe)tontineTxt='<span style="font-size:9px;font-weight:700;color:'+(CL[u.tontine.couleur]||'#6b7280')+';margin-left:4px">● '+(u.tontine.categorie||'')+'</span>';
+    }
     div.innerHTML='<input type="checkbox" '+(checked?'checked':'')+' style="width:18px;height:18px;accent-color:var(--y);flex-shrink:0"/>'
-      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</span><span style="padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;background:'+c+'22;color:'+c+'">'+u.role+'</span>'+(u.nbFilleuls?'<span style="font-size:9px;color:#9ca3af">· '+u.nbFilleuls+' filleul(s)</span>':'')+'</div>'
-      +'<div style="font-size:11px;color:#6b7280">'+u.telephone+'</div>'+volTxt+'</div>';
+      +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:13px;font-weight:700">'+(u.prenom||'')+' '+(u.nom||'')+'</span><span style="padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;background:'+c+'22;color:'+c+'">'+u.role+'</span>'+(u.nbFilleuls?'<span style="font-size:9px;color:#9ca3af">· '+u.nbFilleuls+' filleul(s)</span>':'')+tontineTxt+'</div>'
+      +'<div style="font-size:11px;color:#6b7280">'+u.telephone+'</div>'+extraTxt+volTxt+'</div>';
     div.addEventListener('click',function(){
       segSelected[u.id]=!segSelected[u.id];
       renderSegResults();
